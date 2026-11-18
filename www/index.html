@@ -188,6 +188,18 @@ nav{bottom:calc(16px + env(safe-area-inset-bottom))!important}
 
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media print{body{background:#fff;color:#000}header,nav,.noprint,button{display:none!important}.card{border:1px solid #999;background:#fff}.mut{color:#444}section{display:none!important}section#v-trips{display:block!important}}
+
+/* cadrans « verre » */
+.dial{filter:drop-shadow(0 12px 22px rgba(0,0,0,.35))}
+.dial .gt{stroke:rgba(127,150,155,.16);stroke-width:16}
+.dial .gv{stroke-width:16}
+.dial .big,.dial .dnum{filter:drop-shadow(0 0 9px color-mix(in srgb,var(--wind) 45%,transparent));letter-spacing:-.01em}
+.dial.stale .big,.dial.stale .dnum{filter:none}
+.dial .tick{stroke:var(--mut)}.dial .tick.m{stroke:var(--tx);stroke-width:2.2}
+.swv{animation:swv 6s linear infinite}@keyframes swv{from{transform:translateX(0)}to{transform:translateX(60px)}}
+.dial .ping{animation:ping 2.4s ease-out infinite;opacity:0}.dial .ping.p2{animation-delay:1.2s}
+@keyframes ping{0%{r:4;opacity:.85}100%{r:26;opacity:0}}
+@media (prefers-reduced-motion:reduce){.swv,.dial .ping{animation:none}}
 </style>
 </head>
 <body>
@@ -437,8 +449,8 @@ function stopPhoneGps(){
 }
 function onPhoneFix(pos){
   const c=pos.coords,prev=GPS.phone;
-  GPS.phone={lat:c.latitude,lon:c.longitude,acc:c.accuracy,t:Date.now()};GPS.err='';
-  const useIt=(cfg.gpsSrc==='phone'||(cfg.gpsSrc==='auto'&&NOW()-GPS.nmeaT>6000))&&!(c.accuracy>150);
+  GPS.phone={lat:c.latitude,lon:c.longitude,acc:c.accuracy,t:Date.now()};GPS.err='';GPS.testing=false;
+  const useIt=cfg.src!=='demo'&&(cfg.gpsSrc==='phone'||(cfg.gpsSrc==='auto'&&NOW()-GPS.nmeaT>6000))&&!(c.accuracy>150);
   if(useIt){
     set('lat',c.latitude);set('lon',c.longitude);
     let v=c.speed;if((v==null||isNaN(v))&&prev){const dt=(Date.now()-prev.t)/1000;if(dt>0.5)v=hav(prev,GPS.phone)*1852/dt}
@@ -448,10 +460,10 @@ function onPhoneFix(pos){
   }
   updGpsPill();
 }
-async function startPhoneGps(){
+async function startPhoneGps(force){
   stopPhoneGps();GPS.err='';
-  if(cfg.gpsSrc==='nmea'||cfg.src==='demo'){updGpsPill();return}
-  const onErr=e=>{GPS.err=(e&&(e.message||e.code))?String(e.message||e.code):'erreur';updGpsPill()};
+  if(!force&&(cfg.gpsSrc==='nmea'||cfg.src==='demo')){updGpsPill();return}
+  const onErr=e=>{GPS.testing=false;const c=e&&e.code,m=c===1?'autorisation refusée : autorise la localisation pour l\'appli dans les réglages du téléphone':c===2?'position indisponible (active le GPS du téléphone, va à l\'extérieur)':c===3?'délai dépassé, pas de point GPS':(e&&(e.message||e.code))?String(e.message||e.code):'erreur';GPS.err=m;updGpsPill()};
   try{
     if(NATIVE){
       GEO=GEO||Capacitor.registerPlugin('Geolocation');
@@ -475,10 +487,10 @@ function updGpsPill(){
   const s=gpsState(),e=$('#gpsp');e.textContent=s.t;e.className='pill '+s.c;
   const p=GPS.phone,lines=[];
   lines.push(NOW()-GPS.nmeaT<6000?'Bateau (NMEA 2000) : position reçue ✓':'Bateau (NMEA 2000) : pas de position reçue');
-  lines.push(GPS.err?'Téléphone : '+GPS.err:p&&Date.now()-p.t<10000?`Téléphone : ${p.lat.toFixed(5)}, ${p.lon.toFixed(5)} · précision ±${Math.round(p.acc)} m ✓`:cfg.gpsSrc==='nmea'?'Téléphone : GPS non utilisé':cfg.src==='demo'?'Téléphone : GPS non utilisé en mode démo':'Téléphone : en attente d\'un point GPS…');
+  lines.push(GPS.err?'Téléphone : '+GPS.err:GPS.testing&&!(p&&Date.now()-p.t<10000)?'Téléphone : demande en cours… accepte la fenêtre d\'autorisation, puis patiente quelques secondes':p&&Date.now()-p.t<10000?`Téléphone : ${p.lat.toFixed(5)}, ${p.lon.toFixed(5)} · précision ±${Math.round(p.acc)} m ✓`:cfg.gpsSrc==='nmea'?'Téléphone : GPS non utilisé':cfg.src==='demo'?'Téléphone : GPS non utilisé en mode démo':'Téléphone : en attente d\'un point GPS…');
   $('#gpsTest').innerHTML=lines.map(esc).join('<br>');
 }
-$('#gpsAsk').onclick=()=>{if(cfg.gpsSrc==='nmea')cfg.gpsSrc='auto',$('#sGps').value='auto';startPhoneGps()};
+$('#gpsAsk').onclick=()=>{if(cfg.gpsSrc==='nmea'){cfg.gpsSrc='auto';$('#sGps').value='auto';saveCfg()}GPS.testing=true;GPS.err='';updGpsPill();startPhoneGps(true)};
 setInterval(updGpsPill,2000);
 
 
@@ -717,22 +729,54 @@ const polar=(r,a)=>[150+r*Math.sin(a*D2R),150-r*Math.cos(a*D2R)];
 function arcPath(r,a0,a1){const[x0,y0]=polar(r,a0),[x1,y1]=polar(r,a1);return`M${x0.toFixed(1)} ${y0.toFixed(1)}A${r} ${r} 0 ${Math.abs(a1-a0)>180?1:0} ${a1>a0?1:0} ${x1.toFixed(1)} ${y1.toFixed(1)}`}
 const SVG=(c,body)=>`<svg class="dial${c}" viewBox="-8 -8 316 316" role="img">${body}</svg>`;
 const unwrap=(prev,t)=>prev+(((t-prev)%360+540)%360-180);
+/* ---------- Style « verre » commun à tous les cadrans ---------- */
+const DEFS=`<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<linearGradient id="gRim" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".6"/><stop offset=".45" stop-color="#fff" stop-opacity=".06"/><stop offset="1" stop-color="#000" stop-opacity=".6"/></linearGradient>
+<radialGradient id="gFace" cx=".5" cy=".36" r=".8"><stop offset="0" style="stop-color:var(--card)"/><stop offset=".7" style="stop-color:var(--surf2)"/><stop offset="1" style="stop-color:var(--bg)"/></radialGradient>
+<linearGradient id="gGlass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".2"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+<linearGradient id="gGauge" gradientUnits="userSpaceOnUse" x1="28" y1="0" x2="272" y2="0"><stop offset="0" style="stop-color:var(--wind)"/><stop offset=".55" style="stop-color:var(--ok)"/><stop offset="1" style="stop-color:var(--acc)"/></linearGradient>
+<linearGradient id="gHeat" gradientUnits="userSpaceOnUse" x1="28" y1="0" x2="272" y2="0"><stop offset="0" style="stop-color:var(--wind)"/><stop offset=".5" style="stop-color:var(--ok)"/><stop offset=".78" style="stop-color:var(--warn)"/><stop offset="1" style="stop-color:var(--bad)"/></linearGradient>
+<linearGradient id="gAw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" style="stop-color:var(--wind)"/></linearGradient>
+<linearGradient id="gSea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--wind)" stop-opacity=".5"/><stop offset="1" style="stop-color:var(--wind)" stop-opacity=".05"/></linearGradient>
+<linearGradient id="gBed" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--mut)" stop-opacity=".55"/><stop offset="1" style="stop-color:var(--line)" stop-opacity=".9"/></linearGradient>
+<linearGradient id="gHull" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset=".25" style="stop-color:var(--acc)"/><stop offset="1" stop-color="#000" stop-opacity=".45"/></linearGradient>
+<linearGradient id="gSail" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop offset="1" style="stop-color:var(--wind)" stop-opacity=".55"/></linearGradient>
+<filter id="fGlow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="3.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+<filter id="fDrop" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="2" stdDeviation="2.2" flood-color="#000" flood-opacity=".55"/></filter>
+</defs></svg>`;
+if(!document.getElementById('gRim'))document.body.insertAdjacentHTML('afterbegin',DEFS);
+const FACE=(r=140)=>`<circle cx="150" cy="150" r="${r+9}" fill="#000" opacity=".28" style="transform:translateY(4px)"/><circle cx="150" cy="150" r="${r+7}" fill="url(#gRim)"/><circle cx="150" cy="150" r="${r+3}" fill="var(--bg)"/><circle cx="150" cy="150" r="${r}" fill="url(#gFace)"/><circle cx="150" cy="150" r="${r}" fill="none" stroke="#000" stroke-opacity=".4" stroke-width="3"/><path d="M${(150-r*.78).toFixed(1)} ${(150-r*.6).toFixed(1)}A${r} ${r} 0 0 1 ${(150+r*.78).toFixed(1)} ${(150-r*.6).toFixed(1)}Q150 ${(150-r*.28).toFixed(1)} ${(150-r*.78).toFixed(1)} ${(150-r*.6).toFixed(1)}Z" fill="url(#gGlass)" pointer-events="none"/>`;
+const TWS=new Set();let twRun=false;
+function twStep(){for(const o of [...TWS]){const d=o.t-o.v;if(Math.abs(d)<0.0015){o.v=o.t;o.fn(o.v);TWS.delete(o)}else{o.v+=d*0.16;o.fn(o.v)}}if(TWS.size)requestAnimationFrame(twStep);else twRun=false}
+function tween(fn){const o={v:0,t:0,fn,to(x){o.t=x;if(!TWS.has(o)){TWS.add(o);if(!twRun){twRun=true;requestAnimationFrame(twStep)}}}};return o}
+function gaugeSet(q,f,r=122){const a=-120+240*Math.max(0,Math.min(1,f)),[x,y]=polar(r,a),d=q('.gd');
+  q('.gv').setAttribute('d',f>0.003?arcPath(r,-120,a):'');d.setAttribute('cx',x.toFixed(1));d.setAttribute('cy',y.toFixed(1));d.setAttribute('opacity',f>0.003?1:0)}
+function gaugeTicks(maxV,step,fmt,sub){
+  let t='';const n=Math.round(maxV/sub);
+  for(let i=0;i<=n;i++){const v=i*sub,a=-120+240*v/maxV,major=Math.abs(v/step-Math.round(v/step))<1e-6,[x0,y0]=polar(major?102:107,a),[x1,y1]=polar(112,a);
+    t+=`<line class="tick${major?' m':''}" x1="${x0.toFixed(1)}" y1="${y0.toFixed(1)}" x2="${x1.toFixed(1)}" y2="${y1.toFixed(1)}"/>`;
+    if(major){const[x2,y2]=polar(88,a);t+=`<text class="sm" x="${x2.toFixed(1)}" y="${(y2+5).toFixed(1)}" text-anchor="middle">${fmt(v)}</text>`}}
+  return t;
+}
 function ringFace(){   // graduations + points cardinaux (anneau qui tourne avec le cap)
   let h='';
-  for(let a=0;a<360;a+=10){const m=a%30===0,r0=m?104:110,[x0,y0]=polar(r0,a),[x1,y1]=polar(120,a);
-    h+=`<line class="tick${m?' m':''}" x1="${x0.toFixed(1)}" y1="${y0.toFixed(1)}" x2="${x1.toFixed(1)}" y2="${y1.toFixed(1)}"/>`}
-  [['N',0],['E',90],['S',180],['O',270]].forEach(([l,a])=>{const[x,y]=polar(90,a);
-    h+=`<text class="cn" x="${x.toFixed(1)}" y="${(y+6).toFixed(1)}" text-anchor="middle" transform="rotate(${a} ${x.toFixed(1)} ${y.toFixed(1)})" style="${l==='N'?'fill:var(--acc)':''}">${l}</text>`});
+  for(let a=0;a<360;a+=5){const m=a%30===0,md=a%10===0,r0=m?102:md?107:111,[x0,y0]=polar(r0,a),[x1,y1]=polar(120,a);
+    h+=`<line class="tick${m?' m':''}" x1="${x0.toFixed(1)}" y1="${y0.toFixed(1)}" x2="${x1.toFixed(1)}" y2="${y1.toFixed(1)}"${md||m?'':' style="opacity:.55"'}/>`}
+  for(let a=30;a<360;a+=30){if(a%90===0)continue;const[x,y]=polar(94,a);
+    h+=`<text class="sm" x="${x.toFixed(1)}" y="${(y+4).toFixed(1)}" text-anchor="middle" transform="rotate(${a} ${x.toFixed(1)} ${y.toFixed(1)})" style="font-size:10px;opacity:.75">${a/10}</text>`}
+  [['N',0],['E',90],['S',180],['O',270]].forEach(([l,a])=>{const[x,y]=polar(88,a);
+    h+=`<text class="cn" x="${x.toFixed(1)}" y="${(y+6).toFixed(1)}" text-anchor="middle" transform="rotate(${a} ${x.toFixed(1)} ${y.toFixed(1)})" style="${l==='N'?'fill:var(--bad);font-size:20px':''}">${l}</text>`});
   return h;
 }
+const BOATTOP=`<g opacity=".16"><path d="M150 92C174 118 176 170 166 214L134 214C124 170 126 118 150 92Z" fill="#fff"/><path d="M150 100V196" stroke="#000" stroke-width="2" opacity=".5"/></g>`;
 const hdgNow=()=>fresh('cog')?D.cog:(fresh('hdg')?D.hdg:null);
 
 /* 1. Vent : cap, vitesse fond, vent apparent / vrai */
 function mkWind(root){
-  root.innerHTML=SVG(' stale',`<g class="dArcs"><path d="${arcPath(138,25,110)}" fill="none" stroke="var(--stbd)" stroke-width="5" stroke-linecap="round" opacity=".9"/><path d="${arcPath(138,-110,-25)}" fill="none" stroke="var(--port)" stroke-width="5" stroke-linecap="round" opacity=".9"/></g>
-   <g class="dRing ring">${ringFace()}</g><path d="M150 13 l-8 -13 h16 z" fill="var(--acc)"/>
-   <g class="dTw needle" opacity="0"><path d="M150 72 L143 56 L157 56 Z" fill="none" stroke="var(--tx)" stroke-width="2" stroke-linejoin="round"/></g>
-   <g class="dAw needle" opacity="0"><path d="M150 54 L141 28 L159 28 Z" fill="var(--wind)"/></g>
+  root.innerHTML=SVG(' stale',`${FACE(146)}<g class="dArcs" style="filter:url(#fGlow)"><path d="${arcPath(138,25,110)}" fill="none" stroke="var(--stbd)" stroke-width="5" stroke-linecap="round" opacity=".95"/><path d="${arcPath(138,-110,-25)}" fill="none" stroke="var(--port)" stroke-width="5" stroke-linecap="round" opacity=".95"/></g>
+   ${BOATTOP}<g class="dRing ring">${ringFace()}</g><path d="M150 14 l-9 -14 h18 z" fill="var(--acc)" style="filter:url(#fDrop)"/>
+   <g class="dTw needle" opacity="0"><path d="M150 76 L141 52 L150 58 L159 52 Z" fill="none" stroke="var(--tx)" stroke-width="2.4" stroke-linejoin="round" style="filter:url(#fGlow)"/></g>
+   <g class="dAw needle" opacity="0"><path d="M150 52 L138 24 L150 32 L162 24 Z" fill="url(#gAw)" stroke="var(--tx)" stroke-opacity=".55" stroke-width="1" style="filter:url(#fGlow)"/></g>
    <text x="150" y="104" text-anchor="middle" class="dlab">vitesse fond</text>
    <text class="dSog dnum" x="150" y="168" text-anchor="middle">--</text>
    <text x="150" y="192" text-anchor="middle" class="dlab">nœuds</text>
@@ -751,19 +795,18 @@ function mkWind(root){
 
 /* 2. Vitesse : jauge, vitesse surface, VMG, vitesse max */
 function mkSpeed(root){
-  let mxv=0;
-  root.innerHTML=SVG(' stale',`<path class="gt" d="${arcPath(122,-120,120)}"/><path class="gv" d=""/><g class="tk"></g><path class="mxm" fill="var(--bad)" d=""/>
+  let mxv=0,mx=10;
+  root.innerHTML=SVG(' stale',`${FACE(140)}<path class="gt" d="${arcPath(122,-120,120)}"/><g class="tk"></g><path class="gv" d="" style="stroke:url(#gGauge);filter:url(#fGlow)"/><circle class="gd" r="8" fill="#fff" opacity="0" style="filter:url(#fGlow)"/><path class="mxm" fill="var(--bad)" d=""/>
     <text class="big sg" x="150" y="170" text-anchor="middle">--</text><text class="sm" x="150" y="196" text-anchor="middle">nœuds</text>
     <text class="mid sub" x="150" y="248" text-anchor="middle"></text>`);
-  const q=s=>root.querySelector(s);
+  const q=s=>root.querySelector(s),tw=tween(f=>gaugeSet(q,f));
   return()=>{
-    const mx=Math.max(10,Math.ceil(cfg.cruise*1.8/2)*2);
-    if(mx!==mxv){mxv=mx;let t='';for(let v=0;v<=mx;v+=2){const a=-120+240*v/mx,[x0,y0]=polar(104,a),[x1,y1]=polar(110,a),[x2,y2]=polar(92,a);
-      t+=`<line class="tick m" x1="${x0.toFixed(1)}" y1="${y0.toFixed(1)}" x2="${x1.toFixed(1)}" y2="${y1.toFixed(1)}"/><text class="sm" x="${x2.toFixed(1)}" y="${(y2+4).toFixed(1)}" text-anchor="middle">${v}</text>`}q('.tk').innerHTML=t}
+    mx=Math.max(10,Math.ceil(cfg.cruise*1.8/2)*2);
+    if(mx!==mxv){mxv=mx;q('.tk').innerHTML=gaugeTicks(mx,2,v=>v,1)}
     const ok=fresh('sog'),v=ok?D.sog:0;
     q('svg').classList.toggle('stale',!ok);
     q('.sg').textContent=ok?num(v):'--';
-    q('.gv').setAttribute('d',v>0.05?arcPath(122,-120,-120+240*Math.min(1,v/mx)):'');
+    tw.to(Math.min(1,v/mx));
     if(SESS.maxSog>0.5){const a=-120+240*Math.min(1,SESS.maxSog/mx),[x,y]=polar(137,a),[x1,y1]=polar(147,a-3),[x2,y2]=polar(147,a+3);q('.mxm').setAttribute('d',`M${x.toFixed(1)} ${y.toFixed(1)}L${x1.toFixed(1)} ${y1.toFixed(1)}L${x2.toFixed(1)} ${y2.toFixed(1)}Z`)}
     const p=[];if(fresh('stw'))p.push('surface '+num(D.stw));const vm=vmg();if(vm!=null)p.push('VMG '+num(Math.abs(vm)));
     q('.sub').textContent=p.join(' · ');
@@ -772,8 +815,8 @@ function mkSpeed(root){
 
 /* 3. Cap : grande rose + route fond */
 function mkCompass(root){
-  root.innerHTML=SVG(' stale',`<g class="dRing ring">${ringFace()}<g class="cg" opacity="0" style="transform-origin:150px 150px"><path d="M150 36 l7 -13 l-7 -13 l-7 13z" fill="var(--wind)"/></g></g>
-    <path d="M150 13 l-8 -13 h16 z" fill="var(--acc)"/>
+  root.innerHTML=SVG(' stale',`${FACE(146)}<g class="dRing ring">${ringFace()}<g class="cg" opacity="0" style="transform-origin:150px 150px"><path d="M150 38 l8 -14 l-8 -14 l-8 14z" fill="url(#gAw)" stroke="var(--tx)" stroke-opacity=".55" stroke-width="1" style="filter:url(#fGlow)"/></g></g>
+    <path d="M150 14 l-9 -14 h18 z" fill="var(--acc)" style="filter:url(#fDrop)"/>${BOATTOP}
     <text class="big hd" x="150" y="166" text-anchor="middle">---</text><text class="sm hl" x="150" y="190" text-anchor="middle">cap</text>
     <text class="mid cd" x="150" y="218" text-anchor="middle" style="font-size:16px"></text>`);
   const q=s=>root.querySelector(s);let dh=0;
@@ -793,9 +836,9 @@ function mkAtt(root){
   const id='cp'+(++dialUid);let t='';
   [-45,-30,-20,-10,0,10,20,30,45].forEach(a=>{const[x0,y0]=polar(104,a),[x1,y1]=polar(a%30===0?118:112,a);t+=`<line class="tick${a%30===0?' m':''}" x1="${x0.toFixed(1)}" y1="${y0.toFixed(1)}" x2="${x1.toFixed(1)}" y2="${y1.toFixed(1)}"/>`});
   let lad='';[-20,-10,10,20].forEach(p=>{const y=150+p*4,w=Math.abs(p)===10?44:64;lad+=`<line x1="${150-w/2}" y1="${y}" x2="${150+w/2}" y2="${y}" stroke="#fff" stroke-width="2" opacity=".8"/><text x="${150+w/2+6}" y="${y+4}" style="fill:#fff;font-size:12px">${Math.abs(p)}</text>`});
-  root.innerHTML=SVG(' stale',`<defs><clipPath id="${id}"><circle cx="150" cy="150" r="98"/></clipPath></defs>
+  root.innerHTML=SVG(' stale',`${FACE(140)}<defs><clipPath id="${id}"><circle cx="150" cy="150" r="98"/></clipPath><linearGradient id="${id}s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--wind)" stop-opacity=".15"/><stop offset="1" style="stop-color:var(--wind)" stop-opacity=".7"/></linearGradient><linearGradient id="${id}g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--line)"/><stop offset="1" style="stop-color:var(--bg)"/></linearGradient></defs>
     <g clip-path="url(#${id})"><g class="hz" style="transform-origin:150px 150px;transition:transform .5s">
-      <rect x="-300" y="-300" width="900" height="450" fill="var(--wind)" opacity=".42"/><rect x="-300" y="150" width="900" height="450" fill="var(--line)"/>
+      <rect x="-300" y="-300" width="900" height="450" fill="url(#${id}s)"/><rect x="-300" y="150" width="900" height="450" fill="url(#${id}g)"/>
       <line x1="-300" y1="150" x2="600" y2="150" stroke="#fff" stroke-width="3"/>${lad}</g></g>
     <circle cx="150" cy="150" r="98" fill="none" stroke="var(--mut)" stroke-width="2"/>${t}
     <g class="ptr" style="transform-origin:150px 150px;transition:transform .5s"><path d="M150 52 l-7 -12 h14z" fill="var(--acc)"/></g>
@@ -971,6 +1014,10 @@ function mkAtt3D(root){
       const paint=()=>{const on=cfg[key]!==false;b.setAttribute('aria-pressed',on);b.style.cssText='font:600 11px system-ui;padding:4px 10px;border-radius:99px;border:1px solid '+(on?'var(--acc)':'var(--line,#8886)')+';background:'+(on?'var(--acc)':'transparent')+';color:'+(on?'#fff':'var(--mut)')+';min-height:26px'};
       paint();b.onclick=()=>{cfg[key]=cfg[key]===false;saveCfg();paint();wxUpdate()};tg.appendChild(b)};
     mk('b3wx','Météo');mk('b3wind','Flux de vent');root.appendChild(tg);
+    [['‹',-1,'left'],['›',1,'right']].forEach(([ch,dir,side])=>{const b=document.createElement('button');b.type='button';b.textContent=ch;b.setAttribute('aria-label',dir<0?'Cadran précédent':'Cadran suivant');
+      b.style.cssText='position:absolute;'+side+':0;top:42%;width:30px;height:64px;border:0;background:transparent;color:var(--mut);font:300 34px/1 system-ui;opacity:.75';
+      b.onclick=ev=>{ev.stopPropagation();const n=DS.ids.length;DS.idx=(DS.idx+dir+n)%n;layoutStage(dir<0?1:-1)};
+      ['pointerdown','touchstart','mousedown'].forEach(e=>b.addEventListener(e,ev=>ev.stopPropagation()));root.appendChild(b)});
     ['pointerdown','touchstart','mousedown','pointermove','touchmove','pointerup'].forEach(e=>tg.addEventListener(e,ev=>ev.stopPropagation()));
   }
   const vis=()=>root.isConnected&&root.offsetParent!==null&&!document.hidden&&(!root.classList.contains('dc')||root.classList.contains('vis'));
@@ -1084,7 +1131,7 @@ function mkAtt3D(root){
       }else if(fresh('awa')&&fresh('aws')){aw=D.awa;ws=D.aws;wsrc='NMEA'}
       if(aw!=null){
         const a=aw*D2R,sp=Math.max(1.5,Math.min(9,ws*0.4)),fxv=-Math.sin(a)*sp,fzv=-Math.cos(a)*sp,sg=aw>=0?1:-1,th=Math.max(5,Math.min(90,Math.abs(aw)-18))*D2R,ccx=-sg*Math.sin(th),ccz=-Math.cos(th),nx=Math.cos(th),nz=-sg*Math.sin(th);
-        const NP=70,HL=9;if(!S.pw)S.pw=Array.from({length:NP},()=>null);
+        const NP=48,HL=9;if(!S.pw)S.pw=Array.from({length:NP},()=>null);
         const nrm=Math.hypot(fxv,fzv)||1,ux2=fxv/nrm,uz2=fzv/nrm;
         for(let i=0;i<NP;i++){
           let q=S.pw[i];
@@ -1119,34 +1166,40 @@ function mkAtt3D(root){
 
 /* 5. Profondeur : valeur + profil des 10 dernières minutes */
 function mkDepth(root){
-  root.innerHTML=SVG(' stale',`<text class="big dv" x="150" y="92" text-anchor="middle">--</text><text class="sm" x="150" y="118" text-anchor="middle">mètres sous la sonde</text>
-    <rect x="14" y="134" width="272" height="156" rx="14" fill="var(--surf2)"/><path class="sea" fill="var(--line)" d=""/><path class="ln" fill="none" stroke="var(--wind)" stroke-width="3" stroke-linejoin="round" d=""/>
-    <text class="sm sc0" x="24" y="152">0 m</text><text class="sm sc1" x="24" y="282">--</text><text class="sm" x="276" y="152" text-anchor="end">10 min</text>`);
+  root.innerHTML=SVG(' stale',`<rect x="6" y="6" width="288" height="288" rx="26" fill="url(#gFace)" stroke="url(#gRim)" stroke-width="3"/>
+    <text class="big dv" x="150" y="86" text-anchor="middle">--</text><text class="sm" x="150" y="112" text-anchor="middle">mètres sous la sonde</text>
+    <clipPath id="dcl"><rect x="16" y="128" width="268" height="156" rx="16"/></clipPath>
+    <g clip-path="url(#dcl)"><rect x="16" y="128" width="268" height="156" fill="url(#gSea)"/>
+      <path class="sea" fill="url(#gBed)" d=""/><path class="ln" fill="none" stroke="#fff" stroke-width="3" stroke-linejoin="round" d="" style="filter:url(#fGlow)"/>
+      <g class="swv"><path d="M-300 140q15 -7 30 0t30 0t30 0t30 0t30 0t30 0t30 0t30 0t30 0t30 0t30 0t30 0t30 0t30 0t30 0t30 0t30 0t30 0t30 0t30 0t30 0t30 0" fill="none" stroke="var(--wind)" stroke-width="2.2" opacity=".75"/></g>
+      <circle class="ping" cx="276" cy="140" r="3" fill="none" stroke="#fff" stroke-width="2"/><circle class="ping p2" cx="276" cy="140" r="3" fill="none" stroke="#fff" stroke-width="2"/>
+      <circle class="dot" cx="276" cy="140" r="5" fill="#fff" style="filter:url(#fGlow)" opacity="0"/></g>
+    <text class="sm sc0" x="26" y="152">0 m</text><text class="sm sc1" x="26" y="276">--</text><text class="sm" x="272" y="276" text-anchor="end">10 min</text>`);
   const q=s=>root.querySelector(s);
   return()=>{
     const ok=fresh('depth');q('svg').classList.toggle('stale',!ok);
     q('.dv').textContent=ok?num(D.depth):'--';q('.dv').style.fill=ok&&D.depth<2.5?'var(--bad)':'';
     const now=NOW(),a=HIST.depth.filter(x=>now-x.t<600000);
     if(a.length<2){q('.ln').setAttribute('d','');q('.sea').setAttribute('d','');return}
-    const hi=Math.max(5,Math.ceil(Math.max(...a.map(x=>x.v))*1.25)),X=t=>22+256*(1-(now-t)/600000),Y=v=>158+Math.min(1,v/hi)*118;
-    const pts=a.map(x=>[X(x.t),Y(x.v)]),l='M'+pts.map(p=>p[0].toFixed(1)+' '+p[1].toFixed(1)).join('L');
-    q('.ln').setAttribute('d',l);q('.sea').setAttribute('d',l+`L${pts[pts.length-1][0].toFixed(1)} 276L${pts[0][0].toFixed(1)} 276Z`);
+    const hi=Math.max(5,Math.ceil(Math.max(...a.map(x=>x.v))*1.25)),X=t=>24+252*(1-(now-t)/600000),Y=v=>150+Math.min(1,v/hi)*118;
+    const pts=a.map(x=>[X(x.t),Y(x.v)]),l='M'+pts.map(p=>p[0].toFixed(1)+' '+p[1].toFixed(1)).join('L'),lp=pts[pts.length-1];
+    q('.ln').setAttribute('d',l);q('.sea').setAttribute('d',l+`L${lp[0].toFixed(1)} 290L${pts[0][0].toFixed(1)} 290Z`);
     q('.sc1').textContent=hi+' m';
+    ['.ping','.p2'].forEach(s=>{const e=q(s);e.setAttribute('cx',lp[0].toFixed(1));e.setAttribute('cy',lp[1].toFixed(1))});
+    const d=q('.dot');d.setAttribute('cx',lp[0].toFixed(1));d.setAttribute('cy',lp[1].toFixed(1));d.setAttribute('opacity',1);
   };
 }
 
 /* 6. Moteur : régime, température, pression d'huile, heures */
 function mkEngine(root){
-  let tk='';for(let v=0;v<=4000;v+=500){const a=-120+240*v/4000,[x0,y0]=polar(104,a),[x1,y1]=polar(110,a),[x2,y2]=polar(92,a);
-    tk+=`<line class="tick m" x1="${x0.toFixed(1)}" y1="${y0.toFixed(1)}" x2="${x1.toFixed(1)}" y2="${y1.toFixed(1)}"/><text class="sm" x="${x2.toFixed(1)}" y="${(y2+4).toFixed(1)}" text-anchor="middle">${v/1000}</text>`}
-  root.innerHTML=SVG(' stale',`<path class="gt" d="${arcPath(122,-120,120)}"/><path d="${arcPath(122,72,120)}" fill="none" stroke="var(--bad)" stroke-width="14" stroke-linecap="round" opacity=".45"/><path class="gv" d=""/>${tk}
+  root.innerHTML=SVG(' stale',`${FACE(140)}<path class="gt" d="${arcPath(122,-120,120)}"/><path d="${arcPath(122,72,120)}" fill="none" stroke="var(--bad)" stroke-width="16" stroke-linecap="round" opacity=".38" style="filter:url(#fGlow)"/>${gaugeTicks(4000,500,v=>v/1000,250)}<path class="gv" d="" style="stroke:url(#gHeat);filter:url(#fGlow)"/><circle class="gd" r="8" fill="#fff" opacity="0" style="filter:url(#fGlow)"/>
     <text class="big rp" x="150" y="170" text-anchor="middle">--</text><text class="sm" x="150" y="196" text-anchor="middle">tr/min</text>
     <text class="mid et" x="150" y="238" text-anchor="middle"></text><text class="sm eh" x="150" y="262" text-anchor="middle"></text>`);
-  const q=s=>root.querySelector(s);
+  const q=s=>root.querySelector(s),tw=tween(f=>gaugeSet(q,f));
   return()=>{
     const ok=fresh('rpm'),v=ok?D.rpm:0;q('svg').classList.toggle('stale',!ok);
     q('.rp').textContent=ok?num(v,0):'--';
-    q('.gv').setAttribute('d',v>20?arcPath(122,-120,-120+240*Math.min(1,v/4000)):'');
+    tw.to(Math.min(1,v/4000));
     const a=[];if(fresh('engT'))a.push(num(D.engT,0)+' °C');if(fresh('oilP'))a.push(num(D.oilP,1)+' bar');
     q('.et').textContent=a.join(' · ');q('.et').style.fill=fresh('engT')&&D.engT>95?'var(--bad)':'';
     const b=[];if(fresh('engHours'))b.push(num(D.engHours,0)+' h moteur');if(fresh('fuelRate'))b.push(num(D.fuelRate,1)+' L/h');
@@ -1157,7 +1210,7 @@ function mkEngine(root){
 /* 7. Énergie & réservoirs */
 const TANKFR={fuel:'Gazole',freshWater:'Eau douce',wasteWater:'Eaux grises',blackWater:'Eaux noires',liveWell:'Vivier',lubrication:'Huile',ballast:'Ballast'};
 function mkEnergy(root){
-  root.innerHTML=SVG('',`<g class="rows"></g><text class="sm none" x="150" y="150" text-anchor="middle">en attente des batteries…</text>`);
+  root.innerHTML=SVG('',`<rect x="6" y="6" width="288" height="288" rx="26" fill="url(#gFace)" stroke="url(#gRim)" stroke-width="3"/><g class="rows"></g><text class="sm none" x="150" y="150" text-anchor="middle">en attente des batteries…</text>`);
   const q=s=>root.querySelector(s);
   return()=>{
     const now=NOW(),rows=[];
@@ -1166,11 +1219,11 @@ function mkEnergy(root){
       rows.push({n,p,c:p<20?'var(--bad)':p<50?'var(--warn)':'var(--ok)',t:[b.v!=null?b.v.toFixed(2)+' V':'',b.soc!=null?Math.round(b.soc)+' %':''].filter(Boolean).join(' · ')})});
     Object.values(D.tanks).forEach(k=>{if(now-k.t>60000)return;rows.push({n:TANKFR[k.type]||k.type,p:k.lvl,c:k.type==='fuel'||k.type==='freshWater'?(k.lvl<15?'var(--bad)':'var(--wind)'):(k.lvl>80?'var(--bad)':'var(--mut)'),t:Math.round(k.lvl)+' %'})});
     q('.none').setAttribute('opacity',rows.length?0:1);
-    const rs=rows.slice(0,7),h=Math.min(36,260/Math.max(1,rs.length));
-    q('.rows').innerHTML=rs.map((r,i)=>{const y=24+i*h;
-      return`<text class="sm" x="12" y="${y+13}" style="font-size:13px;fill:var(--tx)">${esc(String(r.n).slice(0,13))}</text>
-      <rect x="110" y="${y}" width="96" height="16" rx="8" fill="var(--line)"/><rect x="110" y="${y}" width="${Math.max(4,96*Math.max(0,Math.min(100,r.p))/100).toFixed(1)}" height="16" rx="8" fill="${r.c}"/>
-      <text class="sm" x="296" y="${y+13}" text-anchor="end" style="font-size:13px;fill:var(--tx)">${esc(r.t)}</text>`}).join('');
+    const rs=rows.slice(0,7),h=Math.min(38,252/Math.max(1,rs.length));
+    q('.rows').innerHTML=rs.map((r,i)=>{const y=26+i*h,w=Math.max(6,82*Math.max(0,Math.min(100,r.p))/100);
+      return`<text class="sm" x="20" y="${y+14}" style="font-size:13px;fill:var(--tx)">${esc(String(r.n).slice(0,12))}</text>
+      <rect x="108" y="${y}" width="82" height="18" rx="9" fill="#000" opacity=".35"/><rect x="108" y="${y}" width="${w.toFixed(1)}" height="18" rx="9" fill="${r.c}" style="filter:url(#fGlow)"/><rect x="110" y="${y+2}" width="${Math.max(2,w-4).toFixed(1)}" height="6" rx="3" fill="#fff" opacity=".3"/>
+      <text class="sm" x="282" y="${y+14}" text-anchor="end" style="font-size:13px;fill:var(--tx)">${esc(r.t)}</text>`}).join('');
   };
 }
 
@@ -1306,7 +1359,7 @@ const dm=(v,p,n,w)=>{const a=Math.abs(v),d=Math.floor(a);return String(d).padSta
 const vz=(label,val,unit,pct,col,sub)=>`<div class="lv"><small>${label}</small><b>${val}<i>${unit}</i></b>${pct!=null&&!isNaN(pct)?`<div class="mt"><u style="width:${Math.max(3,Math.min(100,pct)).toFixed(0)}%;background:${col||'var(--acc)'}"></u></div>`:''}${sub?`<small>${sub}</small>`:''}</div>`;
 const windSvg=a=>`<svg viewBox="0 0 46 46"><circle cx="23" cy="23" r="20" fill="none" stroke="var(--line)" stroke-width="2"/><path d="M23 14 L29 32 L23 28 L17 32Z" fill="var(--mut)"/><g transform="rotate(${a||0} 23 23)"><path d="M23 3 V13 M18.5 8.5 L23 13 L27.5 8.5" fill="none" stroke="var(--wind)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></g></svg>`;
 const cogSvg=a=>`<svg viewBox="0 0 46 46"><circle cx="23" cy="23" r="20" fill="none" stroke="var(--line)" stroke-width="2"/><text x="23" y="10" text-anchor="middle" style="font:700 8px system-ui;fill:var(--acc)">N</text><g transform="rotate(${a||0} 23 23)"><path d="M23 11 L29 33 L23 28 L17 33Z" fill="var(--acc)"/></g></svg>`;
-const boatSvg=r=>`<svg viewBox="0 0 46 46"><g transform="rotate(${r||0} 23 30)"><path d="M23 6 V28 M23 8 L35 27 H23" fill="none" stroke="var(--tx)" stroke-width="2" stroke-linejoin="round"/><path d="M7 28 H39 L34 38 H12Z" fill="var(--acc)"/></g><path d="M3 41 H43" stroke="var(--wind)" stroke-width="2" stroke-linecap="round"/></svg>`;
+const boatSvg=r=>`<svg viewBox="0 0 46 46"><g transform="rotate(${r||0} 23 31)" style="filter:url(#fDrop)"><path d="M22 5 V29" stroke="var(--tx)" stroke-width="1.6" stroke-linecap="round"/><path d="M24 7 Q36 16 35.5 27 H24Z" fill="url(#gSail)" stroke="var(--tx)" stroke-width=".8" stroke-linejoin="round"/><path d="M20.5 9 Q12 17 10.5 27 H20.5Z" fill="url(#gSail)" opacity=".8"/><path d="M6 28.5 H40 Q37 38 31 38.5 H14 Q9 37 6 28.5Z" fill="url(#gHull)" stroke="#fff" stroke-opacity=".5" stroke-width=".8"/></g><path d="M2 41.5 q4 -3 8 0 t8 0 t8 0 t8 0 t8 0" fill="none" stroke="var(--wind)" stroke-width="2" stroke-linecap="round" style="filter:url(#fGlow)"/></svg>`;
 function logViz(id,d,x){
   const has=v=>v!=null;
   switch(id){
@@ -1582,7 +1635,14 @@ function renderMap(){
   wpDraw(g,P);
   // position du bateau
   if(fresh('lat')){const[x,y]=P({lat:D.lat,lon:D.lon});g.save();g.translate(x,y);g.rotate((fresh('cog')?D.cog:0)*D2R);
-    g.fillStyle='#fff';g.strokeStyle='#04202f';g.lineWidth=2;g.beginPath();g.moveTo(0,-13);g.lineTo(9,10);g.lineTo(0,5);g.lineTo(-9,10);g.closePath();g.fill();g.stroke();g.restore()}
+    const cs=getComputedStyle(document.documentElement),ac=cs.getPropertyValue('--acc').trim()||'#FFB224',wd=cs.getPropertyValue('--wind').trim()||'#5CC8FF';
+    const hg=g.createRadialGradient(0,0,4,0,0,34);hg.addColorStop(0,wd+'88');hg.addColorStop(1,wd+'00');g.fillStyle=hg;g.beginPath();g.arc(0,0,34,0,6.2832);g.fill();
+    if(fresh('sog')&&D.sog>0.5){const wk=g.createLinearGradient(0,10,0,10+Math.min(46,D.sog*7));wk.addColorStop(0,'rgba(255,255,255,.55)');wk.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=wk;g.beginPath();g.moveTo(-4,11);g.lineTo(4,11);g.lineTo(11,11+Math.min(46,D.sog*7));g.lineTo(-11,11+Math.min(46,D.sog*7));g.closePath();g.fill()}
+    g.shadowColor='rgba(0,0,0,.6)';g.shadowBlur=8;g.shadowOffsetY=2;
+    const bg=g.createLinearGradient(-9,-16,9,12);bg.addColorStop(0,'#ffffff');bg.addColorStop(.5,ac);bg.addColorStop(1,'#00000099');
+    g.fillStyle=bg;g.strokeStyle='#fff';g.lineWidth=1.8;g.beginPath();g.moveTo(0,-17);g.bezierCurveTo(7,-8,9,2,7,11);g.lineTo(-7,11);g.bezierCurveTo(-9,2,-7,-8,0,-17);g.closePath();g.fill();g.stroke();
+    g.shadowBlur=0;g.shadowOffsetY=0;g.strokeStyle='rgba(0,0,0,.55)';g.lineWidth=1.6;g.beginPath();g.moveTo(0,-8);g.lineTo(0,8);g.stroke();g.fillStyle='rgba(255,255,255,.9)';g.beginPath();g.moveTo(0,-9);g.quadraticCurveTo(6,-1,4,6);g.lineTo(0,6);g.closePath();g.fill();
+    g.restore()}
   // échelle
   const mPx=156543.03*Math.cos(MV.lat*D2R)/2**z, nmPx=1852/mPx, nice=[0.01,0.02,0.05,0.1,0.2,0.5,1,2,5,10,20,50,100,200,500];
   let nm=nice[0];for(const v of nice)if(v*nmPx<=120)nm=v;
