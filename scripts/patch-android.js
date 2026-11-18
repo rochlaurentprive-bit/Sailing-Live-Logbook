@@ -27,6 +27,7 @@ const perms = [
   'android.permission.POST_NOTIFICATIONS',
   'android.permission.ACCESS_FINE_LOCATION',   // GPS du téléphone
   'android.permission.ACCESS_COARSE_LOCATION',
+  'android.permission.VIBRATE',   // retour haptique
   'android.permission.CAMERA',   // photos du carnet de bord
 ];
 const missing = perms.filter((p) => !m.includes(`"${p}"`));

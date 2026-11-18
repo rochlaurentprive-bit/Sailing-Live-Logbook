@@ -340,6 +340,7 @@ nav{bottom:calc(16px + env(safe-area-inset-bottom))!important}
     <label>YDWG-02 : adresse (Wi-Fi du boîtier) et port TCP</label>
     <div class="row"><input id="sYdHost" placeholder="192.168.4.1" style="flex:2"><input id="sYdPort" type="number" placeholder="1456" style="flex:1"></div>
     <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="sAwake" style="width:auto"> Garder l'écran allumé (Android)</label>
+    <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="sHaptic" style="width:auto"> Retour haptique (vibration légère au toucher)</label>
     <label>Vitesse de croisière du bateau (nœuds)</label><input id="sCruise" type="number" step="0.1">
     <label>Windy : clé Point Forecast (routage)</label><input id="sKPoint" type="password" autocomplete="off">
     <label>Windy : clé Map Forecast (carte)</label><input id="sKMap" type="password" autocomplete="off">
@@ -421,6 +422,7 @@ const uid=()=>NOW().toString(36)+Math.random().toString(36).slice(2,6);
 
 /* ---------- Réglages ---------- */
 const NATIVE=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
+const cfgHaptic=()=>{try{return JSON.parse(localStorage.getItem('cfg')||'{}').haptic!==false}catch(e){return true}};
 const DEF={boat:'Mon voilier',src:NATIVE?'ydwg':'demo',gpsSrc:'auto',demoSpeed:1,logMin:15,ydHost:'192.168.4.1',ydPort:1456,awake:true,host:location.hostname?location.hostname+':3000':'',startKn:1.5,startSec:30,stopKn:0.5,stopMin:5,interval:10,cruise:6,kPoint:'',kMap:''};
 let cfg={...DEF,...JSON.parse(localStorage.getItem('cfg')||'{}')};
 if(cfg.src==='sim')cfg.src='demo';
@@ -442,8 +444,27 @@ const D={bats:{},tanks:{}}, T={}; // valeurs et horodatages
 const fresh=k=>T[k]&&NOW()-T[k]<15000;
 function set(k,v){if(v==null||isNaN(v)&&typeof v==='number')return;D[k]=v;T[k]=NOW()}
 /* ---------- Source du GPS : réseau NMEA 2000 du bateau et / ou téléphone ---------- */
-const GPS={nmeaT:0,phone:null,watch:null,err:'',asked:false};
+const GPS={diag:'',nmeaT:0,phone:null,watch:null,err:'',asked:false};
 let GEO=null;
+
+/* ---------- Retour tactile : animation + vibration (réglable) ---------- */
+let HAPT=null;
+function hap(kind){
+  if(cfg.haptic===false)return;
+  try{
+    if(NATIVE){HAPT=HAPT||Capacitor.registerPlugin('Haptics');
+      if(kind==='tick'){HAPT.selectionStart&&HAPT.selectionStart();HAPT.selectionChanged&&HAPT.selectionChanged();HAPT.selectionEnd&&HAPT.selectionEnd()}
+      else HAPT.impact({style:kind==='strong'?'MEDIUM':'LIGHT'}).catch(()=>{if(navigator.vibrate)navigator.vibrate(10)});
+    }else if(navigator.vibrate)navigator.vibrate(kind==='strong'?18:9);
+  }catch(e){try{navigator.vibrate&&navigator.vibrate(10)}catch(_){}}
+}
+const PRESS_SEL='button,.b,.icon,[role=button],nav a,label.sw,summary,.chip,.tile.click,.card.click';
+document.addEventListener('pointerdown',e=>{
+  const el=e.target.closest&&e.target.closest(PRESS_SEL);if(!el||el.disabled||el.getAttribute('aria-disabled')==='true')return;
+  hap(el.classList.contains('b')&&!el.classList.contains('sec')?'strong':'light');
+  if(matchMedia('(prefers-reduced-motion:reduce)').matches||!el.animate)return;
+  try{el.animate([{transform:'scale(1)',boxShadow:'0 0 0 0 color-mix(in srgb,var(--acc) 55%,transparent)'},{transform:'scale(.94)',offset:.3},{transform:'scale(1)',boxShadow:'0 0 0 12px color-mix(in srgb,var(--acc) 0%,transparent)'}],{duration:340,easing:'ease-out'})}catch(_){}
+},{passive:true});
 function stopPhoneGps(){
   if(GPS.watch!=null){try{if(NATIVE&&GEO)GEO.clearWatch({id:GPS.watch});else navigator.geolocation.clearWatch(GPS.watch)}catch(e){}GPS.watch=null}
 }
@@ -467,10 +488,12 @@ async function startPhoneGps(force){
   try{
     if(NATIVE){
       GEO=GEO||Capacitor.registerPlugin('Geolocation');
-      let st=await GEO.checkPermissions();
-      if(st.location!=='granted'&&st.coarseLocation!=='granted')st=await GEO.requestPermissions({permissions:['location']});
+      GPS.diag='plugin natif OK';let st=await GEO.checkPermissions();GPS.diag='permission : '+st.location+' / approx. '+st.coarseLocation;updGpsPill();
+      if(st.location!=='granted'&&st.coarseLocation!=='granted')st=await GEO.requestPermissions({permissions:['location','coarseLocation']});
+      GPS.diag='permission : '+st.location+' / approx. '+st.coarseLocation;
       if(st.location!=='granted'&&st.coarseLocation!=='granted'){GPS.err='localisation refusée : autorise-la dans les réglages Android de l\'appli';updGpsPill();return}
-      GPS.watch=await GEO.watchPosition({enableHighAccuracy:true,timeout:20000,maximumAge:0},(pos,err)=>{if(err)onErr(err);else if(pos)onPhoneFix(pos)});
+      try{const q=await GEO.getCurrentPosition({enableHighAccuracy:false,timeout:15000,maximumAge:60000});if(q)onPhoneFix(q)}catch(e){GPS.diag+=' · position rapide échouée : '+(e&&e.message||e)}
+      GPS.watch=await GEO.watchPosition({enableHighAccuracy:true,timeout:30000,maximumAge:5000},(pos,err)=>{if(err)onErr(err);else if(pos)onPhoneFix(pos)});
     }else if(navigator.geolocation){
       GPS.watch=navigator.geolocation.watchPosition(onPhoneFix,onErr,{enableHighAccuracy:true,maximumAge:0,timeout:20000});
     }else GPS.err='GPS du téléphone non disponible ici';
@@ -487,6 +510,7 @@ function updGpsPill(){
   const s=gpsState(),e=$('#gpsp');e.textContent=s.t;e.className='pill '+s.c;
   const p=GPS.phone,lines=[];
   lines.push(NOW()-GPS.nmeaT<6000?'Bateau (NMEA 2000) : position reçue ✓':'Bateau (NMEA 2000) : pas de position reçue');
+  if(GPS.diag&&NATIVE)lines.push('Diagnostic : '+GPS.diag);
   lines.push(GPS.err?'Téléphone : '+GPS.err:GPS.testing&&!(p&&Date.now()-p.t<10000)?'Téléphone : demande en cours… accepte la fenêtre d\'autorisation, puis patiente quelques secondes':p&&Date.now()-p.t<10000?`Téléphone : ${p.lat.toFixed(5)}, ${p.lon.toFixed(5)} · précision ±${Math.round(p.acc)} m ✓`:cfg.gpsSrc==='nmea'?'Téléphone : GPS non utilisé':cfg.src==='demo'?'Téléphone : GPS non utilisé en mode démo':'Téléphone : en attente d\'un point GPS…');
   $('#gpsTest').innerHTML=lines.map(esc).join('<br>');
 }
@@ -981,7 +1005,7 @@ function mkAtt3D(root){
   root.innerHTML='';root.appendChild(cv);
   const wc=document.createElement('canvas');const sc=document.createElement('canvas');
   const S={roll:0,pitch:0,tr:0,tp:0,ok:false,psi:B3_VIEWS[0].psi,e:B3_VIEWS[0].e,v:0,tpsi:B3_VIEWS[0].psi,te:B3_VIEWS[0].e,dist:29,td:29,vn:B3_VIEWS[0].n,pw:null};let last=0;
-  const preset=()=>{S.v=(S.v+1)%B3_VIEWS.length;const V=B3_VIEWS[S.v];S.tpsi=V.psi;S.te=V.e;S.td=29;S.vn=V.n};
+  const preset=()=>{hap('light');S.v=(S.v+1)%B3_VIEWS.length;const V=B3_VIEWS[S.v];S.tpsi=V.psi;S.te=V.e;S.td=29;S.vn=V.n};
   const inStage=!!(root.closest&&root.closest('#dialStage'));
   if(!inStage)cv.onclick=preset;
   else{
@@ -1277,7 +1301,7 @@ function updDials(){
   const end=e=>{
     if(!s||e.pointerId!==s.id)return;const n=DS.ids.length,W=stg.clientWidth,dx=s.dx,v=dx/Math.max(1,NOW()-s.t);
     stg.classList.remove('drag');
-    if(s.on){if(dx<-W*0.2||v<-0.5)DS.idx=(DS.idx+1)%n;else if(dx>W*0.2||v>0.5)DS.idx=(DS.idx-1+n)%n;layoutStage(0)}
+    if(s.on){const i0=DS.idx;if(dx<-W*0.2||v<-0.5)DS.idx=(DS.idx+1)%n;else if(dx>W*0.2||v>0.5)DS.idx=(DS.idx-1+n)%n;if(DS.idx!==i0)hap('tick');layoutStage(0)}
     s=null;
   };
   stg.onpointerup=stg.onpointercancel=end;
@@ -1986,9 +2010,10 @@ function loadSettings(){
   $('#boat').textContent=cfg.boat;
   $('#sBoat').value=cfg.boat;$('#sSrc').value=cfg.src;$('#sGps').value=cfg.gpsSrc||'auto';$('#sHost').value=cfg.host;
   $('#sDemoSpd').value=String(cfg.demoSpeed||1);buildLogCfg();updDemoBar();
-  $('#sYdHost').value=cfg.ydHost;$('#sYdPort').value=cfg.ydPort;$('#sAwake').checked=!!cfg.awake;$('#sCruise').value=cfg.cruise;$('#sKPoint').value=cfg.kPoint;$('#sKMap').value=cfg.kMap;
+  $('#sYdHost').value=cfg.ydHost;$('#sYdPort').value=cfg.ydPort;$('#sAwake').checked=!!cfg.awake;$('#sHaptic').checked=cfg.haptic!==false;$('#sCruise').value=cfg.cruise;$('#sKPoint').value=cfg.kPoint;$('#sKMap').value=cfg.kMap;
   $('#sStartKn').value=cfg.startKn;$('#sStartSec').value=cfg.startSec;$('#sStopKn').value=cfg.stopKn;$('#sStopMin').value=cfg.stopMin;$('#sInt').value=cfg.interval;
 }
+$('#sHaptic').onchange=e=>{cfg.haptic=e.target.checked;saveCfg();if(cfg.haptic)hap('strong')};
 $('#sSave').onclick=()=>{
   cfg={...cfg,boat:$('#sBoat').value||DEF.boat,src:$('#sSrc').value,gpsSrc:$('#sGps').value,host:$('#sHost').value.trim(),
    ydHost:$('#sYdHost').value.trim()||DEF.ydHost,ydPort:+$('#sYdPort').value||DEF.ydPort,awake:$('#sAwake').checked,
