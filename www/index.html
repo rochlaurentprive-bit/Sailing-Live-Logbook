@@ -1205,7 +1205,7 @@ const tr=I18N.tr,LOC=()=>I18N.LOC();
 </div>
 <script>
 let simT=null;
-const APPV='v21',ERRLOG=[];
+const APPV='v22',ERRLOG=[];
 const logErr=m=>{ERRLOG.push(new Date().toLocaleTimeString(LOC())+' '+String(m).slice(0,220));if(ERRLOG.length>25)ERRLOG.shift()};
 window.addEventListener('error',e=>logErr((e.message||'erreur')+' @'+String(e.filename||'').split('/').pop()+':'+e.lineno));
 window.addEventListener('unhandledrejection',e=>logErr('promesse : '+((e.reason&&e.reason.message)||e.reason)));
@@ -1623,14 +1623,14 @@ const hdgNow=()=>fresh('cog')?D.cog:(fresh('hdg')?D.hdg:null);
 function mkWind(root){
   root.innerHTML=SVG(' stale',`${FACE(146)}<g class="dArcs" style="filter:url(#fGlow)"><path class="dArcS" d="${arcPath(138,25,110)}" fill="none" stroke="var(--stbd)" stroke-width="5" stroke-linecap="round" opacity=".95"/><path class="dArcP" d="${arcPath(138,-110,-25)}" fill="none" stroke="var(--port)" stroke-width="5" stroke-linecap="round" opacity=".95"/></g>
    <g class="dNoGo"></g>${BOATTOP}<g class="dRing">${staticFace()}</g><path d="M150 14 l-9 -14 h18 z" fill="var(--acc)" style="filter:url(#fDrop)"/>
-   <g class="dTw needle" opacity="0"><path d="M150 76V150" stroke="var(--tx)" stroke-width="2" stroke-dasharray="5 4" opacity=".22" fill="none"/><path d="M150 76 L141 52 L150 58 L159 52 Z" fill="none" stroke="var(--tx)" stroke-width="2.4" stroke-linejoin="round" style="filter:url(#fGlow)"/></g>
    <g class="dAw needle" opacity="0"><path d="M150 52V76" stroke="var(--wind)" stroke-width="2.4" opacity=".9" fill="none"/><path d="M150 76V150" stroke="var(--wind)" stroke-width="2.4" opacity=".2" fill="none"/><path d="M150 52 L138 24 L150 32 L162 24 Z" fill="url(#gAw)" stroke="var(--tx)" stroke-opacity=".55" stroke-width="1" style="filter:url(#fGlow)"/></g>
+   <g class="dTw needle" opacity="0"><path d="M150 52V75" stroke="var(--tx)" stroke-width="2" stroke-dasharray="5 4" opacity=".8" fill="none"/><path d="M150 75V150" stroke="var(--tx)" stroke-width="2" stroke-dasharray="5 4" opacity=".22" fill="none"/><path d="M150 52 L138 24 L150 32 L162 24 Z" fill="none" stroke="var(--tx)" stroke-width="2.4" stroke-linejoin="round" style="filter:url(#fGlow)"/></g>
    <text x="150" y="104" text-anchor="middle" class="dlab">vitesse fond</text>
    <text class="dSog dnum" x="150" y="168" text-anchor="middle">--</text>
    <text x="150" y="192" text-anchor="middle" class="dlab">nœuds</text>
    <text class="dStw" x="150" y="212" text-anchor="middle" style="font-family:var(--num);font-size:12.5px;fill:var(--tx)"></text>
    <text class="dCur" x="150" y="228" text-anchor="middle" style="font-family:var(--num);font-size:12.5px;fill:var(--wind)"></text>
-   <g class="dCornA"><text class="dAsv" x="-38" y="284" text-anchor="start" style="font-family:var(--num);font-size:24px;font-weight:600;fill:var(--tx)">--</text><text x="-38" y="300" text-anchor="start" class="dlab" style="font-size:10px">vent apparent · nds</text></g>
+   <g class="dCornA"><text class="dAsv" x="-38" y="284" text-anchor="start" style="font-family:var(--num);font-size:24px;font-weight:600;fill:var(--wind)">--</text><text x="-38" y="300" text-anchor="start" class="dlab" style="font-size:10px;fill:var(--wind)">vent apparent · nds</text></g>
    <g class="dCornT"><text class="dTsv" x="338" y="284" text-anchor="end" style="font-family:var(--num);font-size:24px;font-weight:600;fill:var(--tx)">--</text><text x="338" y="300" text-anchor="end" class="dlab" style="font-size:10px">vent vrai · nds</text></g>
    <g class="dSideA"><text class="dlab" x="-38" y="8" text-anchor="start" style="font-size:10px">apparent</text><text class="dAv" x="-38" y="31" text-anchor="start" style="font-family:var(--num);font-size:26px;font-weight:600;fill:var(--mut)">--</text><text class="dAs" x="-38" y="44" text-anchor="start" style="font-size:11px;font-weight:600">&#8203;</text></g>
    <g class="dSideT"><text class="dlab" x="338" y="8" text-anchor="end" style="font-size:10px">vrai</text><text class="dTv" x="338" y="31" text-anchor="end" style="font-family:var(--num);font-size:26px;font-weight:600;fill:var(--mut)">--</text><text class="dTs" x="338" y="44" text-anchor="end" style="font-size:11px;font-weight:600">&#8203;</text></g>`);
