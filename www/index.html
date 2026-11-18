@@ -420,6 +420,7 @@ nav{z-index:6}
 </nav>
 
 <script>
+let simT=null;
 const APPV='v10',ERRLOG=[];
 const logErr=m=>{ERRLOG.push(new Date().toLocaleTimeString('fr-FR')+' '+String(m).slice(0,220));if(ERRLOG.length>25)ERRLOG.shift()};
 window.addEventListener('error',e=>logErr((e.message||'erreur')+' @'+String(e.filename||'').split('/').pop()+':'+e.lineno));
@@ -666,7 +667,7 @@ function startYdwg(){
   }).catch(e=>setSrc('erreur : '+(e.message||e),'bad'));
 }
 
-let simT=null;
+
 /* ---------- Enregistrement des trajets ---------- */
 let cur=null, moveCnt=0, idleCnt=0, lastPt=0, lastSave=0, lastLog=0;
 function snapshot(){
