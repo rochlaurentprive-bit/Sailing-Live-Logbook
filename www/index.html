@@ -90,6 +90,7 @@ th:first-child,td:first-child{text-align:left}
 canvas#map{width:100%;height:58vh;background:var(--map);border-radius:var(--r);border:1px solid var(--line);touch-action:none;display:block}
 .bar{height:8px;background:var(--acc);border-radius:4px}
 .hide{display:none!important}
+.sg{background:var(--card);border:1px solid var(--line);border-radius:14px;margin:0 0 10px;overflow:hidden}.sg>summary{list-style:none;cursor:pointer;padding:15px 16px;font-weight:600;font-size:16px;display:flex;align-items:center;gap:8px}.sg>summary::-webkit-details-marker{display:none}.sg>summary::after{content:"›";margin-left:auto;font-size:24px;line-height:1;color:var(--mut);transition:transform .2s}.sg[open]>summary::after{transform:rotate(90deg)}.sg[open]>summary{border-bottom:1px solid var(--line)}.sgb{padding:6px 16px 16px}
 nav{transition:transform .28s ease,opacity .2s}
 body.navc nav{transform:translateX(-130%);opacity:0;pointer-events:none}
 .navhide{flex:0 0 30px;display:flex;align-items:center;justify-content:center;font:300 30px/1 system-ui;color:var(--mut);border-right:1px solid var(--line);margin-right:4px;cursor:pointer;border-radius:14px 0 0 14px}
@@ -390,8 +391,8 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
 </section>
 
 <section id="v-set">
-  <div class="card"><b>Langue</b><select id="sLang" style="margin-top:6px"></select><button class="b sec" id="setHelp" style="margin-top:10px">Ouvrir l'aide et le pense-bête</button></div>
-  <div class="card">
+  <details class="sg" data-g="lang"><summary>Langue</summary><div class="sgb"><select id="sLang" style="margin-top:6px"></select><button class="b sec" id="setHelp" style="margin-top:10px">Ouvrir l'aide et le pense-bête</button></div></details>
+  <details class="sg" data-g="boat"><summary>Bateau et connexion</summary><div class="sgb">
     <label>Nom du bateau</label><input id="sBoat">
     <label>Source de données</label>
     <select id="sSrc"><option value="demo">Mode démo (voilier fictif)</option><option value="signalk">Signal K (WebSocket)</option><option value="ydwg">YDWG-02 direct (appli Android)</option></select>
@@ -403,10 +404,16 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
     <label>YDWG-02 : adresse (Wi-Fi du boîtier) et port TCP</label>
     <div class="row"><input id="sYdHost" placeholder="192.168.4.1" style="flex:2"><input id="sYdPort" type="number" placeholder="1456" style="flex:1"></div>
     <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="sAwake" style="width:auto"> Garder l'écran allumé (Android)</label>
-    <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="sHaptic" style="width:auto"> Retour haptique (vibration légère au toucher)</label>
-    <button class="b sec" id="hapTest" style="margin-top:8px">Tester la vibration</button>
     <label>Vitesse de croisière du bateau (nœuds)</label><input id="sCruise" type="number" step="0.1">
-    <h3 style="margin:18px 0 4px;font-size:15px">Carte</h3>
+<div class="row" style="margin-top:12px"><button class="b saveb">Enregistrer</button></div>
+  </div></details>
+  <details class="sg" data-g="hap"><summary>Retour haptique (vibration)</summary><div class="sgb">
+    <label>Intensité du retour haptique</label>
+    <select id="sHapLvl"><option value="0">Désactivé</option><option value="1">Léger</option><option value="2">Moyen</option><option value="3">Fort</option></select>
+    <button class="b sec" id="hapTest" style="margin-top:8px">Tester la vibration</button>
+    <div class="mut" style="margin-top:6px">L'alerte MOB vibre toujours à pleine puissance.</div>
+  </div></details>
+  <details class="sg" data-g="map"><summary>Carte</summary><div class="sgb">
     <label>Fond de carte</label>
     <select id="mapBase"><option value="osm">OpenStreetMap</option><option value="voy">Carte claire (Carto)</option><option value="esri">Satellite (Esri)</option><option value="none">Aucun fond (hors ligne)</option></select>
     <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="mapSea" checked style="width:auto"> Balises et feux marins (OpenSeaMap)</label>
@@ -417,22 +424,25 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
     <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="lnCog" style="width:auto"> Ligne de fond (route réelle, tient compte de la dérive)</label>
     <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="lnLay" style="width:auto"> Laylines (selon la polaire et le vent vrai)</label>
     <label>Longueur des lignes (minutes de navigation)</label><input id="lnMin" type="number" min="5" step="5">
-    <h3 style="margin:18px 0 4px;font-size:15px">Routage : terres et profondeur</h3>
+  </div></details>
+  <details class="sg" data-g="route"><summary>Routage et météo (Windy)</summary><div class="sgb">
     <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="sAvoid" style="width:auto"> Éviter les terres</label>
     <label>Profondeur minimale à respecter (mètres, 0 = ignorer)</label><input id="sMinDepth" type="number" step="0.1" min="0">
     <div class="mut">Tirant d'eau + marge de sécurité. Données EMODnet (mers d'Europe, résolution selon la taille de la zone), hauteur par rapport au zéro des cartes : à vérifier sur une carte marine officielle.</div>
     <label>Windy : clé Point Forecast (routage)</label><input id="sKPoint" type="password" autocomplete="off">
     <label>Windy : clé Map Forecast (carte)</label><input id="sKMap" type="password" autocomplete="off">
     <div class="mut">Les clés restent sur cet appareil (stockage local du navigateur).</div>
+    <div class="row" style="margin-top:12px"><button class="b saveb">Enregistrer</button></div>
+  </div></details>
+  <details class="sg" data-g="auto"><summary>Enregistrement automatique</summary><div class="sgb">
     <label>Démarrage auto : vitesse mini (nœuds)</label><input id="sStartKn" type="number" step="0.1">
     <label>Démarrage auto : durée (secondes)</label><input id="sStartSec" type="number">
     <label>Arrêt auto : vitesse sous (nœuds)</label><input id="sStopKn" type="number" step="0.1">
     <label>Arrêt auto : durée (minutes)</label><input id="sStopMin" type="number">
     <label>Intervalle d'enregistrement (secondes)</label><input id="sInt" type="number">
     <div class="row" style="margin-top:12px"><button class="b" id="sSave">Enregistrer</button></div>
-  </div>
-  <div class="card" id="polCard" style="border:1.5px solid var(--acc)">
-    <div class="row" style="justify-content:space-between;align-items:center"><b>Polaire du bateau</b><span class="pill" id="polBadge"></span></div>
+  </div></details>
+  <details class="sg" data-g="pol" id="polCard" style="border-color:var(--acc)"><summary>Polaire du bateau <span class="pill" id="polBadge"></span></summary><div class="sgb">
     <div class="mut" style="margin:4px 0 10px">La polaire donne la vitesse de ton bateau selon l'angle et la force du vent. Elle sert au routage et aux laylines.</div>
     <div class="mut"><b>1 · Obtenir le fichier</b><br>Cherche la polaire de ton bateau sur <a href="https://windregatta.com" target="_blank" rel="noopener" style="color:var(--acc)">windregatta.com</a>, puis importe le fichier ici. Formats acceptés : tableau angle du vent × vitesse du vent (CSV, POL, TXT, séparateurs ; , tabulation ou espace) ou lignes « vent, angle, vitesse, angle, vitesse… ».</div>
     <div class="mut" style="margin-top:10px"><b>2 · Importer</b></div>
@@ -446,44 +456,39 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
     <div class="mut" id="polTbl" style="font-size:12px;margin:4px 0"></div>
     <div id="polPerfRow" class="hide"><label>Performance réelle par rapport à la polaire : <b id="polPerfV"></b></label><input type="range" id="polPerf" min="50" max="110" step="1"><div class="mut">Les polaires sont théoriques : 85–95 % est courant en croisière.</div></div>
     <button class="b sec hide" id="polReset" style="margin-top:10px">Polaire générique</button>
-  </div>
-  <div class="card">
-    <b>Cadrans</b>
+  </div></details>
+  <details class="sg" data-g="dials"><summary>Cadrans</summary><div class="sgb">
     <div class="mut" style="margin:4px 0 10px">Choisis les cadrans affichés dans « Direct » et leur ordre, avec des miniatures en direct.</div>
     <button class="b" id="sDials" style="width:100%;padding:14px">Configurer les cadrans</button>
     <label style="margin-top:12px">Angle mort au près : angle minimal au vent vrai (degrés, 0 = masqué)</label><input id="sNoGo" type="number" min="0" max="80" step="1" inputmode="numeric">
     <div class="mut" style="margin-top:4px">Affiché en rouge sur l'anémomètre : en dessous de cet angle par rapport au vent vrai, le bateau ne peut plus avancer. Typiquement 30 à 45° selon le bateau.</div>
-  </div>
-  <div class="card">
-    <b>Logbook</b>
+  </div></details>
+  <details class="sg" data-g="logbook"><summary>Logbook</summary><div class="sgb">
     <label>Une entrée automatique toutes les (minutes)</label><input id="sLogMin" type="number" min="1" step="1" inputmode="numeric">
     <label>Informations affichées dans chaque entrée</label><div class="chips" id="logFields"></div>
     <label>Sections de la fiche trajet</label><div class="chips" id="logSec"></div>
     <div class="mut" style="margin-top:8px">Chaque entrée enregistre toutes les données reçues du réseau NMEA 2000 ; ces choix ne changent que l'affichage.</div>
-  </div>
-  <div class="card">
-    <b>Mode démo</b>
+  </div></details>
+  <details class="sg" data-g="demo"><summary>Mode démo</summary><div class="sgb">
     <div class="mut" style="margin:4px 0 8px">Une navigation fictive mais réaliste : sortie de port au moteur, louvoyage, bon plein, vent arrière, calmes, gîte, marée, batteries… Les trajets créés sont marqués « démo ».</div>
     <label>Vitesse du temps</label><select id="sDemoSpd"><option value="1">×1 (temps réel)</option><option value="5">×5</option><option value="20">×20</option></select>
     <div class="row" style="margin-top:10px"><button class="b" id="sDemoGo">Lancer la démo</button><button class="b sec" id="sDemoClear">Supprimer les trajets de démo</button></div>
-  </div>
-  <div class="card">
-    <b>Journal des modifications (audit)</b>
+  </div></details>
+  <details class="sg" data-g="audit"><summary>Journal des modifications (audit)</summary><div class="sgb">
     <div class="mut" style="margin:4px 0 10px">Toutes les modifications du carnet (entrées modifiées ou supprimées, photos, trajets) sont enregistrées ici, avec la valeur avant et après.</div>
     <div id="auSummary" style="margin-bottom:10px"></div>
     <button class="b" id="sAudit" style="width:100%;padding:14px">Consulter le journal d'audit</button>
-  </div>
-  <div class="card">
-    <b>Sauvegarde</b>
+  </div></details>
+  <details class="sg" data-g="save"><summary>Sauvegarde</summary><div class="sgb">
     <div class="row" style="margin-top:8px">
       <button class="b sec" id="bExport">Exporter tout (JSON)</button>
       <label class="b sec" style="margin:0;color:var(--tx);display:inline-block;width:auto">Importer<input type="file" id="bImport" accept=".json" class="hide"></label>
     </div>
-  </div>
-  <div class="card"><b>Diagnostic</b><div class="mut" id="diag" style="white-space:pre-wrap;font-size:12px;margin-top:6px"></div>
+  </div></details>
+  <details class="sg" data-g="diag"><summary>Diagnostic et log</summary><div class="sgb"><div class="mut" id="diag" style="white-space:pre-wrap;font-size:12px;margin-top:6px"></div>
     <div class="mut" style="margin-top:12px">Enregistre un journal technique (erreurs, connexions, données reçues, actions) pour m'aider à diagnostiquer un problème. Les clés Windy ne sont pas incluses. Lance l'enregistrement, reproduis le problème, arrête, puis partage le fichier.</div>
     <div class="row" style="margin-top:8px;gap:8px;flex-wrap:wrap"><button class="b" id="recGo">Enregistrer le log</button><button class="b sec hide" id="recShare">Partager / exporter le log</button><button class="b sec hide" id="recCopy">Copier le log</button><button class="b sec hide" id="recClear">Effacer le log</button></div>
-    <div class="mut" id="recSt" style="margin-top:6px"></div></div>
+    <div class="mut" id="recSt" style="margin-top:6px"></div></div></details>
 </section>
 
 <div id="auditView" class="overlay hide" role="dialog" aria-label="Journal d'audit">
@@ -1068,7 +1073,19 @@ Navire engagé dans la pêche|Vissend schip|Vessel engaged in fishing|Fischendes
 Voilier|Zeilschip|Sailing vessel|Segelfahrzeug|Velero
 Navire à moteur|Motorschip|Power-driven vessel|Maschinenfahrzeug|Buque de propulsión mecánica
 ⬇ Chaque catégorie laisse la route libre à celles du dessus|⬇ Elke categorie wijkt voor die erboven|⬇ Each category keeps clear of those above|⬇ Jede Kategorie weicht denen darüber aus|⬇ Cada categoría cede el paso a las de arriba
-Lignes isobathes (courbes de profondeur EMODnet, généralisées : 50 m et plus profond)|Dieptelijnen (EMODnet-dieptecontouren, vereenvoudigd: 50 m en dieper)|Depth contour lines (EMODnet, generalised: 50 m and deeper)|Tiefenlinien (EMODnet, generalisiert: ab 50 m)|Isóbatas (curvas de profundidad EMODnet, generalizadas: 50 m y más)`;
+Lignes isobathes (courbes de profondeur EMODnet, généralisées : 50 m et plus profond)|Dieptelijnen (EMODnet-dieptecontouren, vereenvoudigd: 50 m en dieper)|Depth contour lines (EMODnet, generalised: 50 m and deeper)|Tiefenlinien (EMODnet, generalisiert: ab 50 m)|Isóbatas (curvas de profundidad EMODnet, generalizadas: 50 m y más)
+Bateau et connexion|Boot en verbinding|Boat and connection|Boot und Verbindung|Barco y conexión
+Retour haptique (vibration)|Haptische feedback (trillen)|Haptic feedback (vibration)|Haptisches Feedback (Vibration)|Respuesta háptica (vibración)
+Intensité du retour haptique|Sterkte van haptische feedback|Haptic feedback strength|Stärke des haptischen Feedbacks|Intensidad de la respuesta háptica
+Désactivé|Uit|Off|Aus|Desactivado
+Léger|Licht|Light|Leicht|Ligero
+Moyen|Gemiddeld|Medium|Mittel|Medio
+Fort|Sterk|Strong|Stark|Fuerte
+L'alerte MOB vibre toujours à pleine puissance.|De MOB-alarm trilt altijd op volle kracht.|The MOB alert always vibrates at full strength.|Der MOB-Alarm vibriert immer mit voller Stärke.|La alerta MOB siempre vibra a máxima potencia.
+Routage et météo (Windy)|Routering en weer (Windy)|Routing and weather (Windy)|Routenplanung und Wetter (Windy)|Rutas y meteorología (Windy)
+Enregistrement automatique|Automatische registratie|Automatic recording|Automatische Aufzeichnung|Registro automático
+Diagnostic et log|Diagnose en log|Diagnostics and log|Diagnose und Protokoll|Diagnóstico y registro
+Enregistrer|Opslaan|Save|Speichern|Guardar`;
   const EX=new Map(),PAT=[];
   RAW.split('\n').forEach(l=>{const a=l.split('|');if(a.length!==5)return;const fr=a[0],t=a.slice(1);
     if(/\{\d\}/.test(fr)){const parts=fr.split(/\{\d\}/).map(x=>x.replace(/[.*+?^$()|[\]\\{}]/g,'\\$&'));PAT.push([new RegExp('^'+parts.join('(.+?)')+'$'),t,fr.length])}
@@ -1172,7 +1189,7 @@ const tr=I18N.tr,LOC=()=>I18N.LOC();
 </div>
 <script>
 let simT=null;
-const APPV='v17',ERRLOG=[];
+const APPV='v18',ERRLOG=[];
 const logErr=m=>{ERRLOG.push(new Date().toLocaleTimeString(LOC())+' '+String(m).slice(0,220));if(ERRLOG.length>25)ERRLOG.shift()};
 window.addEventListener('error',e=>logErr((e.message||'erreur')+' @'+String(e.filename||'').split('/').pop()+':'+e.lineno));
 window.addEventListener('unhandledrejection',e=>logErr('promesse : '+((e.reason&&e.reason.message)||e.reason)));
@@ -1230,12 +1247,13 @@ let GEO=null;
 let HAPT=null,BLV=null;const HAP={msg:'pas encore testé'};
 function hap(kind,pattern){
   if(cfg.haptic===false&&!pattern)return;
-  const ms=kind==='strong'?50:kind==='tick'?20:30;
+  const lv=pattern?3:(cfg.hapLvl!=null?cfg.hapLvl:2);if(lv<=0&&!pattern)return;
+  const base=kind==='strong'?50:kind==='tick'?20:30,ms=Math.round(base*[0,.6,1,1.8][lv]),amp=[0,70,150,255][lv];
   const web=()=>{try{navigator.vibrate&&navigator.vibrate(pattern||ms);HAP.msg='navigator.vibrate '+ms+' ms'}catch(e){}};
   const old=()=>{try{HAPT=HAPT||plug('Haptics');return Promise.resolve(HAPT.vibrate({duration:ms})).then(()=>{HAP.msg='Haptics.vibrate '+ms+' ms : OK'}).catch(e=>{HAP.msg='Haptics.vibrate : '+(e&&e.message||e);web()})}catch(e){HAP.msg='plugin Haptics : '+(e&&e.message||e);web()}};
   try{
     if(NATIVE){BLV=BLV||plug('BoatLink');
-      Promise.resolve(BLV.vibrate(pattern?{pattern}:{duration:ms})).then(()=>{HAP.msg='BoatLink.vibrate '+(pattern?'motif':ms+' ms')+' : OK'}).catch(e=>{HAP.msg='BoatLink.vibrate : '+(e&&e.message||e);old()});
+      Promise.resolve(BLV.vibrate(pattern?{pattern}:{duration:ms,amplitude:amp})).then(()=>{HAP.msg='BoatLink.vibrate '+(pattern?'motif':ms+' ms, niveau '+lv)+' : OK'}).catch(e=>{HAP.msg='BoatLink.vibrate : '+(e&&e.message||e);old()});
     }else web();
   }catch(e){HAP.msg='vibration native : '+(e&&e.message||e);old()}
 }
@@ -1596,8 +1614,8 @@ function mkWind(root){
    <text x="150" y="192" text-anchor="middle" class="dlab">nœuds</text>
    <g class="dCornA"><text class="dAsv" x="-2" y="284" text-anchor="start" style="font-family:var(--num);font-size:24px;font-weight:600;fill:var(--tx)">--</text><text x="-2" y="300" text-anchor="start" class="dlab" style="font-size:10px">vent apparent · nds</text></g>
    <g class="dCornT"><text class="dTsv" x="302" y="284" text-anchor="end" style="font-family:var(--num);font-size:24px;font-weight:600;fill:var(--tx)">--</text><text x="302" y="300" text-anchor="end" class="dlab" style="font-size:10px">vent vrai · nds</text></g>
-   <g class="dSideA"><text class="dlab" x="92" y="232" text-anchor="middle" style="font-size:10px">apparent</text><text class="dAv" x="92" y="254" text-anchor="middle" style="font-family:var(--num);font-size:24px;font-weight:600;fill:var(--mut)">--</text><text class="dAs" x="92" y="269" text-anchor="middle" style="font-size:11px;font-weight:600">&#8203;</text></g>
-   <g class="dSideT"><text class="dlab" x="208" y="232" text-anchor="middle" style="font-size:10px">vrai</text><text class="dTv" x="208" y="254" text-anchor="middle" style="font-family:var(--num);font-size:24px;font-weight:600;fill:var(--mut)">--</text><text class="dTs" x="208" y="269" text-anchor="middle" style="font-size:11px;font-weight:600">&#8203;</text></g>`);
+   <g class="dSideA"><text class="dlab" x="-2" y="8" text-anchor="start" style="font-size:10px">apparent</text><text class="dAv" x="-2" y="31" text-anchor="start" style="font-family:var(--num);font-size:26px;font-weight:600;fill:var(--mut)">--</text><text class="dAs" x="-2" y="44" text-anchor="start" style="font-size:11px;font-weight:600">&#8203;</text></g>
+   <g class="dSideT"><text class="dlab" x="302" y="8" text-anchor="end" style="font-size:10px">vrai</text><text class="dTv" x="302" y="31" text-anchor="end" style="font-family:var(--num);font-size:26px;font-weight:600;fill:var(--mut)">--</text><text class="dTs" x="302" y="44" text-anchor="end" style="font-size:11px;font-weight:600">&#8203;</text></g>`);
   const q=s=>root.querySelector(s);let dh=0;
   return()=>{
     const h=hdgNow();
@@ -2930,13 +2948,16 @@ function loadSettings(){
   $('#boat').textContent=cfg.boat;
   $('#sBoat').value=cfg.boat;$('#sSrc').value=cfg.src;$('#sGps').value=cfg.gpsSrc||'auto';$('#sHost').value=cfg.host;
   $('#sDemoSpd').value=String(cfg.demoSpeed||1);buildLogCfg();updDemoBar();
-  $('#sNoGo').value=cfg.noGo;$('#sYdHost').value=cfg.ydHost;$('#sYdPort').value=cfg.ydPort;$('#sAwake').checked=!!cfg.awake;['lnHdg','lnCog','lnLay'].forEach(k=>$('#'+k).checked=cfg[k]!==false);$('#lnMin').value=cfg.lnMin||30;$('#map3dCb').checked=M3D;$('#sAvoid').checked=cfg.avoidLand!==false;$('#sMinDepth').value=cfg.minDepth??3;$('#sHaptic').checked=cfg.haptic!==false;$('#sCruise').value=cfg.cruise;$('#sKPoint').value=cfg.kPoint;$('#sKMap').value=cfg.kMap;
+  $('#sNoGo').value=cfg.noGo;$('#sYdHost').value=cfg.ydHost;$('#sYdPort').value=cfg.ydPort;$('#sAwake').checked=!!cfg.awake;['lnHdg','lnCog','lnLay'].forEach(k=>$('#'+k).checked=cfg[k]!==false);$('#lnMin').value=cfg.lnMin||30;$('#map3dCb').checked=M3D;$('#sAvoid').checked=cfg.avoidLand!==false;$('#sMinDepth').value=cfg.minDepth??3;$('#sHapLvl').value=String(cfg.hapLvl!=null?cfg.hapLvl:(cfg.haptic===false?0:2));$('#sCruise').value=cfg.cruise;$('#sKPoint').value=cfg.kPoint;$('#sKMap').value=cfg.kMap;
   $('#sStartKn').value=cfg.startKn;$('#sStartSec').value=cfg.startSec;$('#sStopKn').value=cfg.stopKn;$('#sStopMin').value=cfg.stopMin;$('#sInt').value=cfg.interval;
 }
 ['lnHdg','lnCog','lnLay'].forEach(k=>$('#'+k).onchange=e=>{cfg[k]=e.target.checked;saveCfg();scheduleDraw()});$('#sNoGo').onchange=e=>{cfg.noGo=Math.max(0,Math.min(80,+e.target.value||0));e.target.value=cfg.noGo;saveCfg();try{updDials()}catch(_){}};
 $('#lnMin').onchange=e=>{cfg.lnMin=Math.max(5,+e.target.value||30);saveCfg();scheduleDraw()};
-$('#hapTest').onclick=()=>{const was=cfg.haptic;cfg.haptic=true;hap('strong');cfg.haptic=was;setTimeout(()=>{alert(tr('Vibration : ')+HAP.msg)},400)};
-$('#sHaptic').onchange=e=>{cfg.haptic=e.target.checked;saveCfg();if(cfg.haptic)hap('strong')};
+{let so={};try{so=JSON.parse(localStorage.getItem('setOpen')||'{}')}catch(e){}
+  $$('#v-set details.sg').forEach(d=>{if(so[d.dataset.g])d.open=true;d.addEventListener('toggle',()=>{so[d.dataset.g]=d.open;try{localStorage.setItem('setOpen',JSON.stringify(so))}catch(e){}})});
+  $$('#v-set .saveb').forEach(b=>b.onclick=()=>$('#sSave').click())}
+$('#hapTest').onclick=()=>{const w=cfg.haptic,l=cfg.hapLvl;cfg.haptic=true;if(!cfg.hapLvl)cfg.hapLvl=2;hap('strong');cfg.haptic=w;cfg.hapLvl=l;setTimeout(()=>{alert(tr('Vibration : ')+HAP.msg)},400)};
+$('#sHapLvl').onchange=e=>{cfg.hapLvl=+e.target.value;cfg.haptic=cfg.hapLvl>0;saveCfg();if(cfg.hapLvl>0)hap('strong')};
 $('#sSave').onclick=()=>{
   cfg={...cfg,boat:$('#sBoat').value||DEF.boat,src:$('#sSrc').value,gpsSrc:$('#sGps').value,host:$('#sHost').value.trim(),
    ydHost:$('#sYdHost').value.trim()||DEF.ydHost,ydPort:+$('#sYdPort').value||DEF.ydPort,awake:$('#sAwake').checked,avoidLand:$('#sAvoid').checked,minDepth:Math.max(0,+$('#sMinDepth').value||0),

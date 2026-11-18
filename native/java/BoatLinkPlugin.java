@@ -75,7 +75,8 @@ public class BoatLinkPlugin extends Plugin {
                 for (int i = 0; i < pat.length; i++) pat[i] = arr.optLong(i, 0);
                 fx = VibrationEffect.createWaveform(pat, -1);
             } else {
-                fx = VibrationEffect.createOneShot(Math.max(1, ms), VibrationEffect.DEFAULT_AMPLITUDE);
+                int amp = call.getInt("amplitude", -1);
+                fx = VibrationEffect.createOneShot(Math.max(1, ms), (amp > 0 && v.hasAmplitudeControl()) ? Math.min(255, amp) : VibrationEffect.DEFAULT_AMPLITUDE);
             }
             AudioAttributes aa = new AudioAttributes.Builder()
                     .setUsage(AudioAttributes.USAGE_ALARM)
