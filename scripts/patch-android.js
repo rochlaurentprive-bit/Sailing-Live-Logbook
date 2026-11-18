@@ -68,3 +68,18 @@ if (fs.existsSync(resSrc)) {
   fs.writeFileSync(bg, '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <color name="ic_launcher_background">#0A1316</color>\n</resources>\n');
   console.log('icônes copiées');
 }
+
+// 4) Signature stable + versionCode croissant : permet les mises à jour par-dessus l'ancienne version
+{
+  const gp = path.join(root, 'android', 'app', 'build.gradle');
+  let g = fs.readFileSync(gp, 'utf8');
+  const ks = path.join(root, 'signing', 'carnet.keystore').replace(/\\/g, '/');
+  const run = parseInt(process.env.GITHUB_RUN_NUMBER || '1', 10);
+  g = g.replace(/versionCode\s+\d+/, `versionCode ${run}`).replace(/versionName\s+"[^"]*"/, `versionName "1.${run}"`);
+  if (!g.includes('signingConfigs')) {
+    g = g.replace(/android\s*\{/, `android {\n    signingConfigs {\n        carnet {\n            storeFile file("${ks}")\n            storePassword "carnet2026"\n            keyAlias "carnet"\n            keyPassword "carnet2026"\n        }\n    }`);
+    g = g.replace(/buildTypes\s*\{\s*\n?\s*debug\s*\{|buildTypes\s*\{/, (s) => s + `\n        debug { signingConfig signingConfigs.carnet }`);
+  }
+  fs.writeFileSync(gp, g);
+  console.log('signature stable + versionCode', run);
+}
