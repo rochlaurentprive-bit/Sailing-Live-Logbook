@@ -25,11 +25,17 @@ const perms = [
   'android.permission.FOREGROUND_SERVICE',
   'android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE',
   'android.permission.POST_NOTIFICATIONS',
+  'android.permission.ACCESS_FINE_LOCATION',   // GPS du téléphone
+  'android.permission.ACCESS_COARSE_LOCATION',
+  'android.permission.CAMERA',   // photos du carnet de bord
 ];
 const missing = perms.filter((p) => !m.includes(`"${p}"`));
 if (missing.length) {
   const block = missing.map((p) => `    <uses-permission android:name="${p}" />`).join('\n') + '\n';
   m = m.replace(/(\s*)<\/manifest>/, `\n${block}$1</manifest>`);
+}
+if (!m.includes('android.hardware.camera')) {
+  m = m.replace(/(\s*)<\/manifest>/, '\n    <uses-feature android:name="android.hardware.camera" android:required="false" />$1</manifest>');
 }
 if (!m.includes('usesCleartextTraffic')) {
   m = m.replace('<application', '<application android:usesCleartextTraffic="true"');

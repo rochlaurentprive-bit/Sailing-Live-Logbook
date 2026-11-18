@@ -92,6 +92,100 @@ canvas#map{width:100%;height:58vh;background:var(--map);border-radius:var(--r);b
 .hide{display:none!important}
 .warn{border-left:4px solid var(--warn)}
 #windy{height:60vh;border-radius:var(--r);overflow:hidden;margin-top:8px}
+/* --- v3 : marges, cadrans, config, route, logbook --- */
+:root{--sat:0px;--sab:0px}
+body.native{--sat:max(env(safe-area-inset-top),26px)}
+header{padding:calc(var(--sat) + 12px) max(env(safe-area-inset-right),20px) 10px max(env(safe-area-inset-left),20px)!important;flex-wrap:wrap;gap:8px 12px!important}
+.hpills{flex-basis:100%;display:flex;gap:8px;order:5}
+.icon{width:46px!important;height:46px!important}
+.icon svg{width:22px!important;height:22px!important}
+section{padding-left:max(env(safe-area-inset-left),16px)!important;padding-right:max(env(safe-area-inset-right),16px)!important}
+body{padding-bottom:124px!important}
+nav{bottom:calc(16px + env(safe-area-inset-bottom))!important}
+.stage{position:relative;width:100%;max-width:420px;margin:0 auto;aspect-ratio:1/1;overflow:hidden;touch-action:pan-y;user-select:none;-webkit-user-select:none}
+.stage .dc{position:absolute;inset:0;visibility:hidden;transition:transform .32s cubic-bezier(.2,.8,.2,1),visibility 0s linear .32s}
+.stage .dc.vis{visibility:visible;transition:transform .32s cubic-bezier(.2,.8,.2,1)}
+.stage.drag .dc{transition:none!important}
+.dots{display:flex;justify-content:center;gap:2px;margin-top:2px}
+.dots button{background:none;border:0;padding:12px 6px;cursor:pointer}
+.dots button i{display:block;width:9px;height:9px;border-radius:50%;background:var(--line)}
+.dots button.on i{background:var(--acc);width:22px;border-radius:5px}
+.dname{text-align:center;font:600 15px var(--num);color:var(--tx);margin-bottom:2px}
+.dial .gt{fill:none;stroke:var(--line);stroke-width:14;stroke-linecap:round}
+.dial .gv{fill:none;stroke:var(--acc);stroke-width:14;stroke-linecap:round}
+.dial .big{font-size:64px;font-weight:600;fill:var(--tx)}
+.dial .mid{font-size:20px;fill:var(--tx);font-weight:600}
+.dial .sm{font-size:14px;fill:var(--mut);font-family:system-ui}
+.dial.stale .big{fill:var(--line)}
+.overlay{position:fixed;inset:0;background:var(--bg);z-index:30;overflow-y:auto;padding:calc(var(--sat) + 14px) max(env(safe-area-inset-right),20px) 40px max(env(safe-area-inset-left),20px)}
+.ovh{display:flex;align-items:center;gap:12px;margin-bottom:6px}.ovh b{font:600 22px var(--num);flex:1}
+.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px}
+.dgi{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;position:relative;touch-action:pan-y}
+.dgi.off .dgb{opacity:.35}
+.dgi.drag{z-index:5;box-shadow:0 14px 34px rgba(0,0,0,.55);border-color:var(--acc);transform-origin:center}
+.dgh{display:flex;align-items:center;gap:6px;padding:0 10px 0 0}
+.dgh b{flex:1;font:600 14px var(--num);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.grip{touch-action:none;cursor:grab;padding:14px 12px;color:var(--mut);display:grid;place-items:center}
+.grip svg{width:20px;height:20px;fill:currentColor}
+.dgb svg{width:100%;display:block}
+.dgb{padding:0 6px 6px;pointer-events:none}
+.sw{position:relative;width:46px;height:28px;margin:0;flex:none}
+.sw input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;padding:0}
+.sw span{position:absolute;inset:0;border-radius:14px;background:var(--line);transition:background .2s}
+.sw span::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--tx);transition:transform .2s}
+.sw input:checked+span{background:var(--acc)}.sw input:checked+span::after{transform:translateX(18px);background:var(--on-acc)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{margin:0!important;display:inline-flex!important}
+.chip input{position:absolute;opacity:0;width:0;height:0}
+.chip span{padding:10px 14px;border-radius:99px;border:1px solid var(--line);color:var(--mut);font-size:14px;cursor:pointer}
+.chip input:checked+span{background:var(--acc);color:var(--on-acc);border-color:var(--acc);font-weight:600}
+.chip input:focus-visible+span{outline:2px solid var(--acc);outline-offset:2px}
+#demoBar .b{padding:8px 12px;min-width:48px}#demoBar .b.on{background:var(--warn);color:var(--on-acc);border-color:var(--warn)}
+/* route sur la carte */
+.sheet{position:absolute;left:8px;right:8px;background:var(--hdr);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid var(--line);border-radius:16px;padding:10px;z-index:4}
+.sheet .t{font-size:13px;color:var(--mut);margin:0 4px 8px}
+.sheet .row{flex-wrap:nowrap}.sheet .row .b{flex:1;padding:12px 6px;font-size:14px}
+.wpr{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--line)}
+.wpr .bub{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font:700 14px var(--num);color:#fff;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.3)}
+.wpr .tx{flex:1;min-width:0;font:600 15px var(--num)}.wpr .tx small{display:block;font:400 12px system-ui;color:var(--mut)}
+.wpr button{width:44px;height:44px;border-radius:50%;border:0;background:transparent;color:var(--mut);font-size:20px;cursor:pointer}
+#wpToggle.on{background:var(--bad);color:#fff}
+.phs{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.ph{width:76px;height:76px;border-radius:12px;object-fit:cover;border:1px solid var(--line);cursor:pointer;display:block}
+.phw{position:relative}.phw button{position:absolute;top:-8px;right:-8px;width:30px;height:30px;border-radius:50%;border:2px solid var(--card);background:var(--bad);color:#fff;font-size:15px;line-height:1;padding:0}
+/* logbook */
+.lb-h{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:baseline;margin:2px 0 10px}
+.lb-h .big{font:600 44px/1 var(--num)}.lb-h small{color:var(--mut);font-size:13px;margin-left:4px}
+.rings{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:8px 0}
+.rg{text-align:center}.rg .r{--p:0;width:78px;height:78px;margin:0 auto;border-radius:50%;background:conic-gradient(var(--c,var(--acc)) calc(var(--p)*1%),var(--line) 0);display:grid;place-items:center}
+.rg .r b{width:62px;height:62px;border-radius:50%;background:var(--card);display:grid;place-items:center;font:600 18px var(--num)}
+.rg small{display:block;color:var(--mut);font-size:12px;margin-top:4px}
+.tl{position:relative;margin-left:14px;padding-left:20px;border-left:2px solid var(--line)}
+.le{position:relative;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;margin-bottom:12px}
+.le::before{content:"";position:absolute;left:-30px;top:16px;width:14px;height:14px;border-radius:50%;background:var(--acc);border:3px solid var(--bg)}
+.le.k-start::before{background:var(--ok)}.le.k-end::before{background:var(--bad)}.le.k-manual::before{background:var(--wind)}
+.le.hl{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc)}
+.leh{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.leh .tm{font:600 22px var(--num)}.leh .kd{font-size:12px;color:var(--mut);flex:1}
+.leh button{width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--tx);font-size:18px;cursor:pointer}
+.lvg{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px}
+.lv{background:var(--surf2);border-radius:12px;padding:8px 10px;min-width:0}
+.lv small{display:block;color:var(--mut);font-size:11px}
+.lv b{display:block;font:600 24px/1.1 var(--num);white-space:nowrap}
+.lv b i{font:400 12px system-ui;font-style:normal;color:var(--mut);margin-left:3px}
+.lv .mt{height:5px;border-radius:3px;background:var(--line);margin-top:6px;overflow:hidden}.lv .mt u{display:block;height:100%;border-radius:3px}
+.lv.w2{grid-column:span 2}
+.lv svg{width:46px;height:46px;float:right;margin:-2px -4px 0 0}
+.lv .pos{font:600 14px/1.3 var(--num)}
+.lnote{margin-top:8px;padding:8px 10px;border-left:3px solid var(--acc);background:var(--surf2);border-radius:0 10px 10px 0;font-size:14px}
+.chart text{font:11px system-ui;fill:var(--mut)}
+.tcard{padding:0;overflow:hidden}.tcard .in{padding:12px 14px}
+.tcard svg.mm{display:block;width:100%;height:92px;background:var(--surf2)}
+.fab{position:fixed;right:max(env(safe-area-inset-right),18px);bottom:calc(96px + env(safe-area-inset-bottom));width:56px;height:56px;border-radius:50%;border:0;background:var(--acc);color:var(--on-acc);font-size:28px;z-index:6;box-shadow:0 6px 18px rgba(0,0,0,.45)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:40;display:flex;align-items:flex-end;justify-content:center}
+.modal>div{background:var(--card);border-radius:20px 20px 0 0;border:1px solid var(--line);width:min(560px,100%);max-height:90vh;overflow:auto;padding:16px max(env(safe-area-inset-right),20px) calc(18px + env(safe-area-inset-bottom)) max(env(safe-area-inset-left),20px)}
+.ed2{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media print{body{background:#fff;color:#000}header,nav,.noprint,button{display:none!important}.card{border:1px solid #999;background:#fff}.mut{color:#444}section{display:none!important}section#v-trips{display:block!important}}
 </style>
@@ -99,27 +193,22 @@ canvas#map{width:100%;height:58vh;background:var(--map);border-radius:var(--r);b
 <body>
 <header>
   <h1><span id="boat">Carnet de bord</span><small>Carnet de bord</small></h1>
-  <span class="pill" id="src">hors ligne</span>
-  <span class="pill" id="recp">repos</span>
   <button class="icon" id="theme" aria-label="Changer le thème (jour, nuit, veille rouge)" title="Jour / Nuit / Veille rouge"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 4v16" /><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg></button>
   <button class="icon" id="gear" aria-label="Réglages"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg></button>
+  <div class="hpills"><span class="pill" id="src">hors ligne</span><span class="pill" id="recp">repos</span><span class="pill" id="gpsp">GPS --</span></div>
 </header>
 
 <section id="v-live" class="on">
   <div class="live">
     <div class="dialbox">
-      <svg id="dial" class="dial stale" viewBox="0 0 300 300" role="img" aria-label="Cadran : cap, vitesse fond et vent">
-        <g id="dArcs"></g>
-        <g id="dRing" class="ring"></g>
-        <path d="M150 13 l-8 -13 h16 z" fill="var(--acc)"/>
-        <g id="dTw" class="needle" opacity="0"><path d="M150 72 L143 56 L157 56 Z" fill="none" stroke="var(--tx)" stroke-width="2" stroke-linejoin="round"/></g>
-        <g id="dAw" class="needle" opacity="0"><path d="M150 54 L141 28 L159 28 Z" fill="var(--wind)"/></g>
-        <text x="150" y="104" text-anchor="middle" class="dlab">vitesse fond</text>
-        <text id="dSog" x="150" y="168" text-anchor="middle" class="dnum">--</text>
-        <text x="150" y="192" text-anchor="middle" class="dlab">nœuds</text>
-        <text id="dCog" x="150" y="222" text-anchor="middle" class="dlab" style="font-family:var(--num);font-size:20px;fill:var(--tx)">cap --</text>
-      </svg>
-      <div class="legend"><span><i style="background:var(--wind);clip-path:polygon(50% 100%,0 0,100% 0)"></i>vent apparent</span><span><i style="border:2px solid var(--tx);clip-path:polygon(50% 100%,0 0,100% 0)"></i>vent vrai</span></div>
+      <div id="demoBar" class="card hide" style="padding:8px 12px;border-color:var(--warn)">
+        <div class="row" style="flex-wrap:nowrap;gap:6px"><b style="color:var(--warn);flex:1;font-size:14px">DÉMO · données fictives</b>
+          <button class="b sec" data-ds="1">×1</button><button class="b sec" data-ds="5">×5</button><button class="b sec" data-ds="20">×20</button></div>
+      </div>
+      <div class="stage" id="dialStage" aria-label="Cadrans : glisser à gauche ou à droite pour changer"></div>
+      <div class="dots" id="dialDots"></div>
+      <div class="dname" id="dialName"></div>
+      <div class="legend" id="dialLegend"></div>
       <button class="recbtn" id="btnRec">Démarrer un trajet</button>
       <div id="recInfo"></div>
     </div>
@@ -134,7 +223,8 @@ canvas#map{width:100%;height:58vh;background:var(--map);border-radius:var(--r);b
 
 <section id="v-map">
   <div class="row" style="margin-bottom:8px">
-    <select id="mapSel" style="flex:1"></select>
+    <select id="mapSel" style="flex:1;min-width:0"></select>
+    <button class="b" id="wpToggle" style="padding:12px 14px">📍 Tracer une route</button>
   </div>
   <div class="row" style="margin-bottom:8px">
     <select id="mapBase" style="flex:1"><option value="osm">Fond : OpenStreetMap</option><option value="voy">Fond : carte claire (Carto)</option><option value="esri">Fond : satellite (Esri)</option><option value="none">Aucun fond (hors ligne)</option></select>
@@ -143,9 +233,18 @@ canvas#map{width:100%;height:58vh;background:var(--map);border-radius:var(--r);b
   <div style="position:relative">
     <canvas id="map"></canvas>
     <canvas id="mapFx" style="position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;border-radius:12px"></canvas>
+    <div id="wpSheet" class="sheet hide"></div>
     <div style="position:absolute;right:8px;top:8px;display:flex;flex-direction:column;gap:6px">
       <button class="b sec" id="mZin" style="width:40px;padding:6px">+</button><button class="b sec" id="mZout" style="width:40px;padding:6px">−</button><button class="b sec" id="mFit" style="width:40px;padding:6px" title="Recentrer">⌖</button>
     </div>
+  </div>
+  <div class="card hide" id="wpPanel" style="margin-top:8px">
+    <div class="row" style="justify-content:space-between"><b>Ma route</b><span class="mut" id="wpTot"></span></div>
+    <div class="mut" id="wpHint" style="margin:4px 0 6px"></div>
+    <div id="wpList"></div>
+    <div class="row" style="margin-top:8px"><button class="b sec" id="wpUndo">↶ Annuler</button><button class="b sec" id="wpClear">Tout effacer</button><button class="b sec" id="wpOpts">Départ, modèles…</button></div>
+    <button class="b" id="wpGo" style="width:100%;margin-top:10px;padding:16px;font-size:17px">Lancer le routage</button>
+    <div class="mut" id="wpStat" style="margin-top:6px"></div>
   </div>
   <div class="card" style="margin-top:8px">
     <label style="display:flex;gap:8px;align-items:center;margin:0 0 10px;color:var(--tx);font-size:14px"><input type="checkbox" id="fxZone" style="width:auto"> Météo de la zone affichée (sans routage)</label>
@@ -160,8 +259,18 @@ canvas#map{width:100%;height:58vh;background:var(--map);border-radius:var(--r);b
 
 <section id="v-route">
   <div class="card warn mut">⚠️ Aide à la décision uniquement. Le routage ne connaît ni la terre, ni les hauts-fonds, ni les dangers : vérifie toujours la route sur la carte et ajoute des points « Via » pour contourner les côtes.</div>
+  <div class="card" id="polCard">
+    <b>Polaire du bateau</b>
+    <div class="mut" id="polInfo" style="margin:4px 0"></div>
+    <div id="polSvg"></div>
+    <div id="polPerfRow" class="hide"><label>Performance réelle par rapport à la polaire : <b id="polPerfV"></b></label><input type="range" id="polPerf" min="50" max="110" step="1"><div class="mut">Les polaires sont théoriques : 85–95 % est courant en croisière.</div></div>
+    <div class="row" style="margin-top:10px"><label class="b" style="margin:0;color:var(--on-acc);display:inline-block;width:auto;cursor:pointer">Importer une polaire<input type="file" id="polFile" accept=".csv,.pol,.txt,.tsv,text/*" class="hide"></label><button class="b sec hide" id="polReset">Polaire générique</button></div>
+    <div class="mut" id="polMsg" style="margin-top:6px"></div>
+    <div class="mut" style="margin-top:8px">Cherche la polaire de ton bateau sur <a href="https://windregatta.com" target="_blank" rel="noopener" style="color:var(--acc)">windregatta.com</a>, puis importe le fichier ici. Formats acceptés : tableau angle du vent × vitesse du vent (CSV, POL, TXT, séparateurs ; , tabulation ou espace) ou lignes « vent, angle, vitesse, angle, vitesse… ».</div>
+  </div>
   <div class="card">
-    <label style="margin-top:0">Départ (lat, lon en degrés décimaux)</label>
+    <button class="b" id="rRoutePick" style="width:100%;padding:14px">📍 Placer les points sur la carte</button>
+    <label>Départ (lat, lon en degrés décimaux)</label>
     <div class="row"><input id="rA" placeholder="47.52, -3.05" style="flex:1"><button class="b sec" id="rHere">Ma position</button></div>
     <label>Arrivée</label><input id="rB" placeholder="46.15, -1.17">
     <label>Points « Via » (un par ligne, facultatif)</label><textarea id="rV" rows="2"></textarea>
@@ -210,7 +319,11 @@ canvas#map{width:100%;height:58vh;background:var(--map);border-radius:var(--r);b
   <div class="card">
     <label>Nom du bateau</label><input id="sBoat">
     <label>Source de données</label>
-    <select id="sSrc"><option value="sim">Simulateur (test)</option><option value="signalk">Signal K (WebSocket)</option><option value="ydwg">YDWG-02 direct (appli Android)</option></select>
+    <select id="sSrc"><option value="demo">Mode démo (voilier fictif)</option><option value="signalk">Signal K (WebSocket)</option><option value="ydwg">YDWG-02 direct (appli Android)</option></select>
+    <label>Source du GPS (position, vitesse et cap fond)</label>
+    <select id="sGps"><option value="auto">Automatique (bateau, sinon téléphone)</option><option value="nmea">GPS du bateau uniquement (NMEA 2000)</option><option value="phone">GPS du téléphone uniquement</option></select>
+    <div class="mut" id="gpsTest" style="margin:6px 0"></div>
+    <button class="b sec" id="gpsAsk">Autoriser / tester le GPS du téléphone</button>
     <label>Adresse Signal K (hôte:port)</label><input id="sHost" placeholder="192.168.1.50:3000">
     <label>YDWG-02 : adresse (Wi-Fi du boîtier) et port TCP</label>
     <div class="row"><input id="sYdHost" placeholder="192.168.4.1" style="flex:2"><input id="sYdPort" type="number" placeholder="1456" style="flex:1"></div>
@@ -227,6 +340,30 @@ canvas#map{width:100%;height:58vh;background:var(--map);border-radius:var(--r);b
     <div class="row" style="margin-top:12px"><button class="b" id="sSave">Enregistrer</button></div>
   </div>
   <div class="card">
+    <b>Cadrans</b>
+    <div class="mut" style="margin:4px 0 10px">Choisis les cadrans affichés dans « Direct » et leur ordre, avec des miniatures en direct.</div>
+    <button class="b" id="sDials" style="width:100%;padding:14px">Configurer les cadrans</button>
+  </div>
+  <div class="card">
+    <b>Logbook</b>
+    <label>Une entrée automatique toutes les (minutes)</label><input id="sLogMin" type="number" min="1" step="1" inputmode="numeric">
+    <label>Informations affichées dans chaque entrée</label><div class="chips" id="logFields"></div>
+    <label>Sections de la fiche trajet</label><div class="chips" id="logSec"></div>
+    <div class="mut" style="margin-top:8px">Chaque entrée enregistre toutes les données reçues du réseau NMEA 2000 ; ces choix ne changent que l'affichage.</div>
+  </div>
+  <div class="card">
+    <b>Mode démo</b>
+    <div class="mut" style="margin:4px 0 8px">Une navigation fictive mais réaliste : sortie de port au moteur, louvoyage, bon plein, vent arrière, calmes, gîte, marée, batteries… Les trajets créés sont marqués « démo ».</div>
+    <label>Vitesse du temps</label><select id="sDemoSpd"><option value="1">×1 (temps réel)</option><option value="5">×5</option><option value="20">×20</option></select>
+    <div class="row" style="margin-top:10px"><button class="b" id="sDemoGo">Lancer la démo</button><button class="b sec" id="sDemoClear">Supprimer les trajets de démo</button></div>
+  </div>
+  <div class="card">
+    <b>Journal des modifications (audit)</b>
+    <div class="mut" style="margin:4px 0 10px">Toutes les modifications du carnet (entrées modifiées ou supprimées, photos, trajets) sont enregistrées ici, avec la valeur avant et après.</div>
+    <div id="auSummary" style="margin-bottom:10px"></div>
+    <button class="b" id="sAudit" style="width:100%;padding:14px">Consulter le journal d'audit</button>
+  </div>
+  <div class="card">
     <b>Sauvegarde</b>
     <div class="row" style="margin-top:8px">
       <button class="b sec" id="bExport">Exporter tout (JSON)</button>
@@ -235,9 +372,24 @@ canvas#map{width:100%;height:58vh;background:var(--map);border-radius:var(--r);b
   </div>
 </section>
 
+<div id="auditView" class="overlay hide" role="dialog" aria-label="Journal d'audit">
+  <div class="ovh"><b>Journal d'audit</b><button class="b" id="auClose" style="padding:12px 18px">Fermer</button></div>
+  <div class="mut" id="auInfo"></div>
+  <div class="row" style="margin:10px 0"><select id="auTrip" style="flex:1;min-width:0"></select><select id="auAct" style="flex:1;min-width:0"><option value="">Toutes les actions</option><option value="entry_edit">Entrées modifiées</option><option value="entry_create">Entrées créées</option><option value="entry_delete">Entrées supprimées</option><option value="photo_add">Photos ajoutées</option><option value="photo_del">Photos supprimées</option><option value="trip_edit">Trajets modifiés</option><option value="trip_delete">Trajets supprimés</option></select></div>
+  <div class="row"><button class="b sec" id="auVerify">Vérifier l'intégrité</button><button class="b sec" id="auCsv">Exporter en CSV</button></div>
+  <div id="auVerdict" style="margin:8px 0"></div>
+  <div id="auList"></div>
+</div>
+
+<div id="dialCfg" class="overlay hide" role="dialog" aria-label="Configurer les cadrans">
+  <div class="ovh"><b>Cadrans</b><button class="b" id="dcDone" style="padding:12px 18px">Terminer</button></div>
+  <div class="mut">Maintiens la poignée ⠿ d'un cadran et fais-la glisser pour changer l'ordre (haut, bas, gauche, droite). L'interrupteur affiche ou masque le cadran dans « Direct ». Les miniatures sont en direct.</div>
+  <div class="dgrid" id="dGrid"></div>
+</div>
+
 <nav aria-label="Navigation">
   <button data-v="live" class="on"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 12l3.5-5"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg>Direct</button>
-  <button data-v="trips"><svg viewBox="0 0 24 24"><circle cx="5.5" cy="18.5" r="1.8"/><circle cx="18.5" cy="5.5" r="1.8"/><path d="M7 17.5c8 0 1-11 10-11"/></svg>Trajets</button>
+  <button data-v="trips"><svg viewBox="0 0 24 24"><circle cx="5.5" cy="18.5" r="1.8"/><circle cx="18.5" cy="5.5" r="1.8"/><path d="M7 17.5c8 0 1-11 10-11"/></svg>Logbook</button>
   <button data-v="map"><svg viewBox="0 0 24 24"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg>Carte</button>
   <button data-v="route"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>Routage</button>
   <button data-v="notes"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M9 12h7M9 16h5"/></svg>Notes</button>
@@ -246,21 +398,26 @@ canvas#map{width:100%;height:58vh;background:var(--map);border-radius:var(--r);b
 
 <script>
 'use strict';
+const CLK={base:Date.now(),v:Date.now(),k:1};   // horloge virtuelle : en démo accélérée, le temps de l'appli s'écoule ×N
+const NOW=()=>CLK.v+(Date.now()-CLK.base)*CLK.k;
+function setClock(k,reset){const n=reset?Date.now():NOW();CLK.v=n;CLK.base=Date.now();CLK.k=k}
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const MS2KN=1.943844, R2D=180/Math.PI, D2R=Math.PI/180;
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const num=(v,d=1)=>(v==null||isNaN(v))?'--':Number(v).toFixed(d);
-const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const uid=()=>NOW().toString(36)+Math.random().toString(36).slice(2,6);
 
 /* ---------- Réglages ---------- */
 const NATIVE=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
-const DEF={boat:'Mon voilier',src:NATIVE?'ydwg':'sim',ydHost:'192.168.4.1',ydPort:1456,awake:true,host:location.hostname?location.hostname+':3000':'',startKn:1.5,startSec:30,stopKn:0.5,stopMin:5,interval:10,cruise:6,kPoint:'',kMap:''};
+const DEF={boat:'Mon voilier',src:NATIVE?'ydwg':'demo',gpsSrc:'auto',demoSpeed:1,logMin:15,ydHost:'192.168.4.1',ydPort:1456,awake:true,host:location.hostname?location.hostname+':3000':'',startKn:1.5,startSec:30,stopKn:0.5,stopMin:5,interval:10,cruise:6,kPoint:'',kMap:''};
 let cfg={...DEF,...JSON.parse(localStorage.getItem('cfg')||'{}')};
+if(cfg.src==='sim')cfg.src='demo';
+if(NATIVE)document.body.classList.add('native');
 
 /* ---------- Stockage IndexedDB ---------- */
 const db={h:null,
-  open(){return new Promise((ok,ko)=>{const r=indexedDB.open('carnet',1);
-    r.onupgradeneeded=()=>{r.result.createObjectStore('trips',{keyPath:'id'});r.result.createObjectStore('notes',{keyPath:'id'})};
+  open(){return new Promise((ok,ko)=>{const r=indexedDB.open('carnet',2);
+    r.onupgradeneeded=()=>{const d=r.result;['trips','notes','photos','audit'].forEach(n=>{if(!d.objectStoreNames.contains(n))d.createObjectStore(n,{keyPath:'id'})})};
     r.onsuccess=()=>{this.h=r.result;ok()};r.onerror=()=>ko(r.error)})},
   st(s,m){return this.h.transaction(s,m||'readonly').objectStore(s)},
   req(q){return new Promise((ok,ko)=>{q.onsuccess=()=>ok(q.result);q.onerror=()=>ko(q.error)})},
@@ -269,9 +426,61 @@ const db={h:null,
   del(s,id){return this.req(this.st(s,'readwrite').delete(id))}};
 
 /* ---------- Données instantanées ---------- */
-const D={bats:{}}, T={}; // valeurs et horodatages
-const fresh=k=>T[k]&&Date.now()-T[k]<15000;
-function set(k,v){if(v==null||isNaN(v)&&typeof v==='number')return;D[k]=v;T[k]=Date.now()}
+const D={bats:{},tanks:{}}, T={}; // valeurs et horodatages
+const fresh=k=>T[k]&&NOW()-T[k]<15000;
+function set(k,v){if(v==null||isNaN(v)&&typeof v==='number')return;D[k]=v;T[k]=NOW()}
+/* ---------- Source du GPS : réseau NMEA 2000 du bateau et / ou téléphone ---------- */
+const GPS={nmeaT:0,phone:null,watch:null,err:'',asked:false};
+let GEO=null;
+function stopPhoneGps(){
+  if(GPS.watch!=null){try{if(NATIVE&&GEO)GEO.clearWatch({id:GPS.watch});else navigator.geolocation.clearWatch(GPS.watch)}catch(e){}GPS.watch=null}
+}
+function onPhoneFix(pos){
+  const c=pos.coords,prev=GPS.phone;
+  GPS.phone={lat:c.latitude,lon:c.longitude,acc:c.accuracy,t:Date.now()};GPS.err='';
+  const useIt=(cfg.gpsSrc==='phone'||(cfg.gpsSrc==='auto'&&NOW()-GPS.nmeaT>6000))&&!(c.accuracy>150);
+  if(useIt){
+    set('lat',c.latitude);set('lon',c.longitude);
+    let v=c.speed;if((v==null||isNaN(v))&&prev){const dt=(Date.now()-prev.t)/1000;if(dt>0.5)v=hav(prev,GPS.phone)*1852/dt}
+    if(v!=null&&!isNaN(v)&&v>=0)set('sog',v*MS2KN);
+    if(c.heading!=null&&!isNaN(c.heading)&&(v||0)>0.7)set('cog',(c.heading+360)%360);
+    onBoatData();
+  }
+  updGpsPill();
+}
+async function startPhoneGps(){
+  stopPhoneGps();GPS.err='';
+  if(cfg.gpsSrc==='nmea'||cfg.src==='demo'){updGpsPill();return}
+  const onErr=e=>{GPS.err=(e&&(e.message||e.code))?String(e.message||e.code):'erreur';updGpsPill()};
+  try{
+    if(NATIVE){
+      GEO=GEO||Capacitor.registerPlugin('Geolocation');
+      let st=await GEO.checkPermissions();
+      if(st.location!=='granted'&&st.coarseLocation!=='granted')st=await GEO.requestPermissions({permissions:['location']});
+      if(st.location!=='granted'&&st.coarseLocation!=='granted'){GPS.err='localisation refusée : autorise-la dans les réglages Android de l\'appli';updGpsPill();return}
+      GPS.watch=await GEO.watchPosition({enableHighAccuracy:true,timeout:20000,maximumAge:0},(pos,err)=>{if(err)onErr(err);else if(pos)onPhoneFix(pos)});
+    }else if(navigator.geolocation){
+      GPS.watch=navigator.geolocation.watchPosition(onPhoneFix,onErr,{enableHighAccuracy:true,maximumAge:0,timeout:20000});
+    }else GPS.err='GPS du téléphone non disponible ici';
+  }catch(e){onErr(e)}
+  updGpsPill();
+}
+function gpsState(){
+  const nm=NOW()-GPS.nmeaT<6000,ph=GPS.phone&&Date.now()-GPS.phone.t<10000,a=cfg.gpsSrc||'auto';
+  if(a==='nmea')return nm?{t:'GPS bateau',c:'ok'}:{t:'GPS bateau : aucun signal',c:'bad'};
+  if(a==='phone')return ph?{t:`GPS téléphone ±${Math.round(GPS.phone.acc)} m`,c:'ok'}:{t:'GPS téléphone : attente…',c:'bad'};
+  return nm?{t:'GPS bateau',c:'ok'}:ph?{t:`GPS téléphone ±${Math.round(GPS.phone.acc)} m`,c:'ok'}:{t:'GPS : aucun signal',c:'bad'};
+}
+function updGpsPill(){
+  const s=gpsState(),e=$('#gpsp');e.textContent=s.t;e.className='pill '+s.c;
+  const p=GPS.phone,lines=[];
+  lines.push(NOW()-GPS.nmeaT<6000?'Bateau (NMEA 2000) : position reçue ✓':'Bateau (NMEA 2000) : pas de position reçue');
+  lines.push(GPS.err?'Téléphone : '+GPS.err:p&&Date.now()-p.t<10000?`Téléphone : ${p.lat.toFixed(5)}, ${p.lon.toFixed(5)} · précision ±${Math.round(p.acc)} m ✓`:cfg.gpsSrc==='nmea'?'Téléphone : GPS non utilisé':cfg.src==='demo'?'Téléphone : GPS non utilisé en mode démo':'Téléphone : en attente d\'un point GPS…');
+  $('#gpsTest').innerHTML=lines.map(esc).join('<br>');
+}
+$('#gpsAsk').onclick=()=>{if(cfg.gpsSrc==='nmea')cfg.gpsSrc='auto',$('#sGps').value='auto';startPhoneGps()};
+setInterval(updGpsPill,2000);
+
 
 function computeTrueWind(){
   // vent vrai calculé depuis le vent apparent si absent
@@ -280,12 +489,16 @@ function computeTrueWind(){
   const v=fresh('stw')?D.stw:(fresh('sog')?D.sog:0);
   const ax=D.aws*Math.cos(D.awa*D2R), ay=D.aws*Math.sin(D.awa*D2R);
   const tx=ax-v, ty=ay;
-  D.tws=Math.hypot(tx,ty); D.twa=Math.atan2(ty,tx)*R2D; T.tws=T.twa=Date.now();
+  D.tws=Math.hypot(tx,ty); D.twa=Math.atan2(ty,tx)*R2D; T.tws=T.twa=NOW();
 }
 const vmg=()=>(fresh('sog')&&D.twa!=null)?D.sog*Math.cos(D.twa*D2R):null;
 
 /* ---------- Signal K ---------- */
 function skValue(path,v){
+  if(cfg.src!=='demo'){
+    if(path==='navigation.position')GPS.nmeaT=NOW();
+    if(cfg.gpsSrc==='phone'&&(path==='navigation.position'||path==='navigation.speedOverGround'||path==='navigation.courseOverGroundTrue'))return;
+  }
   const deg=x=>{let d=x*R2D;return d};
   const sdeg=x=>{let d=x*R2D;if(d>180)d-=360;return d};
   const cdeg=x=>((x*R2D)%360+360)%360;
@@ -294,20 +507,27 @@ function skValue(path,v){
     case'navigation.speedOverGround':set('sog',v*MS2KN);return;
     case'navigation.speedThroughWater':set('stw',v*MS2KN);return;
     case'navigation.courseOverGroundTrue':set('cog',cdeg(v));return;
-    case'navigation.headingTrue':case'navigation.headingMagnetic':if(!fresh('cog'))set('hdg',cdeg(v));return;
+    case'navigation.headingTrue':case'navigation.headingMagnetic':set('hdg',cdeg(v));return;
     case'environment.wind.speedApparent':set('aws',v*MS2KN);return;
     case'environment.wind.angleApparent':set('awa',sdeg(v));return;
     case'environment.wind.speedTrue':set('tws',v*MS2KN);return;
     case'environment.wind.angleTrueWater':case'environment.wind.angleTrueGround':set('twa',sdeg(v));return;
     case'environment.depth.belowTransducer':case'environment.depth.belowKeel':case'environment.depth.belowSurface':set('depth',v);return;
     case'environment.water.temperature':set('wTemp',v-273.15);return;
+    case'environment.outside.temperature':set('airT',v-273.15);return;
+    case'environment.outside.pressure':set('baro',v/100);return;
+    case'navigation.attitude':set('roll',sdeg(v.roll||0));set('pitch',sdeg(v.pitch||0));SESS.maxRoll=Math.max(SESS.maxRoll,Math.abs(D.roll));return;
+    case'steering.rudderAngle':set('rudder',sdeg(v));return;
   }
   let m;
   if((m=path.match(/^propulsion\.([^.]+)\.revolutions$/)))set('rpm',v*60);
   else if((m=path.match(/^propulsion\.([^.]+)\.(temperature|coolantTemperature)$/)))set('engT',v-273.15);
   else if((m=path.match(/^propulsion\.([^.]+)\.oilPressure$/)))set('oilP',v/100000);
-  else if((m=path.match(/^electrical\.batteries\.([^.]+)\.voltage$/))){(D.bats[m[1]]=D.bats[m[1]]||{}).v=v;D.bats[m[1]].t=Date.now()}
-  else if((m=path.match(/^electrical\.batteries\.([^.]+)\.capacity\.stateOfCharge$/))){(D.bats[m[1]]=D.bats[m[1]]||{}).soc=v*100;D.bats[m[1]].t=Date.now()}
+  else if((m=path.match(/^propulsion\.([^.]+)\.runTime$/)))set('engHours',v/3600);
+  else if((m=path.match(/^propulsion\.([^.]+)\.fuel\.rate$/)))set('fuelRate',v*3.6e6);
+  else if((m=path.match(/^tanks\.([^.]+)\.([^.]+)\.currentLevel$/)))D.tanks[m[1]+'.'+m[2]]={type:m[1],lvl:v*100,t:NOW()};
+  else if((m=path.match(/^electrical\.batteries\.([^.]+)\.voltage$/))){(D.bats[m[1]]=D.bats[m[1]]||{}).v=v;D.bats[m[1]].t=NOW()}
+  else if((m=path.match(/^electrical\.batteries\.([^.]+)\.capacity\.stateOfCharge$/))){(D.bats[m[1]]=D.bats[m[1]]||{}).soc=v*100;D.bats[m[1]].t=NOW()}
 }
 let ws=null, wsTimer=null;
 function connectSK(){
@@ -320,14 +540,14 @@ function connectSK(){
   ws.onclose=()=>{setSrc('déconnecté','bad');if(cfg.src==='signalk')wsTimer=setTimeout(connectSK,4000)};
   ws.onerror=()=>{try{ws.close()}catch(e){}};
 }
-function closeSrc(){if(typeof BL!=='undefined'&&BL){try{BL.disconnect().catch(()=>{})}catch(e){}}clearTimeout(wsTimer);if(ws){ws.onclose=null;try{ws.close()}catch(e){}ws=null}clearInterval(simT)}
+function closeSrc(){Object.keys(T).forEach(k=>delete T[k]);D.bats={};D.tanks={};if(typeof BL!=='undefined'&&BL){try{BL.disconnect().catch(()=>{})}catch(e){}}clearTimeout(wsTimer);if(ws){ws.onclose=null;try{ws.close()}catch(e){}ws=null}clearInterval(simT)}
 function setSrc(t,c){const e=$('#src');e.textContent=t;e.className='pill '+c}
 
 
 /* ---------- NMEA 2000 : décodage du flux « RAW » du YDWG-02 (Yacht Devices) ---------- */
 const N2K={fp:{}};
 const N2K_FAST=new Set([127489,127506]);                                   // trames multiples (fast-packet) que l'on décode
-const N2K_SINGLE=new Set([129025,129026,130306,128259,128267,127250,127488,127508]);
+const N2K_SINGLE=new Set([129025,129026,130306,128259,128267,127250,127488,127508,127257,127245,127505,130310,130311,130312]);
 const nU16=(b,o)=>{if(o+2>b.length)return null;const v=b[o]|(b[o+1]<<8);return v===0xFFFF?null:v};
 const nS16=(b,o)=>{if(o+2>b.length)return null;const v=b[o]|(b[o+1]<<8);return v===0x7FFF?null:(v>=0x8000?v-0x10000:v)};
 const nS32=(b,o)=>{if(o+4>b.length)return null;const v=b[o]|(b[o+1]<<8)|(b[o+2]<<16)|(b[o+3]<<24);return v===0x7FFFFFFF?null:v};
@@ -346,7 +566,14 @@ function n2kPgn(pgn,b){
     case 128267:sk('environment.depth.belowTransducer',sc(nU32(b,1),0.01));break;
     case 127250:sk((b[7]&3)===0?'navigation.headingTrue':'navigation.headingMagnetic',sc(nU16(b,1),1e-4));break;
     case 127488:{const r=sc(nU16(b,1),0.25);if(r!=null)sk(`propulsion.${b[0]}.revolutions`,r/60);break}
-    case 127489:{sk(`propulsion.${b[0]}.oilPressure`,sc(nU16(b,1),100));sk(`propulsion.${b[0]}.temperature`,sc(nU16(b,5),0.01));break}
+    case 127489:{sk(`propulsion.${b[0]}.oilPressure`,sc(nU16(b,1),100));sk(`propulsion.${b[0]}.temperature`,sc(nU16(b,5),0.01));
+      const fr=sc(nS16(b,9),0.1),hs=nU32(b,11);if(fr!=null)sk(`propulsion.${b[0]}.fuel.rate`,fr/3.6e6);if(hs!=null)sk(`propulsion.${b[0]}.runTime`,hs);break}
+    case 127257:{const y=sc(nU16(b,1),1e-4),p=sc(nS16(b,3),1e-4),r=sc(nS16(b,5),1e-4);if(p!=null||r!=null)sk('navigation.attitude',{roll:r||0,pitch:p||0,yaw:y||0});break}
+    case 127245:sk('steering.rudderAngle',sc(nS16(b,4),1e-4));break;
+    case 127505:{const lv=nS16(b,1),ty=['fuel','freshWater','wasteWater','liveWell','lubrication','blackWater'][b[0]>>4];if(lv!=null&&lv>=0&&ty)sk(`tanks.${ty}.${b[0]&15}.currentLevel`,lv/25000);break}
+    case 130310:sk('environment.water.temperature',sc(nU16(b,1),0.01));sk('environment.outside.temperature',sc(nU16(b,3),0.01));sk('environment.outside.pressure',sc(nU16(b,5),100));break;
+    case 130311:{const s=b[1]&0x3F;sk(s===0?'environment.water.temperature':'environment.outside.temperature',s<=1?sc(nU16(b,2),0.01):null);sk('environment.outside.pressure',sc(nU16(b,6),100));break}
+    case 130312:{const s=b[2];if(s===0)sk('environment.water.temperature',sc(nU16(b,3),0.01));else if(s===1)sk('environment.outside.temperature',sc(nU16(b,3),0.01));break}
     case 127508:sk(`electrical.batteries.Batterie ${b[0]}.voltage`,sc(nU16(b,1),0.01));break;
     case 127506:if(b[3]!==0xFF&&b[3]<=100)sk(`electrical.batteries.Batterie ${b[1]}.capacity.stateOfCharge`,b[3]/100);break;
   }
@@ -386,57 +613,30 @@ function startYdwg(){
   }).catch(e=>setSrc('erreur : '+(e.message||e),'bad'));
 }
 
-/* ---------- Simulateur ---------- */
 let simT=null;
-function startSim(){
-  closeSrc(); setSrc('simulateur','ok');
-  let lat=47.52,lon=-3.05,hdg=200,t=0,bat=12.9;
-  simT=setInterval(()=>{
-    t++; hdg+=Math.sin(t/40)*1.2;
-    const tw=14+4*Math.sin(t/90), twd=250, twaDeg=((twd-hdg+540)%360)-180;
-    const sog=Math.max(0,3+tw*0.28*Math.min(1,Math.abs(twaDeg)/60));
-    const ms=sog/MS2KN;
-    lat+=ms*Math.cos(hdg*D2R)/111320; lon+=ms*Math.sin(hdg*D2R)/(111320*Math.cos(lat*D2R));
-    const a=Math.PI/180;
-    skValue('navigation.position',{latitude:lat,longitude:lon});
-    skValue('navigation.speedOverGround',ms);
-    skValue('navigation.speedThroughWater',ms*0.97);
-    skValue('navigation.courseOverGroundTrue',((hdg%360)+360)%360*a);
-    // vent apparent depuis vent vrai
-    const wx=tw/MS2KN*Math.cos(twaDeg*a)+ms, wy=tw/MS2KN*Math.sin(twaDeg*a);
-    skValue('environment.wind.speedApparent',Math.hypot(wx,wy));
-    skValue('environment.wind.angleApparent',Math.atan2(wy,wx));
-    skValue('environment.depth.belowTransducer',18+6*Math.sin(t/60));
-    skValue('propulsion.port.revolutions',0);
-    skValue('propulsion.port.temperature',293.15);
-    bat-=0.00003; skValue('electrical.batteries.service.voltage',bat);
-    skValue('electrical.batteries.service.capacity.stateOfCharge',0.9-t*0.00003);
-    skValue('electrical.batteries.moteur.voltage',12.8);
-  },1000);
-}
-
 /* ---------- Enregistrement des trajets ---------- */
-let cur=null, moveCnt=0, idleCnt=0, lastPt=0, lastSave=0;
+let cur=null, moveCnt=0, idleCnt=0, lastPt=0, lastSave=0, lastLog=0;
 function snapshot(){
-  return{t:Date.now(),lat:D.lat,lon:D.lon,sog:D.sog,cog:D.cog,tws:fresh('tws')?D.tws:null,twa:fresh('twa')?D.twa:null,
+  return{t:NOW(),lat:D.lat,lon:D.lon,sog:D.sog,cog:D.cog,tws:fresh('tws')?D.tws:null,twa:fresh('twa')?D.twa:null,
     aws:fresh('aws')?D.aws:null,awa:fresh('awa')?D.awa:null,depth:fresh('depth')?D.depth:null,rpm:fresh('rpm')?D.rpm:null,
-    engT:fresh('engT')?D.engT:null,bat:Object.values(D.bats)[0]?.v??null};
+    engT:fresh('engT')?D.engT:null,bat:Object.values(D.bats)[0]?.v??null,stw:fresh('stw')?D.stw:null,roll:fresh('roll')?D.roll:null};
 }
 function startTrip(auto){
   if(cur)return;
-  cur={id:uid(),name:'',auto:!!auto,open:true,start:Date.now(),end:null,crew:'',points:[]};
-  cur.name='Navigation du '+new Date().toLocaleDateString('fr-FR');
-  lastPt=0;idleCnt=0;db.put('trips',cur);updateRecUI();
+  cur={id:uid(),name:'',auto:!!auto,open:true,start:NOW(),end:null,crew:'',points:[],log:[],demo:cfg.src==='demo'};
+  cur.name=(cfg.src==='demo'?'Navigation démo du ':'Navigation du ')+new Date(NOW()).toLocaleDateString('fr-FR');
+  lastPt=0;idleCnt=0;lastLog=0;db.put('trips',cur);updateRecUI();addLog('start');
 }
 async function endTrip(){
   if(!cur)return;
-  cur.open=false;cur.end=Date.now();
+  addLog('end');
+  cur.open=false;cur.end=NOW();
   if(cur.points.length<2){await db.del('trips',cur.id)}else await db.put('trips',cur);
   cur=null;updateRecUI();renderTrips();renderStats();
 }
 let lastTick=0;
 function tick(){
-  const now=Date.now(),dt=lastTick?Math.min(120,(now-lastTick)/1000):1;lastTick=now;   // durée réelle écoulée (s)
+  const now=NOW(),dt=lastTick?Math.min(120,(now-lastTick)/1000):1;lastTick=now;   // durée réelle écoulée (s)
   computeTrueWind();
   if(fresh('lat')&&fresh('lon')){
     const sog=fresh('sog')?D.sog:0;
@@ -448,9 +648,12 @@ function tick(){
       if(sog<cfg.stopKn){idleCnt+=dt;if(idleCnt>=cfg.stopMin*60&&cur.auto)endTrip()}else idleCnt=0;
     }
   }
+  if(fresh('sog')&&D.sog>SESS.maxSog)SESS.maxSog=D.sog;
+  if(fresh('depth')&&now-HIST.dt>5000){HIST.depth.push({t:now,v:D.depth});HIST.dt=now;if(HIST.depth.length>130)HIST.depth.shift()}
+  if(cur&&now-lastLog>=cfg.logMin*60000)addLog('auto');   // entrée de journal automatique, même sans position GPS
   renderLive();
 }
-const onBoatData=()=>{if(Date.now()-lastTick>800)tick()};   // l'arrivée des données déclenche aussi le calcul, même si l'écran est éteint
+const onBoatData=()=>{if(NOW()-lastTick>800)tick()};   // l'arrivée des données déclenche aussi le calcul, même si l'écran est éteint
 function updateRecUI(){
   const r=!!cur;
   $('#btnRec').textContent=r?'Terminer le trajet':'Démarrer un trajet';
@@ -505,33 +708,261 @@ function buildTiles(){
   $('#tiles').innerHTML=GROUPS.map(g=>`<div class="grp"><h3>${g[0]}</h3><div class="cells">${g[1].map(tile).join('')}</div></div>`).join('')+
    `<div class="grp"><h3>Énergie</h3><div class="cells"><div class="tile wide" id="t-bat"><div id="batList">--</div></div></div></div>`+
    `<div class="grp"><h3>Position</h3><div class="cells"><div class="tile wide" id="t-pos"><div id="posTxt" style="font:600 22px var(--num)">--</div></div></div></div>`;
-  buildDial();
+  buildStage();
 }
-let dHdg=0;
-function arcPath(r,a0,a1){const p=a=>[150+r*Math.sin(a*D2R),150-r*Math.cos(a*D2R)];const[x0,y0]=p(a0),[x1,y1]=p(a1);return`M${x0.toFixed(1)} ${y0.toFixed(1)}A${r} ${r} 0 0 ${a1>a0?1:0} ${x1.toFixed(1)} ${y1.toFixed(1)}`}
-function buildDial(){
-  // secteurs tribord (vert) et bâbord (rouge) : repère du bateau, étrave en haut
-  $('#dArcs').innerHTML=`<path d="${arcPath(138,25,110)}" fill="none" stroke="var(--stbd)" stroke-width="5" stroke-linecap="round" opacity=".9"/>
-    <path d="${arcPath(138,-110,-25)}" fill="none" stroke="var(--port)" stroke-width="5" stroke-linecap="round" opacity=".9"/>`;
-  let h='';
-  for(let a=0;a<360;a+=10){const m=a%30===0,r0=m?104:110,x0=150+r0*Math.sin(a*D2R),y0=150-r0*Math.cos(a*D2R),x1=150+120*Math.sin(a*D2R),y1=150-120*Math.cos(a*D2R);
-    h+=`<line class="tick${m?' m':''}" x1="${x0.toFixed(1)}" y1="${y0.toFixed(1)}" x2="${x1.toFixed(1)}" y2="${y1.toFixed(1)}"/>`}
-  [['N',0],['E',90],['S',180],['O',270]].forEach(([l,a])=>{const x=150+90*Math.sin(a*D2R),y=150-90*Math.cos(a*D2R);
-    h+=`<text class="cn" x="${x.toFixed(1)}" y="${(y+6).toFixed(1)}" text-anchor="middle" transform="rotate(${a} ${x.toFixed(1)} ${y.toFixed(1)})" style="${l==='N'?'fill:var(--acc)':''}">${l}</text>`});
-  $('#dRing').innerHTML=h;
-}
+/* ---------- Cadrans (swipables, configurables) ---------- */
+let dialUid=0;
+const SESS={maxSog:0,maxRoll:0,maxPitch:0}, HIST={depth:[],dt:0};
+const polar=(r,a)=>[150+r*Math.sin(a*D2R),150-r*Math.cos(a*D2R)];
+function arcPath(r,a0,a1){const[x0,y0]=polar(r,a0),[x1,y1]=polar(r,a1);return`M${x0.toFixed(1)} ${y0.toFixed(1)}A${r} ${r} 0 ${Math.abs(a1-a0)>180?1:0} ${a1>a0?1:0} ${x1.toFixed(1)} ${y1.toFixed(1)}`}
+const SVG=(c,body)=>`<svg class="dial${c}" viewBox="-8 -8 316 316" role="img">${body}</svg>`;
 const unwrap=(prev,t)=>prev+(((t-prev)%360+540)%360-180);
-function updDial(){
-  const hdgOk=fresh('cog')||fresh('hdg'),h=fresh('cog')?D.cog:D.hdg;
-  $('#dial').classList.toggle('stale',!fresh('sog'));
-  $('#dSog').textContent=fresh('sog')?num(D.sog):'--';
-  $('#dCog').textContent=hdgOk?'cap '+String(Math.round(h)%360).padStart(3,'0')+'°':'cap --';
-  if(hdgOk){dHdg=unwrap(dHdg,-h);$('#dRing').style.transform=`rotate(${dHdg}deg)`}
-  const nd=(id,ok,ang)=>{const e=$(id);e.setAttribute('opacity',ok?1:0);if(ok)e.style.transform=`rotate(${ang}deg)`};
-  nd('#dAw',fresh('awa'),D.awa);nd('#dTw',fresh('twa'),D.twa);
+function ringFace(){   // graduations + points cardinaux (anneau qui tourne avec le cap)
+  let h='';
+  for(let a=0;a<360;a+=10){const m=a%30===0,r0=m?104:110,[x0,y0]=polar(r0,a),[x1,y1]=polar(120,a);
+    h+=`<line class="tick${m?' m':''}" x1="${x0.toFixed(1)}" y1="${y0.toFixed(1)}" x2="${x1.toFixed(1)}" y2="${y1.toFixed(1)}"/>`}
+  [['N',0],['E',90],['S',180],['O',270]].forEach(([l,a])=>{const[x,y]=polar(90,a);
+    h+=`<text class="cn" x="${x.toFixed(1)}" y="${(y+6).toFixed(1)}" text-anchor="middle" transform="rotate(${a} ${x.toFixed(1)} ${y.toFixed(1)})" style="${l==='N'?'fill:var(--acc)':''}">${l}</text>`});
+  return h;
 }
+const hdgNow=()=>fresh('cog')?D.cog:(fresh('hdg')?D.hdg:null);
+
+/* 1. Vent : cap, vitesse fond, vent apparent / vrai */
+function mkWind(root){
+  root.innerHTML=SVG(' stale',`<g class="dArcs"><path d="${arcPath(138,25,110)}" fill="none" stroke="var(--stbd)" stroke-width="5" stroke-linecap="round" opacity=".9"/><path d="${arcPath(138,-110,-25)}" fill="none" stroke="var(--port)" stroke-width="5" stroke-linecap="round" opacity=".9"/></g>
+   <g class="dRing ring">${ringFace()}</g><path d="M150 13 l-8 -13 h16 z" fill="var(--acc)"/>
+   <g class="dTw needle" opacity="0"><path d="M150 72 L143 56 L157 56 Z" fill="none" stroke="var(--tx)" stroke-width="2" stroke-linejoin="round"/></g>
+   <g class="dAw needle" opacity="0"><path d="M150 54 L141 28 L159 28 Z" fill="var(--wind)"/></g>
+   <text x="150" y="104" text-anchor="middle" class="dlab">vitesse fond</text>
+   <text class="dSog dnum" x="150" y="168" text-anchor="middle">--</text>
+   <text x="150" y="192" text-anchor="middle" class="dlab">nœuds</text>
+   <text class="dCog dlab" x="150" y="222" text-anchor="middle" style="font-family:var(--num);font-size:20px;fill:var(--tx)">cap --</text>`);
+  const q=s=>root.querySelector(s);let dh=0;
+  return()=>{
+    const h=hdgNow();
+    q('svg').classList.toggle('stale',!fresh('sog'));
+    q('.dSog').textContent=fresh('sog')?num(D.sog):'--';
+    q('.dCog').textContent=h!=null?'cap '+String(Math.round(h)%360).padStart(3,'0')+'°':'cap --';
+    if(h!=null){dh=unwrap(dh,-h);q('.dRing').style.transform=`rotate(${dh}deg)`}
+    const nd=(s,ok,ang)=>{const e=q(s);e.setAttribute('opacity',ok?1:0);if(ok)e.style.transform=`rotate(${ang}deg)`};
+    nd('.dAw',fresh('awa'),D.awa);nd('.dTw',fresh('twa'),D.twa);
+  };
+}
+
+/* 2. Vitesse : jauge, vitesse surface, VMG, vitesse max */
+function mkSpeed(root){
+  let mxv=0;
+  root.innerHTML=SVG(' stale',`<path class="gt" d="${arcPath(122,-120,120)}"/><path class="gv" d=""/><g class="tk"></g><path class="mxm" fill="var(--bad)" d=""/>
+    <text class="big sg" x="150" y="170" text-anchor="middle">--</text><text class="sm" x="150" y="196" text-anchor="middle">nœuds</text>
+    <text class="mid sub" x="150" y="248" text-anchor="middle"></text>`);
+  const q=s=>root.querySelector(s);
+  return()=>{
+    const mx=Math.max(10,Math.ceil(cfg.cruise*1.8/2)*2);
+    if(mx!==mxv){mxv=mx;let t='';for(let v=0;v<=mx;v+=2){const a=-120+240*v/mx,[x0,y0]=polar(104,a),[x1,y1]=polar(110,a),[x2,y2]=polar(92,a);
+      t+=`<line class="tick m" x1="${x0.toFixed(1)}" y1="${y0.toFixed(1)}" x2="${x1.toFixed(1)}" y2="${y1.toFixed(1)}"/><text class="sm" x="${x2.toFixed(1)}" y="${(y2+4).toFixed(1)}" text-anchor="middle">${v}</text>`}q('.tk').innerHTML=t}
+    const ok=fresh('sog'),v=ok?D.sog:0;
+    q('svg').classList.toggle('stale',!ok);
+    q('.sg').textContent=ok?num(v):'--';
+    q('.gv').setAttribute('d',v>0.05?arcPath(122,-120,-120+240*Math.min(1,v/mx)):'');
+    if(SESS.maxSog>0.5){const a=-120+240*Math.min(1,SESS.maxSog/mx),[x,y]=polar(137,a),[x1,y1]=polar(147,a-3),[x2,y2]=polar(147,a+3);q('.mxm').setAttribute('d',`M${x.toFixed(1)} ${y.toFixed(1)}L${x1.toFixed(1)} ${y1.toFixed(1)}L${x2.toFixed(1)} ${y2.toFixed(1)}Z`)}
+    const p=[];if(fresh('stw'))p.push('surface '+num(D.stw));const vm=vmg();if(vm!=null)p.push('VMG '+num(Math.abs(vm)));
+    q('.sub').textContent=p.join(' · ');
+  };
+}
+
+/* 3. Cap : grande rose + route fond */
+function mkCompass(root){
+  root.innerHTML=SVG(' stale',`<g class="dRing ring">${ringFace()}<g class="cg" opacity="0" style="transform-origin:150px 150px"><path d="M150 36 l7 -13 l-7 -13 l-7 13z" fill="var(--wind)"/></g></g>
+    <path d="M150 13 l-8 -13 h16 z" fill="var(--acc)"/>
+    <text class="big hd" x="150" y="166" text-anchor="middle">---</text><text class="sm hl" x="150" y="190" text-anchor="middle">cap</text>
+    <text class="mid cd" x="150" y="218" text-anchor="middle" style="font-size:16px"></text>`);
+  const q=s=>root.querySelector(s);let dh=0;
+  return()=>{
+    const useH=fresh('hdg'),h=useH?D.hdg:(fresh('cog')?D.cog:null);
+    q('svg').classList.toggle('stale',h==null);
+    q('.hd').textContent=h!=null?String(Math.round(h)%360).padStart(3,'0')+'°':'---';
+    q('.hl').textContent=useH?'cap compas':'route fond';
+    if(h!=null){dh=unwrap(dh,-h);q('.dRing').style.transform=`rotate(${dh}deg)`}
+    const g=q('.cg'),show=useH&&fresh('cog');g.setAttribute('opacity',show?1:0);if(show)g.style.transform=`rotate(${D.cog}deg)`;
+    q('.cd').textContent=show?'route fond '+String(Math.round(D.cog)%360).padStart(3,'0')+'°':'';
+  };
+}
+
+/* 4. Roulis & tangage : horizon artificiel */
+function mkAtt(root){
+  const id='cp'+(++dialUid);let t='';
+  [-45,-30,-20,-10,0,10,20,30,45].forEach(a=>{const[x0,y0]=polar(104,a),[x1,y1]=polar(a%30===0?118:112,a);t+=`<line class="tick${a%30===0?' m':''}" x1="${x0.toFixed(1)}" y1="${y0.toFixed(1)}" x2="${x1.toFixed(1)}" y2="${y1.toFixed(1)}"/>`});
+  let lad='';[-20,-10,10,20].forEach(p=>{const y=150+p*4,w=Math.abs(p)===10?44:64;lad+=`<line x1="${150-w/2}" y1="${y}" x2="${150+w/2}" y2="${y}" stroke="#fff" stroke-width="2" opacity=".8"/><text x="${150+w/2+6}" y="${y+4}" style="fill:#fff;font-size:12px">${Math.abs(p)}</text>`});
+  root.innerHTML=SVG(' stale',`<defs><clipPath id="${id}"><circle cx="150" cy="150" r="98"/></clipPath></defs>
+    <g clip-path="url(#${id})"><g class="hz" style="transform-origin:150px 150px;transition:transform .5s">
+      <rect x="-300" y="-300" width="900" height="450" fill="var(--wind)" opacity=".42"/><rect x="-300" y="150" width="900" height="450" fill="var(--line)"/>
+      <line x1="-300" y1="150" x2="600" y2="150" stroke="#fff" stroke-width="3"/>${lad}</g></g>
+    <circle cx="150" cy="150" r="98" fill="none" stroke="var(--mut)" stroke-width="2"/>${t}
+    <g class="ptr" style="transform-origin:150px 150px;transition:transform .5s"><path d="M150 52 l-7 -12 h14z" fill="var(--acc)"/></g>
+    <path d="M80 150 h52 l8 10 M220 150 h-52 l-8 10" fill="none" stroke="var(--acc)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="150" cy="150" r="5" fill="var(--acc)"/>
+    <text class="big rv" x="82" y="282" text-anchor="middle" style="font-size:34px">--</text><text class="sm rl" x="82" y="302" text-anchor="middle" style="font-size:12px">roulis</text>
+    <text class="big pv" x="218" y="282" text-anchor="middle" style="font-size:34px">--</text><text class="sm pl" x="218" y="302" text-anchor="middle" style="font-size:12px">tangage</text>`);
+  const q=s=>root.querySelector(s);
+  return()=>{
+    const okR=fresh('roll'),okP=fresh('pitch'),r=okR?D.roll:0,p=okP?D.pitch:0;
+    q('svg').classList.toggle('stale',!okR&&!okP);
+    q('.hz').style.transform=`rotate(${-r}deg) translateY(${Math.max(-90,Math.min(90,p*4))}px)`;
+    q('.ptr').style.transform=`rotate(${-r}deg)`;
+    q('.rv').textContent=okR?Math.abs(r).toFixed(0)+'°':'--';
+    q('.pv').textContent=okP?Math.abs(p).toFixed(0)+'°':'--';
+    q('.rl').textContent=okR?`roulis ${r>0.5?'tribord':r<-0.5?'bâbord':''} · max ${SESS.maxRoll.toFixed(0)}°`:'roulis';
+    q('.pl').textContent=okP?`tangage ${p>0.5?'étrave haute':p<-0.5?'étrave basse':''}`:'tangage';
+  };
+}
+
+/* 5. Profondeur : valeur + profil des 10 dernières minutes */
+function mkDepth(root){
+  root.innerHTML=SVG(' stale',`<text class="big dv" x="150" y="92" text-anchor="middle">--</text><text class="sm" x="150" y="118" text-anchor="middle">mètres sous la sonde</text>
+    <rect x="14" y="134" width="272" height="156" rx="14" fill="var(--surf2)"/><path class="sea" fill="var(--line)" d=""/><path class="ln" fill="none" stroke="var(--wind)" stroke-width="3" stroke-linejoin="round" d=""/>
+    <text class="sm sc0" x="24" y="152">0 m</text><text class="sm sc1" x="24" y="282">--</text><text class="sm" x="276" y="152" text-anchor="end">10 min</text>`);
+  const q=s=>root.querySelector(s);
+  return()=>{
+    const ok=fresh('depth');q('svg').classList.toggle('stale',!ok);
+    q('.dv').textContent=ok?num(D.depth):'--';q('.dv').style.fill=ok&&D.depth<2.5?'var(--bad)':'';
+    const now=NOW(),a=HIST.depth.filter(x=>now-x.t<600000);
+    if(a.length<2){q('.ln').setAttribute('d','');q('.sea').setAttribute('d','');return}
+    const hi=Math.max(5,Math.ceil(Math.max(...a.map(x=>x.v))*1.25)),X=t=>22+256*(1-(now-t)/600000),Y=v=>158+Math.min(1,v/hi)*118;
+    const pts=a.map(x=>[X(x.t),Y(x.v)]),l='M'+pts.map(p=>p[0].toFixed(1)+' '+p[1].toFixed(1)).join('L');
+    q('.ln').setAttribute('d',l);q('.sea').setAttribute('d',l+`L${pts[pts.length-1][0].toFixed(1)} 276L${pts[0][0].toFixed(1)} 276Z`);
+    q('.sc1').textContent=hi+' m';
+  };
+}
+
+/* 6. Moteur : régime, température, pression d'huile, heures */
+function mkEngine(root){
+  let tk='';for(let v=0;v<=4000;v+=500){const a=-120+240*v/4000,[x0,y0]=polar(104,a),[x1,y1]=polar(110,a),[x2,y2]=polar(92,a);
+    tk+=`<line class="tick m" x1="${x0.toFixed(1)}" y1="${y0.toFixed(1)}" x2="${x1.toFixed(1)}" y2="${y1.toFixed(1)}"/><text class="sm" x="${x2.toFixed(1)}" y="${(y2+4).toFixed(1)}" text-anchor="middle">${v/1000}</text>`}
+  root.innerHTML=SVG(' stale',`<path class="gt" d="${arcPath(122,-120,120)}"/><path d="${arcPath(122,72,120)}" fill="none" stroke="var(--bad)" stroke-width="14" stroke-linecap="round" opacity=".45"/><path class="gv" d=""/>${tk}
+    <text class="big rp" x="150" y="170" text-anchor="middle">--</text><text class="sm" x="150" y="196" text-anchor="middle">tr/min</text>
+    <text class="mid et" x="150" y="238" text-anchor="middle"></text><text class="sm eh" x="150" y="262" text-anchor="middle"></text>`);
+  const q=s=>root.querySelector(s);
+  return()=>{
+    const ok=fresh('rpm'),v=ok?D.rpm:0;q('svg').classList.toggle('stale',!ok);
+    q('.rp').textContent=ok?num(v,0):'--';
+    q('.gv').setAttribute('d',v>20?arcPath(122,-120,-120+240*Math.min(1,v/4000)):'');
+    const a=[];if(fresh('engT'))a.push(num(D.engT,0)+' °C');if(fresh('oilP'))a.push(num(D.oilP,1)+' bar');
+    q('.et').textContent=a.join(' · ');q('.et').style.fill=fresh('engT')&&D.engT>95?'var(--bad)':'';
+    const b=[];if(fresh('engHours'))b.push(num(D.engHours,0)+' h moteur');if(fresh('fuelRate'))b.push(num(D.fuelRate,1)+' L/h');
+    q('.eh').textContent=b.join(' · ');
+  };
+}
+
+/* 7. Énergie & réservoirs */
+const TANKFR={fuel:'Gazole',freshWater:'Eau douce',wasteWater:'Eaux grises',blackWater:'Eaux noires',liveWell:'Vivier',lubrication:'Huile',ballast:'Ballast'};
+function mkEnergy(root){
+  root.innerHTML=SVG('',`<g class="rows"></g><text class="sm none" x="150" y="150" text-anchor="middle">en attente des batteries…</text>`);
+  const q=s=>root.querySelector(s);
+  return()=>{
+    const now=NOW(),rows=[];
+    Object.entries(D.bats).forEach(([n,b])=>{if(now-b.t>15000)return;
+      const p=b.soc!=null?b.soc:(b.v!=null?Math.max(0,Math.min(100,(b.v-11.8)/(13.6-11.8)*100)):0);
+      rows.push({n,p,c:p<20?'var(--bad)':p<50?'var(--warn)':'var(--ok)',t:[b.v!=null?b.v.toFixed(2)+' V':'',b.soc!=null?Math.round(b.soc)+' %':''].filter(Boolean).join(' · ')})});
+    Object.values(D.tanks).forEach(k=>{if(now-k.t>60000)return;rows.push({n:TANKFR[k.type]||k.type,p:k.lvl,c:k.type==='fuel'||k.type==='freshWater'?(k.lvl<15?'var(--bad)':'var(--wind)'):(k.lvl>80?'var(--bad)':'var(--mut)'),t:Math.round(k.lvl)+' %'})});
+    q('.none').setAttribute('opacity',rows.length?0:1);
+    const rs=rows.slice(0,7),h=Math.min(36,260/Math.max(1,rs.length));
+    q('.rows').innerHTML=rs.map((r,i)=>{const y=24+i*h;
+      return`<text class="sm" x="12" y="${y+13}" style="font-size:13px;fill:var(--tx)">${esc(String(r.n).slice(0,13))}</text>
+      <rect x="110" y="${y}" width="96" height="16" rx="8" fill="var(--line)"/><rect x="110" y="${y}" width="${Math.max(4,96*Math.max(0,Math.min(100,r.p))/100).toFixed(1)}" height="16" rx="8" fill="${r.c}"/>
+      <text class="sm" x="296" y="${y+13}" text-anchor="end" style="font-size:13px;fill:var(--tx)">${esc(r.t)}</text>`}).join('');
+  };
+}
+
+const DIALS={
+  wind:{name:'Vent',mk:mkWind,legend:'<span><i style="background:var(--wind);clip-path:polygon(50% 100%,0 0,100% 0)"></i>vent apparent</span><span><i style="border:2px solid var(--tx);clip-path:polygon(50% 100%,0 0,100% 0)"></i>vent vrai</span>'},
+  speed:{name:'Vitesse',mk:mkSpeed,legend:'<span><i style="background:var(--bad)"></i>vitesse max de la session</span>'},
+  compass:{name:'Cap',mk:mkCompass,legend:'<span><i style="background:var(--wind)"></i>route fond</span>'},
+  attitude:{name:'Roulis et tangage',mk:mkAtt,legend:''},
+  depth:{name:'Profondeur',mk:mkDepth,legend:''},
+  engine:{name:'Moteur',mk:mkEngine,legend:''},
+  energy:{name:'Énergie et réservoirs',mk:mkEnergy,legend:''}};
+const dialList=()=>{const o=(cfg.dialOrder||[]).filter(id=>DIALS[id]);Object.keys(DIALS).forEach(id=>{if(!o.includes(id))o.push(id)});return o};
+const dialActive=()=>{const a=dialList().filter(id=>!(cfg.dialOff||[]).includes(id));return a.length?a:['wind']};
+const saveCfg=()=>localStorage.setItem('cfg',JSON.stringify(cfg));
+
+/* carrousel circulaire : glisser à gauche / à droite, on boucle sur le premier cadran */
+const DS={idx:0,ids:[],ups:{},cards:[]};
+function layoutStage(dx){
+  const stg=$('#dialStage'),n=DS.ids.length,W=stg.clientWidth||1,h=Math.floor(n/2);if(!n)return;
+  DS.cards.forEach((c,i)=>{
+    let rel=((i-DS.idx+n+h)%n)-h;if(n===2&&rel===-1&&dx<=0)rel=1;
+    c.style.transition=(c._rel!=null&&Math.abs(rel-c._rel)>1)?'none':'';
+    c._rel=rel;c.classList.toggle('vis',Math.abs(rel)<=1);
+    c.style.transform=`translateX(${rel*W+(Math.abs(rel)<=1?dx:0)}px)`;
+    if(c.style.transition==='none')requestAnimationFrame(()=>requestAnimationFrame(()=>{c.style.transition=''}));
+  });
+  const id=DS.ids[DS.idx];
+  $('#dialName').textContent=DIALS[id].name;$('#dialLegend').innerHTML=DIALS[id].legend||'';
+  $$('#dialDots button').forEach((b,i)=>b.classList.toggle('on',i===DS.idx));
+}
+function buildStage(){
+  const stg=$('#dialStage');stg.innerHTML='';DS.ids=dialActive();DS.ups={};DS.cards=[];DS.idx=0;
+  DS.ids.forEach(id=>{const d=document.createElement('div');d.className='dc';stg.appendChild(d);DS.ups[id]=DIALS[id].mk(d);DS.cards.push(d)});
+  $('#dialDots').innerHTML=DS.ids.length>1?DS.ids.map((id,i)=>`<button aria-label="Cadran ${esc(DIALS[id].name)}"><i></i></button>`).join(''):'';
+  $$('#dialDots button').forEach((b,i)=>b.onclick=()=>{DS.idx=i;layoutStage(0)});
+  layoutStage(0);updDials();
+}
+function updDials(){
+  if($('#v-live').classList.contains('on'))DS.ids.forEach(id=>DS.ups[id]&&DS.ups[id]());
+  if(!$('#dialCfg').classList.contains('hide'))Object.values(DC.ups).forEach(u=>u());
+}
+(()=>{
+  const stg=$('#dialStage');let s=null;
+  stg.onpointerdown=e=>{if(DS.ids.length>1)s={id:e.pointerId,x:e.clientX,y:e.clientY,t:NOW(),dx:0,on:false}};
+  stg.onpointermove=e=>{
+    if(!s||e.pointerId!==s.id)return;const dx=e.clientX-s.x,dy=e.clientY-s.y;
+    if(!s.on){if(Math.abs(dx)>10&&Math.abs(dx)>Math.abs(dy)*1.2){s.on=true;try{stg.setPointerCapture(e.pointerId)}catch(_){}stg.classList.add('drag')}else return}
+    s.dx=dx;layoutStage(dx);
+  };
+  const end=e=>{
+    if(!s||e.pointerId!==s.id)return;const n=DS.ids.length,W=stg.clientWidth,dx=s.dx,v=dx/Math.max(1,NOW()-s.t);
+    stg.classList.remove('drag');
+    if(s.on){if(dx<-W*0.2||v<-0.5)DS.idx=(DS.idx+1)%n;else if(dx>W*0.2||v>0.5)DS.idx=(DS.idx-1+n)%n;layoutStage(0)}
+    s=null;
+  };
+  stg.onpointerup=stg.onpointercancel=end;
+  addEventListener('resize',()=>layoutStage(0));
+})();
+
+/* configuration : miniatures en direct, glisser pour réordonner, interrupteur pour afficher / masquer */
+const DC={ups:{}};
+const GRIP='<svg viewBox="0 0 24 24"><circle cx="8" cy="5" r="1.9"/><circle cx="16" cy="5" r="1.9"/><circle cx="8" cy="12" r="1.9"/><circle cx="16" cy="12" r="1.9"/><circle cx="8" cy="19" r="1.9"/><circle cx="16" cy="19" r="1.9"/></svg>';
+function openDialCfg(){$('#dialCfg').classList.remove('hide');renderDialCfg()}
+function closeDialCfg(){$('#dialCfg').classList.add('hide');DC.ups={};$('#dGrid').innerHTML='';buildStage()}
+function renderDialCfg(){
+  const g=$('#dGrid');g.innerHTML='';DC.ups={};
+  dialList().forEach(id=>{
+    const off=(cfg.dialOff||[]).includes(id),it=document.createElement('div');
+    it.className='dgi'+(off?' off':'');it.dataset.id=id;
+    it.innerHTML=`<div class="dgh"><span class="grip" aria-label="Déplacer le cadran ${esc(DIALS[id].name)}">${GRIP}</span><b>${esc(DIALS[id].name)}</b><label class="sw"><input type="checkbox" ${off?'':'checked'} aria-label="Afficher le cadran ${esc(DIALS[id].name)}"><span></span></label></div><div class="dgb"></div>`;
+    g.appendChild(it);DC.ups[id]=DIALS[id].mk(it.querySelector('.dgb'));DC.ups[id]();
+    it.querySelector('input').onchange=e=>{
+      const offs=new Set(cfg.dialOff||[]);
+      if(e.target.checked)offs.delete(id);else{if(Object.keys(DIALS).length-offs.size<=1){e.target.checked=true;return}offs.add(id)}
+      cfg.dialOff=[...offs];saveCfg();it.classList.toggle('off',!e.target.checked);
+    };
+    const gr=it.querySelector('.grip');let st=null;
+    gr.onpointerdown=e=>{e.preventDefault();gr.setPointerCapture(e.pointerId);const r=it.getBoundingClientRect();st={id:e.pointerId,gx:e.clientX-r.left,gy:e.clientY-r.top};it.classList.add('drag')};
+    gr.onpointermove=e=>{
+      if(!st||e.pointerId!==st.id)return;
+      it.style.transform='';const r=it.getBoundingClientRect();
+      it.style.transform=`translate(${e.clientX-st.gx-r.left}px,${e.clientY-st.gy-r.top}px) scale(1.04)`;
+      const kids=[...g.children],over=kids.find(c=>{if(c===it)return false;const rc=c.getBoundingClientRect();return e.clientX>=rc.left&&e.clientX<=rc.right&&e.clientY>=rc.top&&e.clientY<=rc.bottom});
+      if(over){if(kids.indexOf(it)<kids.indexOf(over))over.after(it);else over.before(it)}
+      const ov=$('#dialCfg');if(e.clientY<100)ov.scrollTop-=16;else if(e.clientY>innerHeight-100)ov.scrollTop+=16;
+    };
+    gr.onpointerup=gr.onpointercancel=()=>{if(!st)return;st=null;it.style.transform='';it.classList.remove('drag');cfg.dialOrder=[...g.children].map(c=>c.dataset.id);saveCfg()};
+  });
+}
+$('#dcDone').onclick=closeDialCfg;
+$('#sDials').onclick=openDialCfg;
+
 function renderLive(){
-  updDial();
+  updDials();
   TILES.forEach(t=>{
     const el=$('#t-'+t[0]);const v=t[3](D);
     el.className='tile'+(v==='--'?' stale':'');
@@ -539,54 +970,218 @@ function renderLive(){
     el.querySelector('.sub').textContent=t[4]?t[4](D):'';
   });
   const ids=Object.keys(D.bats);
-  $('#batList').innerHTML=ids.length?ids.map(i=>{const b=D.bats[i],old=Date.now()-b.t>15000;
+  $('#batList').innerHTML=ids.length?ids.map(i=>{const b=D.bats[i],old=NOW()-b.t>15000;
     return `<div style="display:flex;justify-content:space-between;align-items:baseline;padding:4px 0;color:${old?'var(--line)':'var(--tx)'}"><span style="color:var(--mut)">${esc(i)}</span><b style="font:600 30px var(--num)">${b.v!=null?num(b.v,2)+'<i style="font:400 14px system-ui;color:var(--mut);margin-left:4px">V</i>':'--'}${b.soc!=null?' <span style="font:600 30px var(--num);margin-left:12px">'+num(b.soc,0)+'<i style="font:400 14px system-ui;color:var(--mut);margin-left:4px">%</i></span>':''}</b></div>`}).join(''):'--';
   $('#posTxt').textContent=fresh('lat')?fmtPos(D.lat,D.lon):'--';
-  if(cur){const s=tripStats(cur);$('#recInfo').textContent=`${num(s.dist)} NM · ${fmtDur((Date.now()-cur.start)/1000)}`}
+  if(cur){const s=tripStats(cur);$('#recInfo').textContent=`${num(s.dist)} NM · ${fmtDur((NOW()-cur.start)/1000)}`}
   else $('#recInfo').textContent=moveCnt>0?`Mouvement détecté… (${Math.round(moveCnt)}/${cfg.startSec}s)`:'Démarrage auto dès que le bateau avance';
 }
 
-/* ---------- Vue Trajets ---------- */
 let openTrip=null;
+/* ---------- Logbook : entrées automatiques, vues graphiques ---------- */
+const LOGF=[{id:'pos',n:'Position'},{id:'cog',n:'Cap fond'},{id:'sog',n:'Vitesse fond'},{id:'stw',n:'Vitesse surface'},{id:'wind',n:'Vent vrai'},{id:'awind',n:'Vent apparent'},{id:'depth',n:'Profondeur'},{id:'wTemp',n:'Température eau'},{id:'airT',n:'Température air'},{id:'baro',n:'Pression'},{id:'attitude',n:'Roulis et tangage'},{id:'rpm',n:'Régime moteur'},{id:'engT',n:'Température moteur'},{id:'oilP',n:'Pression huile'},{id:'fuel',n:'Consommation'},{id:'hours',n:'Heures moteur'},{id:'rudder',n:'Barre'},{id:'bat',n:'Batteries'},{id:'tanks',n:'Réservoirs'}];
+const LOG_DEF=['pos','cog','sog','wind','depth','wTemp','baro','attitude','rpm','bat'];
+const logFields=()=>cfg.logFields||LOG_DEF;
+const logSec=()=>({map:true,charts:true,stats:true,...(cfg.logSec||{})});
+function fullData(){   // tout ce que le réseau NMEA 2000 a donné récemment
+  const f=k=>fresh(k)?D[k]:null,now=NOW();
+  return{lat:f('lat'),lon:f('lon'),cog:f('cog'),hdg:f('hdg'),sog:f('sog'),stw:f('stw'),tws:f('tws'),twa:f('twa'),aws:f('aws'),awa:f('awa'),depth:f('depth'),
+    wTemp:f('wTemp'),airT:f('airT'),baro:f('baro'),roll:f('roll'),pitch:f('pitch'),rpm:f('rpm'),engT:f('engT'),oilP:f('oilP'),fuelRate:f('fuelRate'),engHours:f('engHours'),rudder:f('rudder'),
+    bats:Object.entries(D.bats).filter(([,b])=>now-b.t<15000).map(([n,b])=>({n,v:b.v??null,soc:b.soc??null})),
+    tanks:Object.values(D.tanks).filter(k=>now-k.t<60000).map(k=>({type:k.type,lvl:k.lvl}))};
+}
+function addLog(kind,note){
+  if(!cur)return null;
+  cur.log=cur.log||[];
+  const e={id:uid(),t:NOW(),kind,note:note||'',d:fullData(),edited:false};
+  e.orig=JSON.parse(JSON.stringify({t:e.t,note:e.note,d:e.d}));
+  cur.log.push(e);lastLog=e.t;db.put('trips',cur);
+  if(openTrip===cur.id&&$('#v-trips').classList.contains('on'))showTrip(openTrip);
+  return e;
+}
+const dm=(v,p,n,w)=>{const a=Math.abs(v),d=Math.floor(a);return String(d).padStart(w,'0')+'° '+((a-d)*60).toFixed(3).padStart(6,'0')+"' "+(v>=0?p:n)};
+const vz=(label,val,unit,pct,col,sub)=>`<div class="lv"><small>${label}</small><b>${val}<i>${unit}</i></b>${pct!=null&&!isNaN(pct)?`<div class="mt"><u style="width:${Math.max(3,Math.min(100,pct)).toFixed(0)}%;background:${col||'var(--acc)'}"></u></div>`:''}${sub?`<small>${sub}</small>`:''}</div>`;
+const windSvg=a=>`<svg viewBox="0 0 46 46"><circle cx="23" cy="23" r="20" fill="none" stroke="var(--line)" stroke-width="2"/><path d="M23 14 L29 32 L23 28 L17 32Z" fill="var(--mut)"/><g transform="rotate(${a||0} 23 23)"><path d="M23 3 V13 M18.5 8.5 L23 13 L27.5 8.5" fill="none" stroke="var(--wind)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></g></svg>`;
+const cogSvg=a=>`<svg viewBox="0 0 46 46"><circle cx="23" cy="23" r="20" fill="none" stroke="var(--line)" stroke-width="2"/><text x="23" y="10" text-anchor="middle" style="font:700 8px system-ui;fill:var(--acc)">N</text><g transform="rotate(${a||0} 23 23)"><path d="M23 11 L29 33 L23 28 L17 33Z" fill="var(--acc)"/></g></svg>`;
+const boatSvg=r=>`<svg viewBox="0 0 46 46"><g transform="rotate(${r||0} 23 30)"><path d="M23 6 V28 M23 8 L35 27 H23" fill="none" stroke="var(--tx)" stroke-width="2" stroke-linejoin="round"/><path d="M7 28 H39 L34 38 H12Z" fill="var(--acc)"/></g><path d="M3 41 H43" stroke="var(--wind)" stroke-width="2" stroke-linecap="round"/></svg>`;
+function logViz(id,d,x){
+  const has=v=>v!=null;
+  switch(id){
+    case'pos':return has(d.lat)&&has(d.lon)?`<div class="lv w2"><small>Position</small><div class="pos">${dm(d.lat,'N','S',2)}<br>${dm(d.lon,'E','O',3)}</div></div>`:'';
+    case'cog':return has(d.cog)?`<div class="lv">${cogSvg(d.cog)}<small>Cap fond</small><b>${String(Math.round(d.cog)%360).padStart(3,'0')}<i>°</i></b></div>`:'';
+    case'sog':return has(d.sog)?vz('Vitesse fond',num(d.sog),'nds',d.sog/x.sog*100):'';
+    case'stw':return has(d.stw)?vz('Vitesse surface',num(d.stw),'nds',d.stw/x.sog*100,'var(--wind)'):'';
+    case'wind':return has(d.tws)?`<div class="lv">${windSvg(d.twa)}<small>Vent vrai</small><b>${num(d.tws,0)}<i>nds</i></b>${has(d.twa)?`<small>${Math.abs(Math.round(d.twa))}° ${d.twa>0?'tribord':'bâbord'}</small>`:''}</div>`:'';
+    case'awind':return has(d.aws)?`<div class="lv">${windSvg(d.awa)}<small>Vent apparent</small><b>${num(d.aws,0)}<i>nds</i></b>${has(d.awa)?`<small>${Math.abs(Math.round(d.awa))}° ${d.awa>0?'tribord':'bâbord'}</small>`:''}</div>`:'';
+    case'depth':return has(d.depth)?vz('Profondeur',num(d.depth),'m',d.depth/x.depth*100,d.depth<3?'var(--bad)':'var(--wind)'):'';
+    case'wTemp':return has(d.wTemp)?vz('Eau',num(d.wTemp),'°C',(d.wTemp+2)/30*100,'var(--wind)'):'';
+    case'airT':return has(d.airT)?vz('Air',num(d.airT),'°C',(d.airT+5)/40*100,'var(--warn)'):'';
+    case'baro':return has(d.baro)?vz('Pression',num(d.baro,0),'hPa',(d.baro-980)/60*100,'var(--mut)'):'';
+    case'attitude':return has(d.roll)||has(d.pitch)?`<div class="lv">${boatSvg(d.roll)}<small>Roulis</small><b>${has(d.roll)?Math.abs(d.roll).toFixed(0)+'°':'--'}<i>${d.roll>0.5?'tribord':d.roll<-0.5?'bâbord':''}</i></b><small>tangage ${has(d.pitch)?d.pitch.toFixed(0)+'°':'--'}</small></div>`:'';
+    case'rpm':return has(d.rpm)?(d.rpm<50?`<div class="lv"><small>Moteur</small><b style="color:var(--mut)">arrêt</b></div>`:vz('Moteur',num(d.rpm,0),'tr/min',d.rpm/3500*100,'var(--bad)')):'';
+    case'engT':return has(d.engT)?vz('Temp. moteur',num(d.engT,0),'°C',d.engT/110*100,d.engT>95?'var(--bad)':'var(--ok)'):'';
+    case'oilP':return has(d.oilP)?vz('Huile',num(d.oilP,1),'bar',d.oilP/6*100,'var(--warn)'):'';
+    case'fuel':return has(d.fuelRate)?vz('Conso',num(d.fuelRate,1),'L/h'):'';
+    case'hours':return has(d.engHours)?vz('Heures moteur',num(d.engHours,0),'h'):'';
+    case'rudder':return has(d.rudder)?vz('Barre',Math.abs(d.rudder).toFixed(0),'°',null,null,d.rudder>0.5?'tribord':d.rudder<-0.5?'bâbord':''):'';
+    case'bat':return(d.bats||[]).map(b=>{const p=b.soc!=null?b.soc:b.v!=null?(b.v-11.8)/1.8*100:null;return vz(esc(b.n),b.soc!=null?Math.round(b.soc):num(b.v,2),b.soc!=null?'%':'V',p,p<20?'var(--bad)':p<50?'var(--warn)':'var(--ok)',b.soc!=null&&b.v!=null?num(b.v,2)+' V':'')}).join('');
+    case'tanks':return(d.tanks||[]).map(k=>vz(TANKFR[k.type]||esc(k.type),Math.round(k.lvl),'%',k.lvl,k.lvl<15&&(k.type==='fuel'||k.type==='freshWater')?'var(--bad)':'var(--wind)')).join('');
+  }
+  return'';
+}
+const KIND={start:'Départ',auto:'Entrée automatique',manual:'Entrée manuelle',end:'Arrivée'};
+function logCard(e,x,ph){
+  const tiles=logFields().map(f=>logViz(f,e.d||{},x)).filter(Boolean).join('');
+  return`<div class="le k-${e.kind}" data-e="${e.id}"><div class="leh"><span class="tm">${fmtT(e.t)}</span><span class="kd">${KIND[e.kind]||''}${e.edited?' · modifiée':''}</span><button data-edit="${e.id}" aria-label="Modifier l'entrée de ${fmtT(e.t)}">✎</button></div>
+   <div class="lvg">${tiles||'<div class="mut">Rien à afficher pour cette entrée avec les réglages actuels.</div>'}</div>${(ph||[]).length?`<div class="phs">${ph.map(p=>`<img class="ph" data-ph="${p.id}" data-pe="${e.id}" src="${p.thumb}" alt="Photo du carnet">`).join('')}</div>`:''}${e.note?`<div class="lnote">${esc(e.note)}</div>`:''}</div>`;
+}
+const spdColor=x=>`hsl(${Math.round(205-175*Math.max(0,Math.min(1,x)))} 85% 55%)`;
+function miniMap(t,big){
+  const p=t.points.filter(q=>q.lat!=null&&q.lon!=null);if(p.length<2)return'';
+  const W=320,H=big?230:92,pad=big?22:12;
+  let a=90,b=-90,l=180,r=-180;p.forEach(q=>{a=Math.min(a,q.lat);b=Math.max(b,q.lat);l=Math.min(l,q.lon);r=Math.max(r,q.lon)});
+  const kx=Math.cos((a+b)/2*D2R),sc=Math.min((W-2*pad)/(Math.max(1e-6,(r-l)*kx)),(H-2*pad)/Math.max(1e-6,b-a)),ox=(W-(r-l)*kx*sc)/2,oy=(H-(b-a)*sc)/2;
+  const X=lo=>(ox+(lo-l)*kx*sc).toFixed(1),Y=la=>(oy+(b-la)*sc).toFixed(1),mx=Math.max(1,...p.map(q=>q.sog||0)),step=Math.max(1,Math.floor(p.length/200));
+  let seg='';for(let i=step;i<p.length;i+=step){const q0=p[i-step],q1=p[i];seg+=`<line x1="${X(q0.lon)}" y1="${Y(q0.lat)}" x2="${X(q1.lon)}" y2="${Y(q1.lat)}" stroke="${spdColor((q1.sog||0)/mx)}"/>`}
+  let dots='';if(big)(t.log||[]).forEach(e=>{const d=e.d||{};if(d.lat==null)return;dots+=`<circle data-goto="${e.id}" cx="${X(d.lon)}" cy="${Y(d.lat)}" r="${e.kind==='auto'?5:7}" fill="#fff" stroke="#0b1316" stroke-width="2" style="cursor:pointer"/><circle data-goto="${e.id}" cx="${X(d.lon)}" cy="${Y(d.lat)}" r="16" fill="transparent" style="cursor:pointer"/>`});
+  const s=p[0],f=p[p.length-1];
+  return`<svg class="mm" viewBox="0 0 ${W} ${H}" ${big?`style="height:auto;border-radius:12px"`:''}><g stroke-width="${big?4:3}" stroke-linecap="round">${seg}</g>${dots}<circle cx="${X(s.lon)}" cy="${Y(s.lat)}" r="${big?8:6}" fill="#2fbf71" stroke="#fff" stroke-width="2"/><circle cx="${X(f.lon)}" cy="${Y(f.lat)}" r="${big?8:6}" fill="#e5484d" stroke="#fff" stroke-width="2"/></svg>`;
+}
+function chart(t,key,name,unit,col,zero){
+  const pts=t.points.filter(p=>p[key]!=null);if(pts.length<3)return'';
+  const t0=t.start,t1=Math.max(t.end||0,pts[pts.length-1].t),span=Math.max(1,t1-t0),N=Math.min(120,pts.length),bins=Array.from({length:N},()=>({s:0,n:0}));
+  pts.forEach(p=>{const i=Math.min(N-1,Math.floor((p.t-t0)/span*N));bins[i].s+=p[key];bins[i].n++});
+  const ser=bins.map((b,i)=>b.n?{i,v:b.s/b.n}:null).filter(Boolean);
+  const vals=pts.map(p=>p[key]),mx=Math.max(...vals),mn=Math.min(...vals),avg=vals.reduce((s,v)=>s+v,0)/vals.length;
+  let lo=zero===false?mn:Math.min(0,mn),hi=mx;if(hi-lo<1e-6)hi=lo+1;
+  const W=320,H=100,pl=4,pr=4,pt=8,pb=18,X=i=>pl+i/(N-1)*(W-pl-pr),Y=v=>pt+(1-(v-lo)/(hi-lo))*(H-pt-pb);
+  const line=ser.map((s,k)=>(k?'L':'M')+X(s.i).toFixed(1)+' '+Y(s.v).toFixed(1)).join(''),area=line+`L${X(ser[ser.length-1].i).toFixed(1)} ${Y(lo).toFixed(1)}L${X(ser[0].i).toFixed(1)} ${Y(lo).toFixed(1)}Z`;
+  const marks=(t.log||[]).map(e=>{const i=(e.t-t0)/span*(N-1);return i<0||i>N-1?'':`<line x1="${X(i).toFixed(1)}" y1="${pt}" x2="${X(i).toFixed(1)}" y2="${H-pb}" stroke="var(--mut)" stroke-dasharray="2 4" opacity=".6"/>`}).join('');
+  const gid='g'+(++dialUid);
+  return`<div class="card"><div class="row" style="justify-content:space-between"><b>${name}</b><span class="mut">moy ${num(avg,unit==='tr/min'?0:1)} · max ${num(mx,unit==='tr/min'?0:1)} ${unit}</span></div>
+   <svg class="chart" viewBox="0 0 ${W} ${H}" width="100%"><defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${col}" stop-opacity=".45"/><stop offset="1" stop-color="${col}" stop-opacity=".02"/></linearGradient></defs>
+   ${marks}<path d="${area}" fill="url(#${gid})"/><path d="${line}" fill="none" stroke="${col}" stroke-width="2.5" stroke-linejoin="round"/>
+   <text x="${pl}" y="${H-4}">${fmtT(t0)}</text><text x="${W-pr}" y="${H-4}" text-anchor="end">${fmtT(t1)}</text></svg></div>`;
+}
+const CHARTS=[['sog','sog','Vitesse fond','nds','var(--acc)'],['wind','tws','Vent vrai','nds','var(--wind)'],['depth','depth','Profondeur','m','#5fb3a6'],['attitude','roll','Roulis','°','var(--warn)',false],['rpm','rpm','Régime moteur','tr/min','var(--bad)']];
+
 async function renderTrips(){
   const trips=(await db.all('trips')).sort((a,b)=>b.start-a.start);
-  if(!trips.length){$('#tripList').innerHTML='<div class="card mut">Aucun trajet. Il sera enregistré automatiquement dès que le bateau avance, ou lance-le manuellement depuis « Direct ».</div>';return}
-  $('#tripList').innerHTML=trips.map(t=>{const s=tripStats(t);
-    return `<div class="card trip" data-id="${t.id}"><h3>${esc(t.name)}${t.open?' <span class="pill rec">en cours</span>':''}</h3>
-    <div class="mut">${fmtDT(t.start)} · ${fmtDur(s.dur)}</div>
-    <div class="mut">${num(s.dist)} NM · moy ${num(s.avg)} nds · max ${num(s.maxS)} nds</div></div>`}).join('');
+  if(!trips.length){$('#tripList').innerHTML='<div class="card mut">Aucun trajet. Il sera enregistré automatiquement dès que le bateau avance, ou démarre-le à la main depuis « Direct ».</div>';return}
+  $('#tripList').innerHTML=trips.map(t=>{if(cur&&cur.id===t.id)t=cur;const s=tripStats(t),n=(t.log||[]).length;
+    return`<div class="card trip tcard" data-id="${t.id}">${miniMap(t,false)}<div class="in"><h3>${esc(t.name)}${t.demo?' <span class="pill">démo</span>':''}${t.open?' <span class="pill rec">en cours</span>':''}</h3>
+    <div class="mut">${fmtDT(t.start)} · ${fmtDur(s.dur)} · ${n} entrée${n>1?'s':''} de log</div>
+    <div class="mut"><b style="color:var(--tx)">${num(s.dist)} NM</b> · moy ${num(s.avg)} nds · max ${num(s.maxS)} nds</div></div></div>`}).join('');
   $$('.trip').forEach(e=>e.onclick=()=>showTrip(e.dataset.id));
 }
 async function showTrip(id){
-  const trips=await db.all('trips');const t=trips.find(x=>x.id===id);if(!t)return;
-  openTrip=id;const s=tripStats(t);
+  const trips=await db.all('trips');const t=(cur&&cur.id===id)?cur:trips.find(x=>x.id===id);if(!t)return;
+  openTrip=id;const s=tripStats(t),S=logSec(),F=logFields();
   const notes=(await db.all('notes')).filter(n=>n.trip===id).sort((a,b)=>a.t-b.t);
-  // relevé horaire
-  const rows=[];let next=t.start;
-  t.points.forEach(p=>{if(p.t>=next){rows.push(p);next=p.t+3600000}});
+  const log=(t.log||[]).slice().sort((a,b)=>a.t-b.t);
+  const photos=(await db.all('photos')).filter(p=>p.trip===id).sort((a,b)=>a.t-b.t),phOf=eid=>photos.filter(p=>p.entry===eid);
+  const x={sog:Math.max(6,s.maxS,...log.map(e=>e.d?.sog||0)),depth:Math.max(5,...t.points.map(p=>p.depth||0),...log.map(e=>e.d?.depth||0))};
+  const pct=(v,m)=>Math.round(Math.max(0,Math.min(100,v/m*100)));
+  const hasEng=t.points.some(p=>p.rpm!=null),engPct=hasEng&&s.dur>0?Math.round(Math.min(100,s.eng/s.dur*100)):null;
+  let last='',tl='';
+  log.forEach(e=>{const day=new Date(e.t).toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+    if(day!==last){tl+=`<div class="mut" style="margin:0 0 8px -2px;text-transform:capitalize">${day}</div>`;last=day}
+    tl+=logCard(e,x,phOf(e.id))});
   $('#tripList').classList.add('hide');$('#tripDetail').classList.remove('hide');
   $('#tripDetail').innerHTML=`
   <div class="row noprint" style="margin-bottom:8px"><button class="b sec" id="tBack">← Retour</button><button class="b sec" id="tMap">Voir sur la carte</button></div>
-  <div class="card"><label style="margin-top:0">Nom</label><input id="tName" value="${esc(t.name)}">
-  <label>Équipage / remarques</label><input id="tCrew" value="${esc(t.crew)}" placeholder="Skipper, équipiers…">
-  <div class="stats">
-    <div><span class="mut">Distance</span><b>${num(s.dist)} NM</b></div><div><span class="mut">Durée</span><b>${fmtDur(s.dur)}</b></div>
-    <div><span class="mut">Vitesse moy / max</span><b>${num(s.avg)} / ${num(s.maxS)} nds</b></div><div><span class="mut">Vent max</span><b>${s.maxW?num(s.maxW)+' nds':'--'}</b></div>
-    <div><span class="mut">Moteur</span><b>${fmtDur(s.eng)}</b></div><div><span class="mut">Points</span><b>${s.n}</b></div></div>
-  <div class="mut">Départ ${fmtDT(t.start)}${t.end?' · Arrivée '+fmtDT(t.end):''}</div></div>
-  <div class="card"><b>Relevé horaire</b><div class="scroll"><table><tr><th>Heure</th><th>Position</th><th>Cap</th><th>SOG</th><th>Vent</th><th>Prof.</th></tr>
-  ${rows.map(p=>`<tr><td>${fmtT(p.t)}</td><td>${fmtPos(p.lat,p.lon)}</td><td>${num(p.cog,0)}°</td><td>${num(p.sog)}</td><td>${p.tws!=null?num(p.tws,0)+' nds':'--'}</td><td>${p.depth!=null?num(p.depth):'--'}</td></tr>`).join('')}</table></div></div>
-  <div class="card"><b>Notes</b>${notes.length?notes.map(n=>`<div style="margin-top:6px"><span class="mut">${fmtT(n.t)} · ${esc(n.type)}</span><br>${esc(n.text)}</div>`).join(''):'<div class="mut">Aucune note.</div>'}</div>
-  <div class="row noprint"><button class="b sec" id="tGpx">GPX</button><button class="b sec" id="tCsv">CSV</button><button class="b sec" id="tPrint">Imprimer / PDF</button><button class="b red" id="tDel">Supprimer</button></div>`;
+  <div class="card"><input id="tName" value="${esc(t.name)}" aria-label="Nom du trajet" style="font:600 20px var(--num);background:transparent;border:0;padding:0 0 6px;border-bottom:1px solid var(--line);border-radius:0">
+   <div class="lb-h"><div><span class="big">${num(s.dist)}</span><small>NM</small></div><div><span class="big">${fmtDur(s.dur)}</span></div></div>
+   <div class="mut">Départ ${fmtDT(t.start)}${t.end?' · Arrivée '+fmtDT(t.end):' · en cours'}</div>
+   <label>Équipage / remarques</label><input id="tCrew" value="${esc(t.crew)}" placeholder="Skipper, équipiers…">
+   ${S.stats?`<div class="rings"><div class="rg"><div class="r" style="--p:${pct(s.avg,Math.max(1,s.maxS))}"><b>${num(s.avg)}</b></div><small>vitesse moy. (max ${num(s.maxS)} nds)</small></div>
+    <div class="rg"><div class="r" style="--p:${pct(s.maxW,40)};--c:var(--wind)"><b>${s.maxW?num(s.maxW,0):'--'}</b></div><small>vent max (nds)</small></div>
+    <div class="rg"><div class="r" style="--p:${engPct||0};--c:var(--bad)"><b>${engPct!=null?engPct+'%':'--'}</b></div><small>au moteur (${fmtDur(s.eng)})</small></div></div>`:''}</div>
+  ${S.map&&t.points.length>1?`<div class="card"><b>Tracé</b><div class="mut" style="margin-bottom:6px">Couleur = vitesse (bleu lent, rouge rapide). Touche un point blanc pour voir l'entrée du log.</div>${miniMap(t,true)}</div>`:''}
+  ${S.charts?CHARTS.filter(c=>F.includes(c[0])).map(c=>chart(t,c[1],c[2],c[3],c[4],c[5])).join(''):''}
+  <div class="row noprint" style="justify-content:space-between;margin:14px 0 8px"><b style="font:600 20px var(--num)">Journal de bord</b><button class="b" id="tAdd">＋ Entrée</button></div>
+  <div class="tl">${tl||'<div class="card mut">Pas encore d\'entrée. Une entrée est ajoutée automatiquement toutes les '+cfg.logMin+' minutes pendant un trajet.</div>'}</div>
+  ${notes.length?`<div class="card"><b>Notes</b>${notes.map(n=>`<div style="margin-top:6px"><span class="mut">${fmtT(n.t)} · ${esc(n.type)}</span><br>${esc(n.text)}</div>`).join('')}</div>`:''}
+  <details class="card"><summary>Relevé horaire détaillé (tableau)</summary><div class="scroll"><table><tr><th>Heure</th><th>Position</th><th>Cap</th><th>SOG</th><th>Vent</th><th>Prof.</th></tr>
+  ${(()=>{const rows=[];let next=t.start;t.points.forEach(p=>{if(p.t>=next){rows.push(p);next=p.t+3600000}});return rows.map(p=>`<tr><td>${fmtT(p.t)}</td><td>${fmtPos(p.lat,p.lon)}</td><td>${num(p.cog,0)}°</td><td>${num(p.sog)}</td><td>${p.tws!=null?num(p.tws,0)+' nds':'--'}</td><td>${p.depth!=null?num(p.depth):'--'}</td></tr>`).join('')})()}</table></div></details>
+  <div class="row noprint"><button class="b sec" id="tGpx">GPX</button><button class="b sec" id="tCsv">CSV trace</button><button class="b sec" id="tLog">CSV journal</button><button class="b sec" id="tPrint">Imprimer / PDF</button><button class="b red" id="tDel">Supprimer</button></div>`;
   $('#tBack').onclick=()=>{openTrip=null;$('#tripDetail').classList.add('hide');$('#tripList').classList.remove('hide');renderTrips()};
-  $('#tName').onchange=async e=>{t.name=e.target.value;await db.put('trips',t);if(cur&&cur.id===t.id)cur.name=t.name};
-  $('#tCrew').onchange=async e=>{t.crew=e.target.value;await db.put('trips',t);if(cur&&cur.id===t.id)cur.crew=t.crew};
+  $('#tName').onchange=async e=>{const o=t.name;t.name=e.target.value;await db.put('trips',t);if(o!==t.name)audit('trip_edit',t,null,[{label:'Nom du trajet',from:o,to:t.name,text:true}])};
+  $('#tCrew').onchange=async e=>{const o=t.crew||'';t.crew=e.target.value;await db.put('trips',t);if(o!==t.crew)audit('trip_edit',t,null,[{label:'Équipage / remarques',from:o||null,to:t.crew||null,text:true}])};
+  $$('[data-ph]').forEach(im=>im.onclick=()=>{const eid=im.dataset.pe,en=log.find(q=>q.id===eid),ids=phOf(eid).map(p=>p.id);viewPhotos(ids,ids.indexOf(im.dataset.ph),t,en,()=>showTrip(id))});
   $('#tMap').onclick=()=>{go('map');fillMapSel().then(()=>{$('#mapSel').value=id;drawMapSel(true)})};
   $('#tGpx').onclick=()=>download(t.name+'.gpx',toGPX(t),'application/gpx+xml');
   $('#tCsv').onclick=()=>download(t.name+'.csv',toCSV(t),'text/csv');
+  $('#tLog').onclick=()=>download(t.name+'-journal.csv',toLogCSV(t),'text/csv');
   $('#tPrint').onclick=()=>print();
-  $('#tDel').onclick=async()=>{if(!confirm('Supprimer ce trajet ?'))return;if(cur&&cur.id===id)cur=null,updateRecUI();await db.del('trips',id);$('#tBack').click()};
+  $('#tAdd').onclick=()=>addManualEntry(t);
+  $$('[data-edit]').forEach(b=>b.onclick=()=>openLogEdit(t,b.dataset.edit));
+  $$('[data-goto]').forEach(c=>c.onclick=()=>{const el=$(`.le[data-e="${c.dataset.goto}"]`);if(!el)return;$$('.le.hl').forEach(h=>h.classList.remove('hl'));el.classList.add('hl');el.scrollIntoView({behavior:'smooth',block:'center'})});
+  $('#tDel').onclick=async()=>{if(!confirm('Supprimer ce trajet, ses entrées et ses photos ?'))return;if(cur&&cur.id===id)cur=null,updateRecUI();await deleteTrip(t);$('#tBack').click()};
 }
+const EDITF=[['lat','Latitude','°'],['lon','Longitude','°'],['cog','Cap fond','°'],['hdg','Cap compas','°'],['sog','Vitesse fond','nds'],['stw','Vitesse surface','nds'],['tws','Vent vrai','nds'],['twa','Angle vent vrai','°'],['aws','Vent apparent','nds'],['awa','Angle vent app.','°'],['depth','Profondeur','m'],['wTemp','Eau','°C'],['airT','Air','°C'],['baro','Pression','hPa'],['roll','Roulis','°'],['pitch','Tangage','°'],['rpm','Régime','tr/min'],['engT','Temp. moteur','°C'],['oilP','Huile','bar'],['fuelRate','Conso','L/h'],['engHours','Heures moteur','h'],['rudder','Barre','°']];
+function toLogCSV(t){
+  const h=['heure_iso','type','remarque',...EDITF.map(f=>f[0])].join(';');
+  return h+'\n'+(t.log||[]).slice().sort((a,b)=>a.t-b.t).map(e=>[new Date(e.t).toISOString(),e.kind,'"'+String(e.note||'').replace(/"/g,'""')+'"',...EDITF.map(f=>e.d?.[f[0]]==null?'':+(+e.d[f[0]]).toFixed(5))].join(';')).join('\n');
+}
+async function addManualEntry(t){
+  const isCur=cur&&cur.id===t.id;t.log=t.log||[];
+  const e={id:uid(),t:isCur?NOW():(t.end||NOW()),kind:'manual',note:'',d:isCur?fullData():{},edited:!isCur};
+  e.orig=JSON.parse(JSON.stringify({t:e.t,note:e.note,d:e.d}));
+  t.log.push(e);t.log.sort((a,b)=>a.t-b.t);await db.put('trips',t);audit('entry_create',t,e,[{label:'Entrée manuelle',from:null,to:fmtDT(e.t)}]);openLogEdit(t,e.id);
+}
+function openLogEdit(t,eid){
+  const e=(t.log||[]).find(q=>q.id===eid);if(!e)return;
+  const before=JSON.parse(JSON.stringify({t:e.t,note:e.note||'',d:e.d||{}}));
+  const m=document.createElement('div');m.className='modal';
+  const ini=k=>e.d?.[k]!=null?String(+(+e.d[k]).toFixed(4)):'';
+  m.innerHTML=`<div role="dialog" aria-label="Modifier l'entrée"><div class="row" style="justify-content:space-between"><b style="font:600 20px var(--num)">Modifier l'entrée</b><button class="b sec" id="leX">Fermer</button></div>
+   <label>Date et heure</label><input type="datetime-local" id="leT" data-o="${toLocalInput(e.t)}" value="${toLocalInput(e.t)}">
+   <label>Remarque</label><textarea id="leN" rows="3" placeholder="Ex : ris pris, dauphins, changement de quart…">${esc(e.note)}</textarea>
+   <label>Photos</label><div class="phs" id="lePh"></div>
+   <div class="row"><label class="b sec" style="margin:0;color:var(--tx);cursor:pointer;display:inline-block;width:auto">📷 Prendre une photo<input type="file" id="lePhCam" accept="image/*" capture="environment" class="hide"></label>
+     <label class="b sec" style="margin:0;color:var(--tx);cursor:pointer;display:inline-block;width:auto">🖼 Galerie<input type="file" id="lePhGal" accept="image/*" multiple class="hide"></label></div>
+   <div class="mut" style="margin-top:14px">Valeurs relevées (laisser vide = pas de donnée). Chaque modification est enregistrée dans le journal d'audit.</div>
+   <div class="ed2">${EDITF.map(f=>`<div><label>${f[1]} (${f[2]})</label><input data-k="${f[0]}" data-o="${ini(f[0])}" inputmode="decimal" value="${ini(f[0])}"></div>`).join('')}</div>
+   <div class="row" style="margin-top:16px"><button class="b" id="leS" style="flex:1">Enregistrer</button><button class="b red" id="leD">Supprimer l'entrée</button></div></div>`;
+  document.body.appendChild(m);
+  const close=()=>m.remove(),refresh=()=>{if(openTrip===t.id)showTrip(t.id)};
+  const drawPh=async()=>{
+    const ph=(await db.all('photos')).filter(p=>p.entry===eid).sort((a,b)=>a.t-b.t);
+    $('#lePh').innerHTML=ph.length?ph.map(p=>`<div class="phw"><img class="ph" data-v="${p.id}" src="${p.thumb}" alt="Photo"><button data-x="${p.id}" aria-label="Supprimer la photo">✕</button></div>`).join(''):'<span class="mut">Aucune photo.</span>';
+    m.querySelectorAll('[data-v]').forEach(im=>im.onclick=()=>{const ids=ph.map(p=>p.id);viewPhotos(ids,ids.indexOf(im.dataset.v),t,e,drawPh)});
+    m.querySelectorAll('[data-x]').forEach(b=>b.onclick=async()=>{const p=ph.find(q=>q.id===b.dataset.x);if(!confirm('Supprimer cette photo ?'))return;await removePhoto(t,e,p);drawPh();refresh()});
+  };
+  drawPh();
+  const onFiles=async ev=>{const fs=[...ev.target.files];ev.target.value='';if(!fs.length)return;await addPhotos(t,e,fs);drawPh();refresh()};
+  $('#lePhCam').onchange=onFiles;$('#lePhGal').onchange=onFiles;
+  m.onclick=ev=>{if(ev.target===m)close()};$('#leX').onclick=close;
+  $('#leS').onclick=async()=>{
+    const tm=new Date($('#leT').value).getTime();if($('#leT').value!==$('#leT').dataset.o&&!isNaN(tm))e.t=tm;
+    e.note=$('#leN').value.trim();e.d=e.d||{};
+    m.querySelectorAll('[data-k]').forEach(i=>{if(i.value.trim()===i.dataset.o)return;const v=i.value.trim().replace(',','.');e.d[i.dataset.k]=v===''||isNaN(+v)?null:+v});
+    const ch=diffEntry(before,{t:e.t,note:e.note,d:e.d});
+    if(ch.length){e.edited=true;if(!e.orig)e.orig=before;await audit('entry_edit',t,e,ch)}
+    t.log.sort((a,b)=>a.t-b.t);await db.put('trips',t);close();refresh();
+  };
+  $('#leD').onclick=async()=>{
+    if(!confirm('Supprimer cette entrée et ses photos ?'))return;
+    const ph=(await db.all('photos')).filter(p=>p.entry===eid);for(const p of ph)await db.del('photos',p.id);
+    const ch=[{label:'Entrée supprimée',from:fmtDT(e.t)+(e.note?' · « '+clip(e.note)+' »':''),to:null}];
+    EDITF.forEach(([k,l,u])=>{if(e.d?.[k]!=null)ch.push({label:l,unit:u,from:e.d[k],to:null})});if(ph.length)ch.push({label:'Photos',from:ph.length,to:0});
+    t.log=t.log.filter(q=>q.id!==eid);await db.put('trips',t);await audit('entry_delete',t,e,ch);close();refresh();
+  };
+}
+function buildLogCfg(){
+  const F=logFields(),S=logSec();
+  $('#logFields').innerHTML=LOGF.map(f=>`<label class="chip"><input type="checkbox" data-lf="${f.id}" ${F.includes(f.id)?'checked':''}><span>${f.n}</span></label>`).join('');
+  $$('[data-lf]').forEach(c=>c.onchange=()=>{cfg.logFields=LOGF.map(f=>f.id).filter(id=>$(`[data-lf="${id}"]`).checked);saveCfg()});
+  $('#logSec').innerHTML=[['map','Carte du tracé'],['charts','Graphiques'],['stats','Chiffres clés']].map(([k,n])=>`<label class="chip"><input type="checkbox" data-ls="${k}" ${S[k]?'checked':''}><span>${n}</span></label>`).join('');
+  $$('[data-ls]').forEach(c=>c.onchange=()=>{cfg.logSec={...logSec(),[c.dataset.ls]:c.checked};saveCfg()});
+  $('#sLogMin').value=cfg.logMin;
+}
+$('#sLogMin').onchange=e=>{const v=+e.target.value;if(v>0){cfg.logMin=v;saveCfg()}};
+
 function toGPX(t){
   return `<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Carnet de bord" xmlns="http://www.topografix.com/GPX/1/1"><trk><name>${esc(t.name)}</name><trkseg>\n`+
   t.points.map(p=>`<trkpt lat="${p.lat}" lon="${p.lon}"><time>${new Date(p.t).toISOString()}</time></trkpt>`).join('\n')+`\n</trkseg></trk></gpx>`;
@@ -651,6 +1246,7 @@ function renderMap(){
   c.width=W*dpr;c.height=H*dpr;const g=c.getContext('2d');g.scale(dpr,dpr);
   if(MV.auto)fitView(W,H);
   const z=MV.z,ox=wx(MV.lon,z)-W/2,oy=wy(MV.lat,z)-H/2;
+  VT={ox,oy,z,W,H};
   const P=p=>[wx(p.lon,z)-ox,wy(p.lat,z)-oy];
   const cs=getComputedStyle(document.documentElement);g.fillStyle=cs.getPropertyValue('--map');g.fillRect(0,0,W,H);
   // graticule
@@ -680,6 +1276,7 @@ function renderMap(){
   if(MD.pts.length){dot(MD.pts[0],'#3ddc97');dot(MD.pts[MD.pts.length-1],'#ff5d6c')}
   if(MD.ov&&MD.ov.length){dot(MD.ov[0],'#3fb6ff');dot(MD.ov[MD.ov.length-1],'#3fb6ff')}
   fxBase(g,W,H,ox,oy,z);
+  wpDraw(g,P);
   // position du bateau
   if(fresh('lat')){const[x,y]=P({lat:D.lat,lon:D.lon});g.save();g.translate(x,y);g.rotate((fresh('cog')?D.cog:0)*D2R);
     g.fillStyle='#fff';g.strokeStyle='#04202f';g.lineWidth=2;g.beginPath();g.moveTo(0,-13);g.lineTo(9,10);g.lineTo(0,5);g.lineTo(-9,10);g.closePath();g.fill();g.stroke();g.restore()}
@@ -696,17 +1293,40 @@ function renderMap(){
   fxZoneUI();
 }
 (()=>{
-  const c=$('#map'),ptrs=new Map();let last=0;
+  const c=$('#map'),ptrs=new Map();let last=0,tap=null;
   const zoomBy=d=>{MV.z=Math.max(3,Math.min(18,MV.z+d));MV.auto=false;scheduleDraw()};
-  c.onpointerdown=e=>{c.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});last=0};
+  const rel=e=>{const r=c.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top]};
+  c.onpointerdown=e=>{
+    c.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});last=0;
+    const[x,y]=rel(e);
+    if(ptrs.size===1){tap={x,y,t:NOW(),moved:false};
+      if(WPE.on){const h=wpHit(x,y);if(h)WPE.drag={...h,id:e.pointerId,moved:false}}}
+    else{tap=null;WPE.drag=null}
+  };
   c.onpointermove=e=>{
     const p=ptrs.get(e.pointerId);if(!p)return;
+    const[x,y]=rel(e);if(tap&&Math.hypot(x-tap.x,y-tap.y)>9)tap.moved=true;
+    const d=WPE.drag;
+    if(d&&d.id===e.pointerId){
+      if(!d.moved){
+        if(!tap||!tap.moved)return;
+        d.moved=true;wpPush();wpSheet('');
+        if(d.type==='mid'){WP.splice(d.i+1,0,{lat:(WP[d.i].lat+WP[d.i+1].lat)/2,lon:(WP[d.i].lon+WP[d.i+1].lon)/2});d.type='pt';d.i=d.i+1}
+        WPE.sel=d.i;
+      }
+      WP[d.i]=toGeo(x,y);scheduleDraw();return;
+    }
     const dx=e.clientX-p.x,dy=e.clientY-p.y;p.x=e.clientX;p.y=e.clientY;
     if(ptrs.size===1){MV.auto=false;const z=MV.z;MV.lon=unx(wx(MV.lon,z)-dx,z);MV.lat=uny(wy(MV.lat,z)-dy,z);scheduleDraw()}
-    else if(ptrs.size===2){const[a,b]=[...ptrs.values()],d=Math.hypot(a.x-b.x,a.y-b.y);
-      if(last){if(d/last>1.5){zoomBy(1);last=d}else if(d/last<0.67){zoomBy(-1);last=d}}else last=d}
+    else if(ptrs.size===2){const[a,b]=[...ptrs.values()],dd=Math.hypot(a.x-b.x,a.y-b.y);
+      if(last){if(dd/last>1.5){zoomBy(1);last=dd}else if(dd/last<0.67){zoomBy(-1);last=dd}}else last=dd}
   };
-  c.onpointerup=c.onpointercancel=e=>{ptrs.delete(e.pointerId);last=0};
+  c.onpointerup=c.onpointercancel=e=>{
+    const[x,y]=rel(e),ok=e.type==='pointerup',d=WPE.drag;
+    if(d&&d.id===e.pointerId){WPE.drag=null;if(d.moved){WPE.sel=-1;wpChanged()}else if(ok)wpTap(x,y);ptrs.delete(e.pointerId);tap=null;last=0;return}
+    if(WPE.on&&ok&&tap&&!tap.moved&&ptrs.size===1&&NOW()-tap.t<700)wpTap(x,y);
+    tap=null;ptrs.delete(e.pointerId);last=0;
+  };
   c.onwheel=e=>{e.preventDefault();zoomBy(e.deltaY<0?1:-1)};
   $('#mZin').onclick=()=>zoomBy(1);$('#mZout').onclick=()=>zoomBy(-1);$('#mFit').onclick=()=>drawMapSel(true);
   const b=localStorage.getItem('mapBase');if(b)$('#mapBase').value=b;
@@ -827,7 +1447,7 @@ function viewBBox(){
 async function loadZone(){
   const st=$('#fxZst'),v=viewBBox(),span=Math.max(v.n-v.s,v.e-v.w);
   if(span>40){st.textContent='Zone trop grande : zoome davantage.';return}
-  const wxM=$('#rWx').value,wave=$('#rWave').value,cur2=$('#rCur').checked,t0=Math.floor(Date.now()/3600000)*3600000,pad=span*0.1;
+  const wxM=$('#rWx').value,wave=$('#rWave').value,cur2=$('#rCur').checked,t0=Math.floor(NOW()/3600000)*3600000,pad=span*0.1;
   const bb={s:Math.max(-85,v.s-pad),n:Math.min(85,v.n+pad),w:Math.max(-180,v.w-pad),e:Math.min(180,v.e+pad)};
   $('#fxReload').disabled=true;
   try{
@@ -836,9 +1456,9 @@ async function loadZone(){
       if(!cfg.kPoint)throw new Error('clé Windy Point Forecast manquante (⚙️ Réglages)');
       const key='Z|'+[wxM,wave,cur2,bb.s.toFixed(1),bb.n.toFixed(1),bb.w.toFixed(1),bb.e.toFixed(1)].join('|');
       let L=gridCache[key];
-      if(!L||Date.now()-L.at>3600000){L=await loadAll(bb,wxM,wave,cur2,m=>{st.textContent=m});L.at=Date.now();gridCache[key]=L}
+      if(!L||NOW()-L.at>3600000){L=await loadAll(bb,wxM,wave,cur2,m=>{st.textContent=m});L.at=NOW();gridCache[key]=L}
       LAST_ZONE={smp:makeSampler(L),bb,wave:!!L.wave,cur:!!L.cur,t0,horizon:L.horizon,zone:true};
-      st.textContent='Zone chargée à '+fmtT(Date.now())+' · '+wxM+(L.warns.length?' · '+L.warns[0]:'');
+      st.textContent='Zone chargée à '+fmtT(NOW())+' · '+wxM+(L.warns.length?' · '+L.warns[0]:'');
     }
     if(FX.zone){LAST=LAST_ZONE;FX.key='';FX.parts=[];FX.t=0;$('#fxT').value=0;updFxLbl();scheduleDraw()}
   }catch(e){st.textContent='Erreur : '+e.message}
@@ -873,7 +1493,7 @@ async function renderNotes(){
 }
 $('#nAdd').onclick=async()=>{
   const text=$('#nText').value.trim();if(!text)return;
-  await db.put('notes',{id:uid(),t:Date.now(),type:$('#nType').value,text,trip:cur?.id||null,lat:fresh('lat')?D.lat:null,lon:fresh('lon')?D.lon:null});
+  await db.put('notes',{id:uid(),t:NOW(),type:$('#nType').value,text,trip:cur?.id||null,lat:fresh('lat')?D.lat:null,lon:fresh('lon')?D.lon:null});
   $('#nText').value='';renderNotes();
 };
 
@@ -892,25 +1512,135 @@ async function renderStats(){
    <div class="card"><b>Milles par mois</b>${ks.map(k=>`<div style="margin-top:8px"><div class="mut">${k} · ${num(byMonth[k],0)} NM</div><div class="bar" style="width:${Math.max(2,byMonth[k]/mx*100)}%"></div></div>`).join('')}</div>`;
 }
 
+/* ---------- Audit : journal inviolable (chaîné par empreintes) de toutes les modifications du carnet ---------- */
+const AUDIT_ACT={entry_create:['Entrée créée','var(--ok)'],entry_edit:['Entrée modifiée','var(--acc)'],entry_delete:['Entrée supprimée','var(--bad)'],photo_add:['Photo ajoutée','var(--wind)'],photo_del:['Photo supprimée','var(--bad)'],trip_edit:['Trajet modifié','var(--acc)'],trip_delete:['Trajet supprimé','var(--bad)']};
+async function sha(txt){
+  try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(txt));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+  catch(e){let h1=0xdeadbeef,h2=0x41c6ce57;for(let i=0;i<txt.length;i++){const c=txt.charCodeAt(i);h1=Math.imul(h1^c,2654435761);h2=Math.imul(h2^c,1597334677)}
+    h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);return'f'+(4294967296*(2097151&h2)+(h1>>>0)).toString(16).padStart(14,'0')}
+}
+const auditBody=r=>JSON.stringify([r.seq,r.t,r.action,r.trip,r.tripName,r.entry,r.entryT,r.changes,r.prev]);
+let AUDIT_Q=Promise.resolve();
+function audit(action,t,e,changes){   // ajoute une ligne à la fin de la chaîne
+  AUDIT_Q=AUDIT_Q.then(async()=>{
+    const all=(await db.all('audit')).sort((a,b)=>a.seq-b.seq),last=all[all.length-1];
+    const r={id:uid(),seq:(last?last.seq:0)+1,t:Date.now(),action,trip:t?.id||null,tripName:t?.name||'',entry:e?.id||null,entryT:e?.t??null,changes:changes||[],prev:last?last.hash:'0'};
+    r.hash=await sha(auditBody(r));await db.put('audit',r);if(!$('#auditView').classList.contains('hide'))renderAudit();updAuditSummary();
+  }).catch(err=>console.error('audit',err));
+  return AUDIT_Q;
+}
+function diffEntry(a,b){
+  const out=[];
+  if(a.t!==b.t)out.push({label:'Date et heure',from:fmtDT(a.t),to:fmtDT(b.t)});
+  if((a.note||'')!==(b.note||''))out.push({label:'Remarque',from:a.note||null,to:b.note||null,text:true});
+  EDITF.forEach(([k,l,u])=>{const x=a.d?.[k]??null,y=b.d?.[k]??null;if(x!==y&&!(x!=null&&y!=null&&Math.abs(x-y)<1e-9))out.push({label:l,unit:u,from:x,to:y})});
+  return out;
+}
+const clip=s=>{s=String(s);return s.length>90?s.slice(0,90)+'…':s};
+const chText=c=>{const f=v=>v==null?'—':c.text?'« '+clip(v)+' »':(typeof v==='number'?+v.toFixed(4):v);return`${esc(c.label)} : ${esc(f(c.from))} → <b>${esc(f(c.to))}</b>${c.unit&&(c.from!=null||c.to!=null)?' '+esc(c.unit):''}`};
+async function renderAudit(){
+  const all=(await db.all('audit')).sort((a,b)=>b.seq-a.seq),tf=$('#auTrip').value,af=$('#auAct').value;
+  const trips=[...new Map(all.map(r=>[r.trip,r.tripName])).entries()];
+  const old=$('#auTrip').value;$('#auTrip').innerHTML='<option value="">Tous les trajets</option>'+trips.map(([id,n])=>`<option value="${esc(id)}">${esc(n||'(sans nom)')}</option>`).join('');$('#auTrip').value=trips.some(x=>x[0]===old)?old:'';
+  const L=all.filter(r=>(!$('#auTrip').value||r.trip===$('#auTrip').value)&&(!af||r.action===af));
+  $('#auInfo').textContent=`${all.length} modification${all.length>1?'s':''} enregistrée${all.length>1?'s':''}. Ce journal ne peut ni être modifié ni être effacé depuis l'application.`;
+  let day='';
+  $('#auList').innerHTML=L.length?L.map(r=>{const d=new Date(r.t).toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}),h=day!==d?`<div class="mut" style="margin:14px 0 6px;text-transform:capitalize">${d}</div>`:'';day=d;
+    const a=AUDIT_ACT[r.action]||[r.action,'var(--mut)'];
+    return h+`<div class="card" style="border-left:4px solid ${a[1]};padding:10px 12px;margin-bottom:8px"><div class="row" style="justify-content:space-between"><b>${a[0]}</b><span class="mut">${new Date(r.t).toLocaleTimeString('fr-FR')} · n°${r.seq}</span></div>
+     <div class="mut">${esc(r.tripName||'')}${r.entryT!=null?' · entrée de '+fmtDT(r.entryT):''}</div>
+     ${(r.changes||[]).map(c=>`<div style="font-size:14px;margin-top:3px">${chText(c)}</div>`).join('')}
+     <div class="mut" style="font:11px ui-monospace,monospace;margin-top:6px;word-break:break-all">empreinte ${r.hash.slice(0,16)}…</div></div>`}).join(''):'<div class="card mut">Aucune modification pour ce filtre.</div>';
+}
+async function verifyAudit(){
+  const all=(await db.all('audit')).sort((a,b)=>a.seq-b.seq);let prev='0';
+  for(const r of all){if(r.prev!==prev||await sha(auditBody(r))!==r.hash)return{ok:false,seq:r.seq,n:all.length};prev=r.hash}
+  return{ok:true,n:all.length};
+}
+async function updAuditSummary(){
+  const all=await db.all('audit');all.sort((a,b)=>b.seq-a.seq);
+  $('#auSummary').textContent=all.length?`${all.length} modification${all.length>1?'s':''} · dernière le ${fmtDT(all[0].t)}`:'Aucune modification pour le moment.';
+}
+function auditCsv(all){
+  return'numero;date_iso;action;trajet;entree_iso;champ;avant;apres;empreinte\n'+all.sort((a,b)=>a.seq-b.seq).map(r=>{
+    const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"',ch=r.changes?.length?r.changes:[{}];
+    return ch.map(c=>[r.seq,new Date(r.t).toISOString(),r.action,q(r.tripName),r.entryT!=null?new Date(r.entryT).toISOString():'',q(c.label),q(c.from),q(c.to),r.hash].join(';')).join('\n')}).join('\n');
+}
+$('#sAudit').onclick=()=>{$('#auditView').classList.remove('hide');renderAudit();$('#auVerdict').textContent=''};
+$('#auClose').onclick=()=>$('#auditView').classList.add('hide');
+$('#auTrip').onchange=$('#auAct').onchange=renderAudit;
+$('#auVerify').onclick=async()=>{const v=await verifyAudit();$('#auVerdict').innerHTML=v.ok?`<span style="color:var(--ok)">✓ Intégrité vérifiée : ${v.n} ligne${v.n>1?'s':''}, chaîne d'empreintes intacte.</span>`:`<span style="color:var(--bad)">⚠ Chaîne rompue à la ligne n°${v.seq} : le journal a été altéré.</span>`};
+$('#auCsv').onclick=async()=>download('audit-carnet.csv',auditCsv(await db.all('audit')),'text/csv');
+
+/* ---------- Photos du carnet ---------- */
+async function shrinkImage(file){
+  let bmp;try{bmp=await createImageBitmap(file)}catch(e){bmp=await new Promise((ok,ko)=>{const i=new Image(),u=URL.createObjectURL(file);i.onload=()=>{URL.revokeObjectURL(u);ok(i)};i.onerror=()=>ko(new Error('image illisible'));i.src=u})}
+  const W=bmp.width||bmp.naturalWidth,H=bmp.height||bmp.naturalHeight;
+  const draw=(m)=>{const k=Math.min(1,m/Math.max(W,H)),c=document.createElement('canvas');c.width=Math.max(1,Math.round(W*k));c.height=Math.max(1,Math.round(H*k));c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);return c};
+  const big=draw(1600),blob=await new Promise(r=>big.toBlob(r,'image/jpeg',0.82)),thumb=draw(260).toDataURL('image/jpeg',0.72);
+  return{blob,thumb,w:big.width,h:big.height};
+}
+async function addPhotos(t,e,files){
+  const done=[];
+  for(const f of files){
+    try{const r=await shrinkImage(f),rec={id:uid(),trip:t.id,entry:e.id,t:Date.now(),name:f.name||'photo.jpg',w:r.w,h:r.h,blob:r.blob,thumb:r.thumb};
+      await db.put('photos',rec);done.push(rec);
+      await audit('photo_add',t,e,[{label:'Photo ajoutée',from:null,to:`${rec.name} (${Math.round(r.blob.size/1024)} Ko)`}]);
+    }catch(err){alert('Photo non ajoutée : '+(err.message||err))}
+  }
+  return done;
+}
+async function removePhoto(t,e,p){
+  await db.del('photos',p.id);
+  await audit('photo_del',t,e,[{label:'Photo supprimée',from:p.name,to:null}]);
+}
+function viewPhotos(list,i,t,e,onChange){
+  const v=document.createElement('div');v.style.cssText='position:fixed;inset:0;background:#000;z-index:60;display:flex;flex-direction:column';
+  let url=null;
+  const show=async()=>{
+    if(url)URL.revokeObjectURL(url);const p=(await db.all('photos')).find(x=>x.id===list[i]);if(!p){v.remove();return}
+    url=URL.createObjectURL(p.blob);
+    v.innerHTML=`<div style="display:flex;align-items:center;gap:10px;padding:calc(var(--sat) + 10px) 18px 10px;color:#fff"><span style="flex:1;font-size:14px">${esc(t.name)} · entrée de ${fmtT(e.t)} · ${i+1}/${list.length}</span><button class="b sec" id="pvX" style="color:#fff;border-color:#888;padding:12px 18px">Fermer</button></div>
+     <div style="flex:1;min-height:0;display:grid;place-items:center"><img src="${url}" style="max-width:100%;max-height:100%;object-fit:contain" alt="Photo du carnet"></div>
+     <div style="display:flex;gap:10px;padding:10px 18px calc(16px + env(safe-area-inset-bottom))"><button class="b sec" id="pvP" style="flex:1;color:#fff;border-color:#888">‹</button><button class="b red" id="pvD" style="flex:2">Supprimer</button><button class="b sec" id="pvN" style="flex:1;color:#fff;border-color:#888">›</button></div>`;
+    $('#pvX').onclick=close;$('#pvP').onclick=()=>{i=(i-1+list.length)%list.length;show()};$('#pvN').onclick=()=>{i=(i+1)%list.length;show()};
+    $('#pvD').onclick=async()=>{if(!confirm('Supprimer cette photo ?'))return;await removePhoto(t,e,p);list.splice(i,1);onChange&&onChange();if(!list.length){close();return}i=Math.min(i,list.length-1);show()};
+  };
+  const close=()=>{if(url)URL.revokeObjectURL(url);v.remove()};
+  document.body.appendChild(v);show();
+}
+async function deleteTrip(t,why){
+  const ph=(await db.all('photos')).filter(p=>p.trip===t.id);
+  for(const p of ph)await db.del('photos',p.id);
+  await audit('trip_delete',t,null,[{label:'Trajet supprimé',from:`${(t.log||[]).length} entrée(s), ${ph.length} photo(s)${why?' · '+why:''}`,to:null}]);
+  await db.del('trips',t.id);
+}
+const blobToData=b=>new Promise(r=>{const f=new FileReader();f.onload=()=>r(f.result);f.readAsDataURL(b)});
+const dataToBlob=async d=>(await fetch(d)).blob();
+
 /* ---------- Réglages / sauvegarde ---------- */
 function loadSettings(){
   $('#boat').textContent=cfg.boat;
-  $('#sBoat').value=cfg.boat;$('#sSrc').value=cfg.src;$('#sHost').value=cfg.host;
+  $('#sBoat').value=cfg.boat;$('#sSrc').value=cfg.src;$('#sGps').value=cfg.gpsSrc||'auto';$('#sHost').value=cfg.host;
+  $('#sDemoSpd').value=String(cfg.demoSpeed||1);buildLogCfg();updDemoBar();
   $('#sYdHost').value=cfg.ydHost;$('#sYdPort').value=cfg.ydPort;$('#sAwake').checked=!!cfg.awake;$('#sCruise').value=cfg.cruise;$('#sKPoint').value=cfg.kPoint;$('#sKMap').value=cfg.kMap;
   $('#sStartKn').value=cfg.startKn;$('#sStartSec').value=cfg.startSec;$('#sStopKn').value=cfg.stopKn;$('#sStopMin').value=cfg.stopMin;$('#sInt').value=cfg.interval;
 }
 $('#sSave').onclick=()=>{
-  cfg={boat:$('#sBoat').value||DEF.boat,src:$('#sSrc').value,host:$('#sHost').value.trim(),
+  cfg={...cfg,boat:$('#sBoat').value||DEF.boat,src:$('#sSrc').value,gpsSrc:$('#sGps').value,host:$('#sHost').value.trim(),
    ydHost:$('#sYdHost').value.trim()||DEF.ydHost,ydPort:+$('#sYdPort').value||DEF.ydPort,awake:$('#sAwake').checked,
    cruise:+$('#sCruise').value||DEF.cruise,kPoint:$('#sKPoint').value.trim(),kMap:$('#sKMap').value.trim(),
    startKn:+$('#sStartKn').value||DEF.startKn,startSec:+$('#sStartSec').value||DEF.startSec,
    stopKn:+$('#sStopKn').value||DEF.stopKn,stopMin:+$('#sStopMin').value||DEF.stopMin,interval:Math.max(1,+$('#sInt').value||DEF.interval)};
   localStorage.setItem('cfg',JSON.stringify(cfg));loadSettings();startSource();go('live');
 };
-$('#bExport').onclick=async()=>download('carnet-sauvegarde.json',JSON.stringify({v:1,trips:await db.all('trips'),notes:await db.all('notes')}),'application/json');
+$('#bExport').onclick=async()=>{
+  const photos=[];for(const p of await db.all('photos'))photos.push({...p,blob:await blobToData(p.blob)});
+  download('carnet-sauvegarde.json',JSON.stringify({v:2,trips:await db.all('trips'),notes:await db.all('notes'),photos,audit:await db.all('audit')}),'application/json');
+};
 $('#bImport').onchange=async e=>{
   const f=e.target.files[0];if(!f)return;
-  try{const j=JSON.parse(await f.text());for(const t of j.trips||[])await db.put('trips',t);for(const n of j.notes||[])await db.put('notes',n);alert('Import terminé.');renderTrips();renderNotes();renderStats()}catch(err){alert('Fichier invalide.')}
+  try{const j=JSON.parse(await f.text());for(const t of j.trips||[])await db.put('trips',t);for(const n of j.notes||[])await db.put('notes',n);for(const p of j.photos||[])await db.put('photos',{...p,blob:await dataToBlob(p.blob)});for(const a of j.audit||[])await db.put('audit',a);updAuditSummary();alert('Import terminé.');renderTrips();renderNotes();renderStats()}catch(err){alert('Fichier invalide.')}
 };
 
 /* ---------- Routage météo : moteur de calcul (sans DOM) ---------- */
@@ -929,11 +1659,20 @@ function lerpTab(tab,x){
 const POLAR_TWA=[[0,0],[30,0],[40,0.55],[52,0.8],[75,0.95],[90,1],[110,1.05],[135,1.05],[160,0.92],[180,0.85]];
 const POLAR_TWS=[[0,0],[5,0.55],[8,0.8],[12,1],[18,1.15],[25,1.15],[30,1],[40,0.6]];
 const angDiff=(a,b)=>Math.abs(((a-b+540)%360)-180);
+let USER_POLAR=null,POLAR_PERF=1;   // polaire importée : {tws:[],twa:[],bs:[[…]]} (vitesses en nœuds)
+function polarSpeed(P,tws,twa){
+  twa=Math.abs(twa)%360;if(twa>180)twa=360-twa;
+  const idx=(arr,x)=>{if(x<=arr[0])return[0,0,0];if(x>=arr[arr.length-1])return[arr.length-1,arr.length-1,0];let i=1;while(arr[i]<x)i++;return[i-1,i,(x-arr[i-1])/(arr[i]-arr[i-1])]};
+  const[a0,a1,fa]=idx(P.twa,twa);let scale=1,w=tws;if(tws<P.tws[0]){scale=Math.max(0,tws/P.tws[0]);w=P.tws[0]}
+  const[w0,w1,fw]=idx(P.tws,w),B=P.bs,v0=B[a0][w0]*(1-fw)+B[a0][w1]*fw,v1=B[a1][w0]*(1-fw)+B[a1][w1]*fw;
+  return(v0*(1-fa)+v1*fa)*scale;
+}
+function sailSpeed(V,tws,twa){return USER_POLAR?polarSpeed(USER_POLAR,tws,twa)*POLAR_PERF:V*lerpTab(POLAR_TWA,twa)*lerpTab(POLAR_TWS,tws)}
 function boat(V,hdg,s,o){
   const tws=s.tws||0, twa=angDiff(s.wdir||0,hdg);
   let stw,motor=false;
   if(o.motorBelow>0&&tws<o.motorBelow){stw=0.75*V;motor=true}
-  else stw=V*lerpTab(POLAR_TWA,twa)*lerpTab(POLAR_TWS,tws);
+  else stw=sailSpeed(V,tws,twa);
   if(s.hs){const rel=angDiff(s.hd||0,hdg)*D2R;   // mer debout : ralentit ; mer de travers : léger
     stw*=1-Math.min(0.4,0.08*s.hs*Math.max(0,Math.cos(rel))+0.01*s.hs*Math.abs(Math.sin(rel)))}
   if(s.sh){const rel=angDiff(s.sd||0,hdg)*D2R;   // houle de travers : roulis, léger ralentissement
@@ -1111,11 +1850,12 @@ function fillRoute(){
   $('#rA').value=f.A||'';$('#rB').value=f.B||'';$('#rV').value=f.V||'';
   $('#rWx').value=f.wx||(cfg.kPoint?'gfs':'demo');$('#rWave').value=f.wave||(cfg.kPoint?'gfsWave':'none');
   $('#rCur').checked=!!f.cur;$('#rMotor').value=f.motor??5;$('#rMaxW').value=f.maxW??22;$('#rMaxH').value=f.maxH??2;
-  $('#rT').value=toLocalInput(Math.max(Date.now()+3600000,f.t0||0)>Date.now()&&f.t0>Date.now()?f.t0:Date.now()+3600000);
+  $('#rT').value=toLocalInput(Math.max(NOW()+3600000,f.t0||0)>NOW()&&f.t0>NOW()?f.t0:NOW()+3600000);
   $('#rCruise').value=cfg.cruise;
+  if(localStorage.getItem('wp')){try{WP=JSON.parse(localStorage.getItem('wp'))||[];wpToFields()}catch(e){WP=[]}}else wpFromFields();
 }
 async function computePlan(force){
-  const st=$('#rStat');
+  const st={set textContent(v){$('#rStat').textContent=v;$('#wpStat').textContent=v}};
   const A=parseLL($('#rA').value),B=parseLL($('#rB').value);
   if(!A||!B){st.textContent='Renseigne départ et arrivée en degrés décimaux (ex : 47.52, -3.05).';return}
   const vias=$('#rV').value.split('\n').map(s=>s.trim()).filter(Boolean).map(parseLL);
@@ -1127,14 +1867,14 @@ async function computePlan(force){
   const maxW=+$('#rMaxW').value||22,maxH=+$('#rMaxH').value||2;
   const pts=[A,...vias,B];
   let smp,horizon=Infinity;const common=[];
-  $('#rGo').disabled=$('#rUpd').disabled=true;
+  $('#rGo').disabled=$('#rUpd').disabled=$('#wpGo').disabled=true;
   try{
     if(wxM==='demo'){smp=demoSampler;setRouteMeteo({smp,bb:null,wave:true,cur:true,t0,horizon:Infinity});common.push('Météo de démonstration (données fictives) : ne pas utiliser pour naviguer.')}
     else{
       if(!cfg.kPoint)throw new Error('clé Windy Point Forecast manquante (⚙️ Réglages)');
       const bb=bboxOf(pts),key=[wxM,wave,cur2,bb.s,bb.n,bb.w,bb.e].join('|');
       let L=force?null:gridCache[key];
-      if(!L||Date.now()-L.at>3600000){L=await loadAll(bb,wxM,wave,cur2,m=>{st.textContent=m});L.at=Date.now();gridCache[key]=L}
+      if(!L||NOW()-L.at>3600000){L=await loadAll(bb,wxM,wave,cur2,m=>{st.textContent=m});L.at=NOW();gridCache[key]=L}
       smp=makeSampler(L);horizon=L.horizon;common.push(...L.warns);setRouteMeteo({smp,bb:{...bb},wave:!!L.wave,cur:!!L.cur,t0,horizon:L.horizon});
     }
     const defs=[{...STRATS[0],o:{motorBelow:motor}},{...STRATS[1],o:{motorBelow:motor,maxTws:maxW,maxHs:maxH}},{...STRATS[2],o:{motorBelow:0}}];
@@ -1151,12 +1891,13 @@ async function computePlan(force){
         route:res.path.map(n=>({la:+n.lat.toFixed(4),lo:+n.lon.toFixed(4),t:n.t,h:Math.round(n.hdg||0),w:n.stw||0,g:n.sog||0,ws:n.tws||0,wa:n.twa||0,hs:n.hs||0,sh:n.sh||0,cu:n.cu||0,cv:n.cv||0,m:n.motor?1:0}))});
     }
     if(!routes.some(r=>r.route)){st.textContent=routes[0].error;return}
+    common.unshift(USER_POLAR?`Polaire « ${USER_POLAR.name} » à ${Math.round(POLAR_PERF*100)} %.`:'Polaire générique (importe celle de ton bateau pour un routage plus fiable).');
     common.push('Le routage ignore la terre et les hauts-fonds : vérifie le tracé.');
-    plan={at:Date.now(),form:{A:$('#rA').value,B:$('#rB').value,V:$('#rV').value,wx:wxM,wave,cur:cur2,motor,maxW,maxH,t0},warns:common,routes,sel:Math.max(0,routes.findIndex(r=>r.route))};
+    plan={at:NOW(),form:{A:$('#rA').value,B:$('#rB').value,V:$('#rV').value,wx:wxM,wave,cur:cur2,motor,maxW,maxH,t0},warns:common,routes,sel:Math.max(0,routes.findIndex(r=>r.route))};
     localStorage.setItem('plan',JSON.stringify(plan));
     st.textContent='3 routages calculés.';renderPlan();drawPlanOnWindy();FX.key='';updFxLbl();
   }catch(e){st.textContent='Erreur météo : '+e.message}
-  finally{$('#rGo').disabled=$('#rUpd').disabled=false}
+  finally{$('#rGo').disabled=$('#rUpd').disabled=false;$('#wpGo').disabled=WP.length<2}
 }
 function renderPlan(){
   if(!plan?.routes){$('#rRes').innerHTML='';return}
@@ -1205,6 +1946,7 @@ async function showWindy(){
       wm.map.on('click',e=>{
         const mode=document.querySelector('input[name=wClick]:checked').value,v=e.latlng.lat.toFixed(4)+', '+e.latlng.lng.toFixed(4);
         if(mode==='A')$('#rA').value=v;else if(mode==='B')$('#rB').value=v;else $('#rV').value=($('#rV').value?$('#rV').value+'\n':'')+v;
+        wpFromFields();
       });
       applyWindyLayers();drawPlanOnWindy();
     });
@@ -1228,12 +1970,12 @@ $('#rUpd').onclick=()=>{
   const B=parseLL($('#rB').value);if(!B){$('#rStat').textContent="Renseigne d'abord l'arrivée.";return}
   const here={lat:D.lat,lon:D.lon},dHere=hav(here,B);
   $('#rA').value=D.lat.toFixed(4)+', '+D.lon.toFixed(4);
-  $('#rT').value=toLocalInput(Date.now());
+  $('#rT').value=toLocalInput(NOW());
   // on retire les points « Via » déjà dépassés
   $('#rV').value=$('#rV').value.split('\n').filter(s=>{const p=parseLL(s);return p&&hav(p,B)<dHere&&hav(p,here)>2}).join('\n');
-  computePlan(true);
+  wpFromFields();computePlan(true);
 };
-$('#rHere').onclick=()=>{if(fresh('lat'))$('#rA').value=D.lat.toFixed(4)+', '+D.lon.toFixed(4);else $('#rStat').textContent='Position actuelle indisponible.'};
+$('#rHere').onclick=()=>{if(fresh('lat')){$('#rA').value=D.lat.toFixed(4)+', '+D.lon.toFixed(4);wpFromFields()}else $('#rStat').textContent='Position actuelle indisponible.'};
 $('#wShow').onclick=showWindy;$('#wOv').onchange=applyWindyLayers;$('#wPr').onchange=applyWindyLayers;
 $('#rCruise').onchange=e=>{if(+e.target.value>0){cfg.cruise=+e.target.value;localStorage.setItem('cfg',JSON.stringify(cfg))}};
 $('#gear').onclick=()=>go('set');
@@ -1242,13 +1984,288 @@ function setTheme(t){document.documentElement.dataset.theme=t;localStorage.setIt
 $('#theme').onclick=()=>setTheme(THEMES[(THEMES.indexOf(document.documentElement.dataset.theme)+1)%3]);
 setTheme(localStorage.getItem('theme')||(matchMedia('(prefers-color-scheme: light)').matches?'day':'night'));
 
+/* ---------- Route tracée sur la carte : départ, arrivée, étapes déplaçables au doigt ---------- */
+const fmtLL=p=>p.lat.toFixed(4)+', '+p.lon.toFixed(4);
+let WP=JSON.parse(localStorage.getItem('wp')||'[]');
+const WPE={on:false,drag:null,sel:-1,ghost:null,undo:[]};
+let VT={ox:0,oy:0,z:12,W:0,H:0};
+function wpToFields(){
+  $('#rA').value=WP[0]?fmtLL(WP[0]):'';
+  $('#rB').value=WP.length>1?fmtLL(WP[WP.length-1]):'';
+  $('#rV').value=WP.slice(1,-1).map(fmtLL).join('\n');
+}
+function wpFromFields(){
+  const A=parseLL($('#rA').value),B=parseLL($('#rB').value),V=$('#rV').value.split('\n').map(s=>parseLL(s.trim())).filter(Boolean);
+  WP=A?[A,...V,...(B?[B]:[])]:[];
+  localStorage.setItem('wp',JSON.stringify(WP));wpRender();scheduleDraw();
+}
+function wpPush(){WPE.undo.push(JSON.stringify(WP));if(WPE.undo.length>30)WPE.undo.shift()}
+function wpChanged(){localStorage.setItem('wp',JSON.stringify(WP));wpToFields();wpRender();scheduleDraw()}
+const wpRole=(i,n=WP.length)=>i===0?'D':i===n-1&&n>1?'A':String(i);
+const wpColor=(i,n=WP.length)=>i===0?'#2fbf71':i===n-1&&n>1?'#e5484d':'#2f7fe0';
+const wpName=(i,n=WP.length)=>i===0?'Départ':i===n-1&&n>1?'Arrivée':'Étape '+i;
+const toXY=p=>[wx(p.lon,VT.z)-VT.ox,wy(p.lat,VT.z)-VT.oy];
+const toGeo=(x,y)=>({lat:uny(VT.oy+y,VT.z),lon:unx(VT.ox+x,VT.z)});
+function wpHit(x,y){
+  let best=null,bd=30;
+  WP.forEach((p,i)=>{const[px,py]=toXY(p),d=Math.hypot(px-x,py-y);if(d<bd){bd=d;best={type:'pt',i}}});
+  if(best)return best;
+  for(let i=0;i<WP.length-1;i++){const[ax,ay]=toXY(WP[i]),[bx,by]=toXY(WP[i+1]);
+    if(Math.hypot(ax-bx,ay-by)<80)continue;if(Math.hypot((ax+bx)/2-x,(ay+by)/2-y)<26)return{type:'mid',i}}
+  return null;
+}
+function wpBestIndex(p){   // où insérer une étape pour allonger le moins possible la route
+  let bi=1,bv=1e9;
+  for(let i=0;i<WP.length-1;i++){const v=hav(WP[i],p)+hav(p,WP[i+1])-hav(WP[i],WP[i+1]);if(v<bv){bv=v;bi=i+1}}
+  return bi;
+}
+function wpSheet(html,y){
+  const s=$('#wpSheet');if(!html){s.classList.add('hide');return}
+  s.innerHTML=html;s.classList.remove('hide');
+  if(y!=null&&y>VT.H/2){s.style.top='8px';s.style.bottom=''}else{s.style.bottom='8px';s.style.top=''}
+}
+function wpTap(x,y){
+  const h=wpHit(x,y);WPE.ghost=null;WPE.sel=-1;
+  if(h&&h.type==='mid'){wpPush();WP.splice(h.i+1,0,{lat:(WP[h.i].lat+WP[h.i+1].lat)/2,lon:(WP[h.i].lon+WP[h.i+1].lon)/2});wpSheet('');wpChanged();return}
+  if(h){WPE.sel=h.i;const i=h.i;
+    wpSheet(`<div class="t"><b>${wpName(i)}</b> · ${fmtLL(WP[i])}<br>Glisse le point pour le déplacer.</div><div class="row">${i===0?'<button class="b sec" id="wsHere">Ma position</button>':''}<button class="b red" id="wsDel">Supprimer</button><button class="b sec" id="wsX">Fermer</button></div>`,y);
+    $('#wsDel').onclick=()=>{wpPush();WP.splice(i,1);WPE.sel=-1;wpSheet('');wpChanged()};
+    $('#wsX').onclick=()=>{WPE.sel=-1;wpSheet('');scheduleDraw()};
+    if(i===0)$('#wsHere').onclick=()=>{if(!fresh('lat'))return;wpPush();WP[0]={lat:D.lat,lon:D.lon};wpSheet('');wpChanged()};
+    scheduleDraw();return;
+  }
+  const p=toGeo(x,y);
+  if(WP.length<2){wpPush();WP.push(p);wpSheet('');wpChanged();return}
+  WPE.ghost={...p,x,y};
+  wpSheet(`<div class="t">Que faire de ce point ?</div><div class="row"><button class="b" id="wsVia">＋ Étape</button><button class="b sec" id="wsEnd">Arrivée ici</button><button class="b sec" id="wsStart">Départ ici</button><button class="b sec" id="wsX" aria-label="Annuler">✕</button></div>`,y);
+  const done=()=>{WPE.ghost=null;wpSheet('');wpChanged()};
+  $('#wsVia').onclick=()=>{wpPush();WP.splice(wpBestIndex(p),0,p);done()};
+  $('#wsEnd').onclick=()=>{wpPush();WP.push(p);done()};
+  $('#wsStart').onclick=()=>{wpPush();WP[0]=p;done()};
+  $('#wsX').onclick=()=>{WPE.ghost=null;wpSheet('');scheduleDraw()};
+  scheduleDraw();
+}
+function wpDraw(g,P){
+  if(!WP.length||!(WPE.on||$('#mapSel').value==='plan'))return;
+  const n=WP.length,pts=WP.map(P);
+  if(n>1){
+    g.lineJoin='round';g.lineCap='round';g.setLineDash([10,8]);
+    g.strokeStyle='rgba(0,0,0,.55)';g.lineWidth=7;g.beginPath();pts.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.stroke();
+    g.strokeStyle='#ffd23f';g.lineWidth=4;g.stroke();g.setLineDash([]);
+    if(WPE.on)for(let i=0;i<n-1;i++){const a=pts[i],b=pts[i+1];if(Math.hypot(a[0]-b[0],a[1]-b[1])<80)continue;
+      const mx=(a[0]+b[0])/2,my=(a[1]+b[1])/2;g.fillStyle='rgba(20,30,40,.85)';g.strokeStyle='#fff';g.lineWidth=2;g.beginPath();g.arc(mx,my,12,0,7);g.fill();g.stroke();
+      g.strokeStyle='#fff';g.lineWidth=2.5;g.beginPath();g.moveTo(mx-5,my);g.lineTo(mx+5,my);g.moveTo(mx,my-5);g.lineTo(mx,my+5);g.stroke()}
+  }
+  g.textAlign='center';g.textBaseline='middle';
+  pts.forEach((p,i)=>{const sel=WPE.sel===i||(WPE.drag&&WPE.drag.i===i&&WPE.drag.type==='pt'),r=sel?19:16;
+    g.shadowColor='rgba(0,0,0,.55)';g.shadowBlur=6;g.fillStyle=wpColor(i,n);g.strokeStyle='#fff';g.lineWidth=3;g.beginPath();g.arc(p[0],p[1],r,0,7);g.fill();g.stroke();g.shadowBlur=0;
+    g.fillStyle='#fff';g.font='bold 15px system-ui';g.fillText(wpRole(i,n),p[0],p[1]+1)});
+  if(WPE.ghost){const[x,y]=toXY(WPE.ghost);g.strokeStyle='#fff';g.lineWidth=3;g.setLineDash([5,4]);g.beginPath();g.arc(x,y,18,0,7);g.stroke();g.setLineDash([]);g.fillStyle='#fff';g.beginPath();g.arc(x,y,4,0,7);g.fill()}
+  g.textAlign='left';g.textBaseline='alphabetic';
+}
+function wpRender(){
+  $('#wpToggle').classList.toggle('on',WPE.on);$('#wpToggle').textContent=WPE.on?'✓ Terminer le tracé':'📍 Tracer une route';
+  $('#wpPanel').classList.toggle('hide',!WPE.on);
+  if(!WPE.on)return;
+  let tot=0;for(let i=1;i<WP.length;i++)tot+=hav(WP[i-1],WP[i]);
+  $('#wpTot').textContent=WP.length>1?num(tot)+' NM':'';
+  $('#wpHint').textContent=WP.length===0?'Touche la carte pour placer le départ.':WP.length===1?"Touche la carte pour placer l'arrivée.":"Touche la carte pour ajouter un point, ou glisse un point pour le déplacer. Le « + » au milieu d'un tronçon crée une étape.";
+  $('#wpList').innerHTML=WP.map((p,i)=>`<div class="wpr"><span class="bub" style="background:${wpColor(i)}">${wpRole(i)}</span><div class="tx">${wpName(i)}<small>${fmtPos(p.lat,p.lon)}${i?' · '+num(hav(WP[i-1],p))+' NM depuis le point précédent':''}</small></div><button data-wpf="${i}" aria-label="Centrer sur ce point">⌖</button><button data-wpd="${i}" aria-label="Supprimer ce point">✕</button></div>`).join('')||'<div class="mut">Aucun point.</div>';
+  $$('[data-wpd]').forEach(b=>b.onclick=()=>{wpPush();WP.splice(+b.dataset.wpd,1);wpChanged()});
+  $$('[data-wpf]').forEach(b=>b.onclick=()=>{const p=WP[+b.dataset.wpf];MV.lat=p.lat;MV.lon=p.lon;MV.auto=false;scheduleDraw()});
+  $('#wpUndo').disabled=!WPE.undo.length;$('#wpGo').disabled=WP.length<2;
+  const stale=plan&&(plan.form.A!==$('#rA').value||plan.form.B!==$('#rB').value||plan.form.V!==$('#rV').value);
+  if(!$('#wpStat').textContent||/modifi|Renseigne|valide/.test($('#wpStat').textContent))$('#wpStat').textContent=stale&&WP.length>1?'Route modifiée : relance le routage pour mettre à jour les trajectoires.':'';
+}
+function wpOn(on){
+  WPE.on=on;WPE.sel=-1;WPE.ghost=null;wpSheet('');
+  if(on){renderMap();MV.auto=false}
+  wpRender();scheduleDraw();
+}
+$('#wpToggle').onclick=()=>wpOn(!WPE.on);
+$('#wpUndo').onclick=()=>{const s=WPE.undo.pop();if(s){WP=JSON.parse(s);wpChanged()}};
+$('#wpClear').onclick=()=>{if(!WP.length)return;wpPush();WP=[];wpChanged()};
+$('#wpOpts').onclick=()=>go('route');
+$('#wpGo').onclick=async()=>{
+  await computePlan(false);
+  if(planRoute()){await fillMapSel();$('#mapSel').value='plan';await drawMapSel('keep')}
+  wpRender();
+};
+$('#rRoutePick').onclick=()=>{go('map');wpOn(true)};
+['#rA','#rB','#rV'].forEach(s=>$(s).addEventListener('input',wpFromFields));
+
+/* ---------- Mode démo : une navigation de voilier réaliste (données fictives) ---------- */
+const DEMO={start:{lat:47.478,lon:-3.075},wps:[[47.30,-3.00],[47.20,-3.55],[47.50,-3.55],[47.50,-3.30]]};
+let DM=null;
+const sAng=a=>((a%360)+540)%360-180;
+function crossTrack(A,B,P){const k=Math.cos(A.lat*D2R)*60,bx=(B.lon-A.lon)*k,by=(B.lat-A.lat)*60,px=(P.lon-A.lon)*k,py=(P.lat-A.lat)*60;return(px*by-py*bx)/(Math.hypot(bx,by)||1)}
+function demoInit(){
+  DM={t:0,lat:DEMO.start.lat,lon:DEMO.start.lon,hdg:160,stw:0,leg:0,legStart:{...DEMO.start},tack:1,regime:0,tackT:999,maneuver:0,motor:true,
+      roll:0,pitch:0,soc:86,engT:32,fuel:93,water:76,engSec:412*3600+1500,bsoc:1};
+}
+function demoStep(dt){
+  const s=DM;s.t+=dt;s.tackT+=dt;
+  // vent vrai : direction qui oscille, rafales, et un calme de temps en temps
+  const lull=Math.max(0,Math.sin(s.t/2400-1.2));
+  const twd=250+12*Math.sin(s.t/700)+4*Math.sin(s.t/95);
+  const tws=Math.max(2,13+3.5*Math.sin(s.t/210)+1.8*Math.sin(s.t/47)+1.2*Math.sin(s.t/11)-9*lull*lull*lull);
+  // moteur : au départ du port, ou quand le vent tombe
+  if(s.t<240)s.motor=true;else if(s.motor&&tws>8.5)s.motor=false;else if(!s.motor&&tws<6)s.motor=true;
+  // route vers le point suivant
+  let B={lat:DEMO.wps[s.leg][0],lon:DEMO.wps[s.leg][1]};
+  if(hav(s,B)<0.12){s.legStart={lat:B.lat,lon:B.lon};s.leg=(s.leg+1)%DEMO.wps.length;s.regime=0;B={lat:DEMO.wps[s.leg][0],lon:DEMO.wps[s.leg][1]}}
+  const brg=bearing(s,B),twa0=sAng(twd-brg),a0=Math.abs(twa0);
+  let target=brg;
+  if(!s.motor&&(a0<44||a0>150)){   // trop près du vent : on louvoie ; trop vent arrière : on empanne
+    const reg=a0<44?1:2;if(s.regime!==reg){s.regime=reg;s.tack=Math.sign(twa0)||1}
+    const lim=reg===1?44:150,xt=crossTrack(s.legStart,B,s),sgn=reg===1?1:-1;
+    if(sgn*s.tack*xt<-0.45&&s.tackT>150){s.tack=-s.tack;s.tackT=0;s.maneuver=35}
+    target=(twd-s.tack*lim+720)%360;
+  }else s.regime=0;
+  const diff=sAng(target-s.hdg),rate=s.maneuver>0?7:4;
+  s.hdg=(s.hdg+Math.max(-rate*dt,Math.min(rate*dt,diff*Math.min(1,dt*0.35)))+360)%360;
+  // vitesse surface : polaire générique mise à l'échelle de la vitesse de croisière
+  const twa=sAng(twd-s.hdg),at=Math.abs(twa);
+  let tgt=s.motor?(s.t<240?3.6:5.7):sailSpeed(cfg.cruise,tws,at)*0.97;
+  if(s.maneuver>0){tgt*=0.4;s.maneuver-=dt}
+  s.stw+=(tgt-s.stw)*Math.min(1,dt*0.12);
+  // vent apparent
+  const awx=tws*Math.cos(twa*D2R)+s.stw,awy=tws*Math.sin(twa*D2R),aws=Math.hypot(awx,awy),awa=Math.atan2(awy,awx)*R2D;
+  // gîte : fonction du vent apparent et de l'allure
+  const f=at<60?1:at<120?1-0.65*(at-60)/60:0.35-0.15*(Math.min(at,180)-120)/60;
+  const heel=s.motor?0:-Math.sign(awa)*Math.min(32,26*Math.pow(aws/18,2)*f);
+  s.roll+=(heel-s.roll)*Math.min(1,dt*0.4);
+  const roll=s.roll+(s.motor?2.2:1.8)*Math.sin(s.t/2.9)+0.9*Math.sin(s.t/1.7+1);
+  const pitch=1.6*Math.sin(s.t/3.4+0.5)+0.8*Math.sin(s.t/2.1)+(s.motor?0.3:-0.8);
+  const rudder=s.maneuver>0?s.tack*20:-s.roll*0.3+2.5*Math.sin(s.t/6.3);
+  // déplacement : cap + dérive, plus courant de marée
+  const lw=s.motor?0:-Math.sign(twa)*Math.min(5,Math.abs(s.roll)/6),crs=(s.hdg+lw)*D2R;
+  const ce=0.6*Math.sin(s.t/2000),cn=0.4*Math.sin(s.t/2000+1),vE=s.stw*Math.sin(crs)+ce,vN=s.stw*Math.cos(crs)+cn;
+  const sog=Math.hypot(vE,vN),cog=(Math.atan2(vE,vN)*R2D+360)%360;
+  s.lat+=vN*dt/3600/60;s.lon+=vE*dt/3600/60/Math.cos(s.lat*D2R);
+  // moteur, énergie, réservoirs
+  const run=s.motor;
+  s.engT+=((run?82:24)-s.engT)*Math.min(1,dt/(run?150:900));
+  if(run){s.engSec+=dt;s.fuel-=3.4*dt/3600}
+  s.soc=Math.max(20,Math.min(100,s.soc+(run?7:-3)*dt/3600));s.water-=1.2*dt/3600;
+  const depth=s.t<300?3.2+14*s.t/300:22+11*Math.sin(s.t/900)+3*Math.sin(s.t/60)+(s.t<600?-4*(1-(s.t-300)/300):0);
+  // diffusion des mesures, comme le ferait le réseau NMEA 2000
+  const S=skValue,a=D2R;
+  S('navigation.position',{latitude:s.lat,longitude:s.lon});
+  S('navigation.speedOverGround',sog/MS2KN);S('navigation.speedThroughWater',s.stw/MS2KN);
+  S('navigation.courseOverGroundTrue',cog*a);S('navigation.headingMagnetic',((s.hdg+1.5)%360)*a);
+  S('environment.wind.speedApparent',aws/MS2KN);S('environment.wind.angleApparent',awa*a);
+  S('environment.depth.belowTransducer',Math.max(1.5,depth));
+  S('environment.water.temperature',14.8+0.2*Math.sin(s.t/3000)+273.15);S('environment.outside.temperature',17.5+1.5*Math.sin(s.t/5000)+273.15);
+  S('environment.outside.pressure',(1016-s.t/3600*0.8)*100);
+  S('navigation.attitude',{roll:roll*a,pitch:pitch*a,yaw:s.hdg*a});S('steering.rudderAngle',rudder*a);
+  S('propulsion.0.revolutions',run?(2050+30*Math.sin(s.t/3))/60:0);S('propulsion.0.temperature',s.engT+273.15);
+  S('propulsion.0.oilPressure',(run?3.6+0.1*Math.sin(s.t/5):0)*100000);S('propulsion.0.runTime',s.engSec);S('propulsion.0.fuel.rate',(run?3.4:0)/3.6e6);
+  S('electrical.batteries.Servitude.voltage',12.9+(s.soc-50)*0.006+(run?0.9:0));S('electrical.batteries.Servitude.capacity.stateOfCharge',s.soc/100);
+  S('electrical.batteries.Démarrage.voltage',run?13.9:12.7);
+  S('tanks.fuel.0.currentLevel',s.fuel/120);S('tanks.freshWater.0.currentLevel',s.water/150);
+}
+function startSim(){
+  closeSrc();demoInit();setClock(cfg.demoSpeed||1,true);
+  setSrc('DÉMO ×'+(cfg.demoSpeed||1),'ok');
+  simT=setInterval(()=>demoStep(0.25*(cfg.demoSpeed||1)),250);
+}
+function setDemoSpeed(k){
+  cfg.demoSpeed=k;saveCfg();
+  if(cfg.src==='demo'){setClock(k,false);setSrc('DÉMO ×'+k,'ok')}
+  updDemoBar();
+}
+function updDemoBar(){
+  const on=cfg.src==='demo',b=$('#demoBar');b.classList.toggle('hide',!on);
+  $$('[data-ds]').forEach(x=>x.classList.toggle('on',+x.dataset.ds===(cfg.demoSpeed||1)));
+}
+$$('[data-ds]').forEach(b=>b.onclick=()=>setDemoSpeed(+b.dataset.ds));
+$('#sDemoGo').onclick=()=>{cfg.src='demo';cfg.demoSpeed=+$('#sDemoSpd').value||1;saveCfg();loadSettings();startSource();go('live')};
+$('#sDemoClear').onclick=async()=>{
+  if(!confirm('Supprimer tous les trajets de démonstration ?'))return;
+  if(cur&&cur.demo){cur=null;updateRecUI()}
+  for(const t of await db.all('trips'))if(t.demo)await deleteTrip(t,'trajet de démo');
+  renderTrips();renderStats();
+};
+
+/* ---------- Polaire du bateau : import, graphique ---------- */
+function parsePolar(text,name){
+  const lines=String(text).replace(/\r/g,'').split('\n').map(l=>l.trim()).filter(l=>l&&!/^(!|#|\/\/)/.test(l));
+  if(lines.length<3)throw new Error('fichier trop court');
+  const delim=lines[0].includes(';')?';':lines[0].includes('\t')?'\t':lines[0].includes(',')?',':/\s+/;
+  const rows=lines.map(l=>l.split(delim).map(c=>(delim===','?c:c.replace(/,/g,'.')).trim()));
+  const nums=a=>a.map(x=>x===''?NaN:Number(x));
+  let tws=nums(rows[0].slice(1)),twaList=[],grid=[];
+  const asc=tws.length>=3&&tws.every((v,i)=>isFinite(v)&&(i===0||v>tws[i-1]));
+  if(asc){   // tableau : première ligne = vitesses de vent, première colonne = angles
+    rows.slice(1).forEach(r=>{const a=Number(r[0]);if(!isFinite(a))return;twaList.push(a);grid.push(nums(r.slice(1)))});
+    grid=grid.map(r=>{const o=tws.map((_,j)=>r[j]);   // trous : on interpole entre voisins
+      for(let j=0;j<o.length;j++)if(!isFinite(o[j])){let l=j-1,h=j+1;while(l>=0&&!isFinite(o[l]))l--;while(h<o.length&&!isFinite(o[h]))h++;
+        o[j]=l>=0&&h<o.length?o[l]+(o[h]-o[l])*(tws[j]-tws[l])/(tws[h]-tws[l]):l>=0?o[l]:h<o.length?o[h]:0}
+      return o});
+  }else{     // lignes « vent  angle vitesse  angle vitesse … »
+    const rs=rows.map(r=>nums(r)).filter(r=>r.length>=3&&r.length%2===1&&r.every(isFinite));
+    if(rs.length<3)throw new Error('format non reconnu (attendu : tableau angle × vent)');
+    tws=rs.map(r=>r[0]);const set=new Set();rs.forEach(r=>{for(let i=1;i<r.length;i+=2)set.add(r[i])});
+    twaList=[...set].sort((a,b)=>a-b);
+    const cols=rs.map(r=>{const pts=[];for(let i=1;i<r.length;i+=2)pts.push([r[i],r[i+1]]);pts.sort((a,b)=>a[0]-b[0]);return twaList.map(a=>lerpTab(pts,a))});
+    grid=twaList.map((_,i)=>cols.map(c=>c[i]));
+    const ord=tws.map((v,i)=>i).sort((a,b)=>tws[a]-tws[b]);grid=grid.map(r=>ord.map(i=>r[i]));tws=ord.map(i=>tws[i]);
+  }
+  if(tws.length<3||twaList.length<4)throw new Error('polaire trop pauvre (au moins 3 vents et 4 angles)');
+  const idx=twaList.map((_,i)=>i).sort((a,b)=>twaList[a]-twaList[b]);
+  let twa=idx.map(i=>twaList[i]),bs=idx.map(i=>grid[i]);
+  if(Math.max(...bs.flat())>60||Math.min(...bs.flat())<0)throw new Error('vitesses incohérentes');
+  if(twa[0]>0){bs=[tws.map(()=>0),tws.map(()=>0),...bs];twa=[0,twa[0]*0.6,...twa]}   // pas de progression face au vent
+  if(twa[twa.length-1]<180){bs.push(bs[bs.length-1].map(v=>v*0.93));twa.push(180)}      // vent arrière : légère baisse
+  return{name:name||'Polaire',tws,twa,bs};
+}
+function polarInfo(){
+  const P=USER_POLAR;
+  return P?`${esc(P.name)} · ${P.tws.length} vents (${P.tws[0]}–${P.tws[P.tws.length-1]} nds) · ${P.twa.length-2} angles`:'Polaire générique (calculée à partir de la vitesse de croisière)';
+}
+function polarSvg(){
+  const P=USER_POLAR;if(!P)return'';
+  const cx=160,cy=150,R=128,mx=Math.max(...P.bs.flat()),sc=R/Math.ceil(mx);let g='',leg='';
+  for(let v=2;v<=Math.ceil(mx);v+=2)g+=`<circle cx="${cx}" cy="${cy}" r="${(v*sc).toFixed(1)}" fill="none" stroke="var(--line)"/><text x="${cx+4}" y="${(cy-v*sc+11).toFixed(1)}">${v}</text>`;
+  g+=`<line x1="${cx}" y1="${cy-R-6}" x2="${cx}" y2="${cy+R+6}" stroke="var(--line)"/>`;
+  const pick=[...new Set([6,10,16,24].map(t=>P.tws.reduce((b,x,i)=>Math.abs(x-t)<Math.abs(P.tws[b]-t)?i:b,0)))];
+  pick.forEach((j,k)=>{const col=`hsl(${200-45*k} 85% ${58-3*k}%)`;let d='';
+    for(let a=0;a<=180;a+=3){let i=1;while(P.twa[i]<a&&i<P.twa.length-1)i++;const f=(a-P.twa[i-1])/Math.max(1e-9,P.twa[i]-P.twa[i-1]),v=P.bs[i-1][j]+(P.bs[i][j]-P.bs[i-1][j])*Math.max(0,Math.min(1,f)),x=v*sc*Math.sin(a*D2R),y=-v*sc*Math.cos(a*D2R);
+      d+=(a?'L':'M')+(cx+x).toFixed(1)+' '+(cy+y).toFixed(1)}
+    let d2='';for(let a=0;a<=180;a+=3){let i=1;while(P.twa[i]<a&&i<P.twa.length-1)i++;const f=(a-P.twa[i-1])/Math.max(1e-9,P.twa[i]-P.twa[i-1]),v=P.bs[i-1][j]+(P.bs[i][j]-P.bs[i-1][j])*Math.max(0,Math.min(1,f));d2+=(a?'L':'M')+(cx-v*sc*Math.sin(a*D2R)).toFixed(1)+' '+(cy-v*sc*Math.cos(a*D2R)).toFixed(1)}
+    g+=`<path d="${d}" fill="none" stroke="${col}" stroke-width="2.5"/><path d="${d2}" fill="none" stroke="${col}" stroke-width="2.5"/>`;
+    leg+=`<tspan x="8" dy="14" fill="${col}">● ${P.tws[j]} nds</tspan>`});
+  return`<svg class="chart" viewBox="0 0 320 300" width="100%" style="max-width:380px;display:block;margin:8px auto"><text x="8" y="8" style="font-size:11px">${leg}</text>${g}<text x="${cx}" y="${cy-R-10}" text-anchor="middle">face au vent</text><text x="${cx}" y="${cy+R+22}" text-anchor="middle">vent arrière</text></svg>`;
+}
+function renderPolar(){
+  $('#polInfo').innerHTML=polarInfo();
+  $('#polSvg').innerHTML=polarSvg();
+  $('#polPerf').value=cfg.polarPerf??90;$('#polPerfV').textContent=(cfg.polarPerf??90)+' %';
+  $('#polReset').classList.toggle('hide',!USER_POLAR);$('#polPerfRow').classList.toggle('hide',!USER_POLAR);
+}
+function setPolar(P){
+  USER_POLAR=P;if(P)localStorage.setItem('polar',JSON.stringify(P));else localStorage.removeItem('polar');
+  POLAR_PERF=(cfg.polarPerf??90)/100;renderPolar();
+}
+$('#polFile').onchange=async e=>{
+  const f=e.target.files[0];e.target.value='';if(!f)return;
+  try{const P=parsePolar(await f.text(),f.name.replace(/\.[^.]+$/,'').replace(/[-_]polar$/i,'').replace(/[-_]/g,' '));setPolar(P);$('#polMsg').textContent='Polaire importée : elle sera utilisée au prochain calcul de routage.'}
+  catch(err){$('#polMsg').textContent='Import impossible : '+err.message}
+};
+$('#polReset').onclick=()=>{setPolar(null);$('#polMsg').textContent='Polaire générique rétablie.'};
+$('#polPerf').oninput=e=>{cfg.polarPerf=+e.target.value;POLAR_PERF=cfg.polarPerf/100;$('#polPerfV').textContent=cfg.polarPerf+' %'};
+$('#polPerf').onchange=saveCfg;
+try{const sp=JSON.parse(localStorage.getItem('polar')||'null');if(sp&&sp.twa&&sp.tws&&sp.bs){USER_POLAR=sp;POLAR_PERF=(cfg.polarPerf??90)/100}}catch(e){}
+
 /* ---------- Navigation ---------- */
 function go(v){
   $$('section').forEach(s=>s.classList.toggle('on',s.id==='v-'+v));
   $$('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
   if(v==='trips')renderTrips();
-  if(v==='map'){fillMapSel().then(drawMapSel);updFxLbl();fxStart()}
-  if(v==='route'){$('#rCruise').value=cfg.cruise;renderPlan()}
+  if(v==='map'){fillMapSel().then(drawMapSel);updFxLbl();fxStart();wpRender()}
+  if(v==='live')updDials();
+  if(v==='route'){$('#rCruise').value=cfg.cruise;renderPlan();renderPolar()}
   if(v==='notes')renderNotes();
   if(v==='stats')renderStats();
   window.scrollTo(0,0);
@@ -1256,16 +2273,20 @@ function go(v){
 $$('nav button').forEach(b=>b.onclick=()=>go(b.dataset.v));
 $('#mapSel').onchange=()=>drawMapSel(true);
 $('#btnRec').onclick=()=>cur?endTrip():startTrip(false);
-function startSource(){cfg.src==='ydwg'?startYdwg():cfg.src==='signalk'&&cfg.host?connectSK():startSim()}
+function startSource(){
+  if(cfg.src!=='demo'&&(CLK.k!==1||DM)){if(cur&&cur.demo)endTrip();setClock(1,true);DM=null}
+  updDemoBar();
+  startPhoneGps();
+  cfg.src==='ydwg'?startYdwg():cfg.src==='signalk'&&cfg.host?connectSK():startSim()}
 
 /* ---------- Démarrage ---------- */
 (async()=>{
   await db.open();
   // reprise d'un trajet interrompu
   const open=(await db.all('trips')).find(t=>t.open);
-  if(open){const last=open.points.length?open.points[open.points.length-1].t:open.start;
-    if(Date.now()-last<15*60000){cur=open;lastPt=last}else{open.open=false;open.end=last;await db.put('trips',open)}}
-  buildTiles();loadSettings();fillRoute();updateRecUI();startSource();
+  if(open&&!open.demo){const last=open.points.length?open.points[open.points.length-1].t:open.start;
+    if(NOW()-last<15*60000){cur=open;lastPt=last;lastLog=(open.log||[]).reduce((m,e)=>Math.max(m,e.t),open.start)}else{open.open=false;open.end=last;await db.put('trips',open)}}
+  buildTiles();loadSettings();fillRoute();renderPolar();updAuditSummary();updateRecUI();startSource();wpRender();
   setInterval(tick,1000);
   setInterval(()=>{if($('#v-map').classList.contains('on')&&$('#mapSel').value==='live')drawMapSel('keep')},5000);
   if(!NATIVE&&'serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
