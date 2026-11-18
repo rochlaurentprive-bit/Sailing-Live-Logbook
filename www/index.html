@@ -90,6 +90,24 @@ th:first-child,td:first-child{text-align:left}
 canvas#map{width:100%;height:58vh;background:var(--map);border-radius:var(--r);border:1px solid var(--line);touch-action:none;display:block}
 .bar{height:8px;background:var(--acc);border-radius:4px}
 .hide{display:none!important}
+.mobbtn{width:100%;margin:10px 0 6px;padding:16px;border:0;border-radius:16px;background:linear-gradient(#e5322d,#b3130f);color:#fff;display:flex;align-items:center;justify-content:center;gap:12px;box-shadow:0 4px 14px #e5322d55}
+.mobbtn b{font-size:28px;letter-spacing:2px}.mobbtn span{font-size:15px;opacity:.95}.mobbtn.on{animation:mobp 1s infinite}
+@keyframes mobp{50%{filter:brightness(1.35)}}
+.mobpill{background:#e5322d!important;color:#fff!important;font-weight:700;animation:mobp 1s infinite;cursor:pointer}
+.mobbar{position:absolute;left:8px;right:56px;top:8px;z-index:4;display:flex;align-items:center;justify-content:space-between;gap:8px;background:#e5322d;color:#fff;border-radius:10px;padding:8px 10px;font-weight:700;font-size:13px}
+.mobbar button{background:#fff;color:#b3130f;border:0;border-radius:8px;padding:6px 10px;font-weight:700}
+.mobov{position:fixed;inset:0;z-index:9999;background:#7a0b09;color:#fff;overflow:auto;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+.mobin{max-width:520px;margin:0 auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+.mobh{display:flex;justify-content:space-between;align-items:center;font-size:18px}.mobh button{background:#0004;color:#fff;border:1px solid #fff6;border-radius:10px;padding:8px 12px}
+.mobel{text-align:center}.mobel span{font-size:54px;font-weight:800;font-variant-numeric:tabular-nums;display:block;line-height:1}.mobel small{opacity:.8}
+.mobpos{background:#0004;border-radius:14px;padding:12px;text-align:center;font-size:20px;font-weight:700;line-height:1.5}.mobpos .mut{font-size:13px;font-weight:400;color:#ffd6d4}
+.mobnav{display:flex;align-items:center;justify-content:center;gap:18px;background:#0004;border-radius:14px;padding:10px}.mobnav b{font-size:30px}.mobnav .mut{color:#ffd6d4}
+#mobArrow{transition:transform .4s}
+.mobmain{background:#fff!important;color:#b3130f!important;font-size:18px;font-weight:800;padding:16px!important}
+.mobrow{display:flex;gap:8px}.mobrow .b{flex:1}
+.mobov .b.sec{background:#0005;color:#fff;border:1px solid #fff5}
+.le.k-mob::before,.le.k-mobend::before{background:#e5322d}.le.k-mob{border-color:#e5322d}
+
 .warn{border-left:4px solid var(--warn)}
 #windy{height:60vh;border-radius:var(--r);overflow:hidden;margin-top:8px}
 /* --- v3 : marges, cadrans, config, route, logbook --- */
@@ -242,7 +260,7 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
   <button class="icon" id="theme" aria-label="Changer le thème (jour, nuit, veille rouge)" title="Jour / Nuit / Veille rouge"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 4v16" /><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg></button>
   <button class="icon" id="helpBtn" aria-label="Aide"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1.1.9-1.1 1.7M12 17h.01"/></svg></button>
   <button class="icon" id="gear" aria-label="Réglages"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg></button>
-  <div class="hpills"><span class="pill" id="src">hors ligne</span><span class="pill" id="recp">repos</span><span class="pill" id="gpsp">GPS --</span></div>
+  <div class="hpills"><span class="pill" id="src">hors ligne</span><span class="pill" id="recp">repos</span><span class="pill" id="gpsp">GPS --</span><span class="pill mobpill hide" id="mobPill">MOB</span></div>
 </header>
 
 <section id="v-live" class="on">
@@ -257,6 +275,7 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
       <div class="dots" id="dialDots"></div>
       <div class="dname" id="dialName"></div>
       <div class="legend" id="dialLegend"></div>
+      <button class="mobbtn" id="mobBtn"><b>MOB</b><span>Homme à la mer</span></button>
       <button class="recbtn" id="btnRec">Démarrer un trajet</button>
       <div id="recInfo"></div>
     </div>
@@ -278,6 +297,7 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
     <div id="mapTilt" style="position:relative"><canvas id="map"></canvas>
     <canvas id="mapFx" style="position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;border-radius:12px"></canvas></div>
     <div id="map3dFog"></div><div id="map3dBoat"></div>
+    <div id="mobBar" class="mobbar hide"><span id="mobBarTx">MOB</span><button id="mobBarOpen">Ouvrir</button></div>
     <div id="wpSheet" class="sheet hide"></div>
     <div style="position:absolute;right:8px;top:8px;display:flex;flex-direction:column;gap:6px;z-index:3">
       <button class="b sec" id="mZin" style="width:40px;padding:6px">+</button><button class="b sec" id="mZout" style="width:40px;padding:6px">−</button><button class="b sec" id="mFit" style="width:40px;padding:6px" title="Recentrer">⌖</button><button class="b sec" id="m3d" style="width:40px;padding:6px;font-weight:700" aria-pressed="false" title="Vue 3D">3D</button>
@@ -967,7 +987,35 @@ vrai|ware|true|wahr|real
 app.|schijnb.|app.|scheinb.|ap.
 angle vent vrai|hoek ware wind|true wind angle|Winkel wahrer Wind|ángulo viento real
 angle vent apparent|hoek schijnbare wind|apparent wind angle|Winkel scheinbarer Wind|ángulo viento aparente
-cap|koers|hdg|Kurs|rumbo`;
+cap|koers|hdg|Kurs|rumbo
+Homme à la mer|Man overboord|Man overboard|Mann über Bord|Hombre al agua
+Position indisponible|Positie niet beschikbaar|Position unavailable|Position nicht verfügbar|Posición no disponible
+GPS bateau|GPS boot|Boat GPS|Boots-GPS|GPS del barco
+GPS téléphone|GPS telefoon|Phone GPS|Handy-GPS|GPS del teléfono
+dernière position connue|laatst bekende positie|last known position|letzte bekannte Position|última posición conocida
+depuis le déclenchement|sinds activering|since triggered|seit Auslösung|desde la activación
+relèvement|peiling|bearing|Peilung|demora
+dans|over|in|in|en
+Copié ✓|Gekopieerd ✓|Copied ✓|Kopiert ✓|Copiado ✓
+Copier les coordonnées|Coördinaten kopiëren|Copy coordinates|Koordinaten kopieren|Copiar coordenadas
+Coordonnées :|Coördinaten:|Coordinates:|Koordinaten:|Coordenadas:
+HOMME À LA MER|MAN OVERBOORD|MAN OVERBOARD|MANN ÜBER BORD|HOMBRE AL AGUA
+🆘 HOMME À LA MER|🆘 MAN OVERBOORD|🆘 MAN OVERBOARD|🆘 MANN ÜBER BORD|🆘 HOMBRE AL AGUA
+MOB terminé|MOB beëindigd|MOB ended|MOB beendet|MOB finalizado
+Réduire|Verkleinen|Minimise|Minimieren|Minimizar
+➜ Créer la route vers le MOB|➜ Route naar MOB maken|➜ Create route to MOB|➜ Route zum MOB erstellen|➜ Crear ruta hacia el MOB
+Voir la carte|Kaart bekijken|View map|Karte ansehen|Ver mapa
+📻 Appel VHF Mayday (pense-bête)|📻 VHF Mayday-oproep (geheugensteun)|📻 VHF Mayday call (reminder)|📻 UKW-Mayday-Ruf (Merkhilfe)|📻 Llamada VHF Mayday (recordatorio)
+Personne récupérée|Persoon gered|Person recovered|Person geborgen|Persona recuperada
+Fausse alerte|Vals alarm|False alarm|Fehlalarm|Falsa alarma
+Personne récupérée : terminer le MOB ?|Persoon gered: MOB beëindigen?|Person recovered: end the MOB?|Person geborgen: MOB beenden?|Persona recuperada: ¿finalizar el MOB?
+Déclenchement par erreur : annuler le MOB ?|Per ongeluk geactiveerd: MOB annuleren?|Triggered by mistake: cancel the MOB?|Versehentlich ausgelöst: MOB abbrechen?|Activado por error: ¿cancelar el MOB?
+Ouvrir|Openen|Open|Öffnen|Abrir
+MOB : position indisponible|MOB: positie niet beschikbaar|MOB: position unavailable|MOB: Position nicht verfügbar|MOB: posición no disponible
+Anémomètre|Windmeter|Anemometer|Windmesser|Anemómetro
+vent vrai|ware wind|true wind|wahrer Wind|viento verdadero
+vent apparent|schijnbare wind|apparent wind|scheinbarer Wind|viento aparente
+Chenal préféré à tribord (bifurcation)|Voorkeursvaarwater aan stuurboord (splitsing)|Preferred channel to starboard (junction)|Vorzugstonne – Hauptfahrwasser an Steuerbord|Canal preferido a estribor (bifurcación)`;
   const EX=new Map(),PAT=[];
   RAW.split('\n').forEach(l=>{const a=l.split('|');if(a.length!==5)return;const fr=a[0],t=a.slice(1);
     if(/\{\d\}/.test(fr)){const parts=fr.split(/\{\d\}/).map(x=>x.replace(/[.*+?^$()|[\]\\{}]/g,'\\$&'));PAT.push([new RegExp('^'+parts.join('(.+?)')+'$'),t,fr.length])}
@@ -1055,9 +1103,23 @@ const tr=I18N.tr,LOC=()=>I18N.LOC();
 
 (()=>{const ft=CanvasRenderingContext2D.prototype.fillText;CanvasRenderingContext2D.prototype.fillText=function(t,...r){return ft.call(this,typeof t==='string'?tr(t):t,...r)}})();
 </script>
+<div id="mobOv" class="mobov hide" role="alertdialog">
+  <div class="mobin">
+    <div class="mobh"><b>🆘 HOMME À LA MER</b><button id="mobMin" aria-label="Réduire">Réduire</button></div>
+    <div class="mobel"><span id="mobEl">0:00</span><small>depuis le déclenchement</small></div>
+    <div class="mobpos"><div id="mobLL">--</div><div id="mobDec" class="mut"></div><div id="mobT" class="mut"></div></div>
+    <div class="mobnav"><svg id="mobArrow" viewBox="0 0 60 60" width="64" height="64"><path d="M30 4L48 50L30 40L12 50Z" fill="#fff"/></svg>
+      <div><b id="mobDist">--</b><div id="mobBrg" class="mut"></div><div id="mobEta" class="mut"></div></div></div>
+    <button class="b mobmain" id="mobRoute">➜ Créer la route vers le MOB</button>
+    <div class="mobrow"><button class="b sec" id="mobMap">Voir la carte</button><button class="b sec" id="mobCopy">Copier les coordonnées</button></div>
+    <button class="b sec" id="mobMayday">📻 Appel VHF Mayday (pense-bête)</button>
+    <div class="mobrow"><button class="b sec" id="mobEnd">Personne récupérée</button><button class="b sec" id="mobFalse">Fausse alerte</button></div>
+    <input type="hidden" id="mobCalc">
+  </div>
+</div>
 <script>
 let simT=null;
-const APPV='v12',ERRLOG=[];
+const APPV='v13',ERRLOG=[];
 const logErr=m=>{ERRLOG.push(new Date().toLocaleTimeString(LOC())+' '+String(m).slice(0,220));if(ERRLOG.length>25)ERRLOG.shift()};
 window.addEventListener('error',e=>logErr((e.message||'erreur')+' @'+String(e.filename||'').split('/').pop()+':'+e.lineno));
 window.addEventListener('unhandledrejection',e=>logErr('promesse : '+((e.reason&&e.reason.message)||e.reason)));
@@ -1470,8 +1532,8 @@ function mkWind(root){
    <text x="150" y="104" text-anchor="middle" class="dlab">vitesse fond</text>
    <text class="dSog dnum" x="150" y="168" text-anchor="middle">--</text>
    <text x="150" y="192" text-anchor="middle" class="dlab">nœuds</text>
-   <text class="dWl dlab" x="150" y="209" text-anchor="middle" style="font-size:12px">angle vent vrai</text>
-   <text class="dWa dlab" x="150" y="232" text-anchor="middle" style="font-family:var(--num);font-size:20px;font-weight:600;fill:var(--tx)">--</text>`);
+   <g class="dSideA"><text class="dlab" x="92" y="232" text-anchor="middle" style="font-size:10px">apparent</text><text class="dAv" x="92" y="254" text-anchor="middle" style="font-family:var(--num);font-size:24px;font-weight:600;fill:var(--mut)">--</text><text class="dAs" x="92" y="269" text-anchor="middle" style="font-size:11px;font-weight:600">&#8203;</text></g>
+   <g class="dSideT"><text class="dlab" x="208" y="232" text-anchor="middle" style="font-size:10px">vrai</text><text class="dTv" x="208" y="254" text-anchor="middle" style="font-family:var(--num);font-size:24px;font-weight:600;fill:var(--mut)">--</text><text class="dTs" x="208" y="269" text-anchor="middle" style="font-size:11px;font-weight:600">&#8203;</text></g>`);
   const q=s=>root.querySelector(s);let dh=0;
   return()=>{
     const h=hdgNow();
@@ -1480,9 +1542,9 @@ function mkWind(root){
     if(h!=null){dh=unwrap(dh,-h);q('.dRing').style.transform=`rotate(${dh}deg)`}
     const nd=(s,ok,ang)=>{const e=q(s);e.setAttribute('opacity',ok?1:0);if(ok)e.style.transform=`rotate(${ang}deg)`};
     nd('.dAw',fresh('awa'),D.awa);nd('.dTw',fresh('twa'),D.twa);
-    {const t=fresh('twa'),aw=t?D.twa:fresh('awa')?D.awa:null,wa=q('.dWa');
-      if(aw==null){wa.textContent='--';wa.style.fill='var(--mut)';q('.dWl').textContent='angle vent vrai'}
-      else{const a=((aw%360)+540)%360-180;q('.dWl').textContent=t?'angle vent vrai':'angle vent apparent';wa.textContent=Math.round(Math.abs(a))+'° '+tr(a>=0?'tribord':'bâbord');wa.style.fill=a>=0?'var(--stbd)':'var(--port)'}}
+    const side=(ok,ang,v,sd)=>{const ev=q(v),es=q(sd);if(!ok){ev.textContent='--';ev.style.fill='var(--mut)';es.textContent='';return}
+      const a=((ang%360)+540)%360-180;ev.textContent=Math.round(Math.abs(a))+'°';es.textContent=tr(a>=0?'tribord':'bâbord');const c=a>=0?'var(--stbd)':'var(--port)';ev.style.fill=c;es.style.fill=c};
+    side(fresh('awa'),D.awa,'.dAv','.dAs');side(fresh('twa'),D.twa,'.dTv','.dTs');
     const ng=Math.max(0,Math.min(80,+cfg.noGo||0)),gE=q('.dNoGo');
     if(gE.dataset.n!==String(ng)){gE.dataset.n=String(ng);
       if(!ng)gE.innerHTML='';
@@ -1717,7 +1779,7 @@ function mkAtt3D(root,opts){
     const mk=(key,lab)=>{const b=document.createElement('button');b.type='button';b.textContent=lab;b.setAttribute('aria-pressed','false');
       const paint=()=>{const on=cfg[key]!==false;b.setAttribute('aria-pressed',on);b.style.cssText='font:600 11px system-ui;padding:4px 10px;border-radius:99px;border:1px solid '+(on?'var(--acc)':'var(--line,#8886)')+';background:'+(on?'var(--acc)':'transparent')+';color:'+(on?'#fff':'var(--mut)')+';min-height:26px'};
       paint();b.onclick=()=>{cfg[key]=cfg[key]===false;saveCfg();paint();wxUpdate()};tg.appendChild(b)};
-    mk('b3wx','Météo');mk('b3wind','Flux de vent');root.appendChild(tg);
+    mk('b3wx','Météo');mk('b3wind','Flux de vent');mk('b3hdg','Cap');mk('b3awa','Anémomètre');root.appendChild(tg);
     [['‹',-1,'left'],['›',1,'right']].forEach(([ch,dir,side])=>{const b=document.createElement('button');b.type='button';b.textContent=ch;b.setAttribute('aria-label',dir<0?'Cadran précédent':'Cadran suivant');
       b.style.cssText='position:absolute;'+side+':0;top:42%;width:30px;height:64px;border:0;background:transparent;color:var(--mut);font:300 34px/1 system-ui;opacity:.75';
       b.onclick=ev=>{ev.stopPropagation();const n=DS.ids.length;DS.idx=(DS.idx+dir+n)%n;layoutStage(dir<0?1:-1)};
@@ -1844,6 +1906,49 @@ function mkAtt3D(root,opts){
           if(q.y>1.4){const dxm=q.x,dzm=q.z-0.7,u=dxm*ccx+dzm*ccz,d=dxm*nx+dzm*nz;if(u>-2&&u<4.4){const e=Math.exp(-(d*d)/0.9),dn=vx*nx+vz*nz;vx-=nx*dn*e*0.9;vz-=nz*dn*e*0.9;vx+=nx*(d>=0?1:-1)*e*sp*0.25;vz+=nz*(d>=0?1:-1)*e*sp*0.25;vy=0.3*e}}
           q.x+=vx*dt;q.z+=vz*dt;q.y+=vy*dt;q.life-=dt;q.h.push(proj([q.x,q.y,q.z]));if(q.h.length>HL)q.h.shift();
           if(q.h.length>1){for(let k=1;k<q.h.length;k++){const al=(k/q.h.length)*0.7*Math.min(1,q.life);g.strokeStyle=`rgba(${wnd[0]},${wnd[1]},${wnd[2]},${al.toFixed(3)})`;g.lineWidth=Math.max(1,W/360)*(0.5+k/q.h.length);g.beginPath();g.moveTo(q.h[k-1][0],q.h[k-1][1]);g.lineTo(q.h[k][0],q.h[k][1]);g.stroke()}}
+        }
+      }
+    }
+    // rose des caps 3D et anémomètre 3D (activables séparément)
+    if(!MO&&inStage){
+      const hOn=cfg.b3hdg!==false,aOn=cfg.b3awa!==false;
+      const P3=(r,deg)=>proj([r*Math.sin(deg*D2R),0,r*Math.cos(deg*D2R)]);
+      const txt=(str,q,sz,col,bold,ln)=>{const fs=Math.max(9,Math.round(sz*F/q[2]));g.font=`${bold?700:600} ${fs}px system-ui`;g.fillStyle=col;g.textAlign='center';g.textBaseline='middle';g.fillText(str,Math.max(fs,Math.min(W-fs,q[0])),q[1]+(ln||0)*fs*1.15)};
+      const txc=`rgba(${tx[0]},${tx[1]},${tx[2]},.85)`;
+      if(hOn){
+        const R=6.4,lw=Math.max(1,W/420);
+        g.strokeStyle=`rgba(${tx[0]},${tx[1]},${tx[2]},.4)`;g.lineWidth=lw;g.beginPath();
+        for(let a=0;a<=360;a+=5){const q=P3(R,a);a?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1])}g.stroke();
+        for(let c=0;c<360;c+=10){
+          const rel=c-hdg0,big=c%30===0,q1=P3(R,rel),q2=P3(R-(big?.7:.35),rel);
+          g.strokeStyle=c===0?'#ff5a4d':`rgba(${tx[0]},${tx[1]},${tx[2]},${big?.7:.38})`;g.lineWidth=big?lw*1.5:lw;g.beginPath();g.moveTo(q1[0],q1[1]);g.lineTo(q2[0],q2[1]);g.stroke();
+          if(big){const lab=c%90===0?['N','E','S','O'][c/90]:String(c).padStart(3,'0'),q=P3(R+(c%90===0?1.0:.95),rel);
+            txt(lab,q,c%90===0?.95:.6,c===0?'#ff5a4d':txc,c%90===0)}
+        }
+        // repère d'étrave et cap
+        const b1=P3(R+.1,0),b2=P3(R-.9,0),bl=P3(R+.1,-4),br=P3(R+.1,4);
+        g.fillStyle=`rgb(${acc[0]},${acc[1]},${acc[2]})`;g.beginPath();g.moveTo(b2[0],b2[1]);g.lineTo(bl[0],bl[1]);g.lineTo(br[0],br[1]);g.closePath();g.fill();
+        const hv=fresh('hdg')?D.hdg:hdg0,hq=P3(R+2.1,0);
+        txt(String(Math.round(((hv%360)+360)%360)).padStart(3,'0')+'°',hq,1.25,`rgb(${acc[0]},${acc[1]},${acc[2]})`,true);
+      }
+      if(aOn){
+        const useT=fresh('twa'),a=useT?D.twa:fresh('awa')?D.awa:null;
+        if(a!=null){
+          const R=4.9,ng=Math.max(0,Math.min(80,+cfg.noGo||0)),lw=Math.max(1,W/420);
+          g.strokeStyle=`rgba(${wnd[0]},${wnd[1]},${wnd[2]},.45)`;g.lineWidth=lw;g.beginPath();
+          for(let k=0;k<=360;k+=6){const q=P3(R,k);k?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1])}g.stroke();
+          if(ng>0&&useT){
+            g.beginPath();for(let k=-ng;k<=ng;k+=4){const q=P3(R,a+k);k===-ng?g.moveTo(q[0],q[1]):g.lineTo(q[0],q[1])}
+            for(let k=ng;k>=-ng;k-=4){const q=P3(R-.9,a+k);g.lineTo(q[0],q[1])}g.closePath();
+            g.fillStyle='rgba(255,70,60,.42)';g.fill();g.strokeStyle='rgba(255,90,80,.9)';g.lineWidth=lw*1.2;g.stroke();
+          }
+          const tail=P3(R+.9,a),tip=P3(R-1.6,a),h1=P3(R-.8,a-9),h2=P3(R-.8,a+9),col=a>=0?'#3ddc97':'#ff6b6b';
+          g.strokeStyle=col;g.lineWidth=lw*3.2;g.beginPath();g.moveTo(tail[0],tail[1]);g.lineTo(tip[0],tip[1]);g.stroke();
+          g.fillStyle=col;g.beginPath();g.moveTo(tip[0],tip[1]);g.lineTo(h1[0],h1[1]);g.lineTo(h2[0],h2[1]);g.closePath();g.fill();
+          const lq=P3(R+2.5,a);
+          txt(Math.round(Math.abs(a))+'°',lq,1.0,col,true);
+          txt((a>=0?'tribord':'bâbord'),lq,.7,col,true,1);
+          txt((useT?'vent vrai':'vent apparent'),lq,.55,txc,false,2);
         }
       }
     }
@@ -2091,7 +2196,7 @@ function logViz(id,d,x){
   }
   return'';
 }
-const KIND={start:'Départ',auto:'Entrée automatique',manual:'Entrée manuelle',end:'Arrivée'};
+const KIND={start:'Départ',auto:'Entrée automatique',manual:'Entrée manuelle',end:'Arrivée',mob:'🆘 HOMME À LA MER',mobend:'MOB terminé'};
 function logCard(e,x,ph){
   const tiles=logFields().map(f=>logViz(f,e.d||{},x)).filter(Boolean).join('');
   return`<div class="le k-${e.kind}" data-e="${e.id}"><div class="leh"><span class="tm">${fmtT(e.t)}</span><span class="kd">${KIND[e.kind]||''}${e.edited?' · modifiée':''}</span><button data-edit="${e.id}" aria-label="Modifier l'entrée de ${fmtT(e.t)}">✎</button></div>
@@ -2401,6 +2506,7 @@ function renderMap(){
   if(MD.ov&&MD.ov.length){dot(MD.ov[0],'#3fb6ff');dot(MD.ov[MD.ov.length-1],'#3fb6ff')}
   fxBase(g,W,H,ox,oy,z);
   wpDraw(g,P);
+  try{mobDraw(g,P)}catch(e){}
   mapNav(g,P,W,H);
   // position du bateau
   if(fresh('lat')){const[x,y]=P({lat:D.lat,lon:D.lon});g.save();g.translate(x,y);g.rotate((fresh('cog')?D.cog:0)*D2R);
@@ -3638,6 +3744,12 @@ const BUOYS=[
  [bz(`<path d="M19 82L25 40h10l6 42z" fill="${GN}"/>`,`<path d="M24 38L30 22l6 16z" fill="${GN}" stroke="#0006" stroke-width=".8"/>`),
   ['Latérale tribord','Stuurboordtonne','Starboard-hand mark','Steuerbord-Spitztonne','Marca lateral de estribor'],
   ['Vert, cône pointe en haut, feu vert. Laisse-la à TRIBORD en venant du large.','Groen, kegel met punt omhoog, groen licht. Houd haar aan STUURBOORD bij het binnenkomen vanaf zee.','Green, conical, green light. Leave it to STARBOARD when entering from seaward.','Grün, Spitztonne, grünes Licht. Beim Einlaufen von See an STEUERBORD lassen.','Verde, cónica, luz verde. Déjala por ESTRIBOR al entrar desde la mar.']],
+ [bz(`<rect x="19" y="40" width="22" height="42" fill="${RD}"/><rect x="19" y="54" width="22" height="14" fill="${GN}"/>`,`<rect x="24" y="28" width="12" height="12" fill="${RD}" stroke="#0006" stroke-width=".8"/>`),
+  ['Chenal préféré à tribord (bifurcation)','Voorkeursvaarwater aan stuurboord (splitsing)','Preferred channel to starboard (junction)','Vorzugstonne – Hauptfahrwasser an Steuerbord','Canal preferido a estribor (bifurcación)'],
+  ['Rouge, large bande verte, voyant cylindre rouge, feu rouge Fl(2+1). Le chenal principal est à TRIBORD : tu peux passer de chaque côté, mais le chenal préféré (principal) est à tribord de la bouée. Se comporte comme une bâbord pour le chenal principal.','Rood met brede groene band, rode cilinder als topteken, rood licht Fl(2+1). Het hoofdvaarwater ligt aan STUURBOORD: je kunt aan beide zijden passeren, maar het voorkeursvaarwater ligt aan stuurboord van de ton. Gedraagt zich als bakboordtonne voor het hoofdvaarwater.','Red with one broad green band, red can topmark, red light Fl(2+1). The main channel is to STARBOARD: you may pass either side, but the preferred (main) channel lies to starboard of the buoy. It acts as a port-hand mark for the main channel.','Rot mit einem breiten grünen Band, rotes Zylinder-Toppzeichen, rotes Licht Fl(2+1). Das Hauptfahrwasser liegt an STEUERBORD: Passieren ist beidseitig möglich, das bevorzugte Fahrwasser liegt aber steuerbord der Tonne. Wirkt wie eine Backbordtonne für das Hauptfahrwasser.','Roja con una franja verde ancha, marca de tope cilíndrica roja, luz roja Fl(2+1). El canal principal está a ESTRIBOR: puedes pasar por cualquier lado, pero el canal preferido queda a estribor de la boya. Actúa como marca de babor para el canal principal.']],
+ [bz(`<rect x="19" y="40" width="22" height="42" fill="${GN}"/><rect x="19" y="54" width="22" height="14" fill="${RD}"/>`,`<path d="M24 38L30 22l6 16z" fill="${GN}" stroke="#0006" stroke-width=".8"/>`),
+  ['Chenal préféré à bâbord (bifurcation)','Voorkeursvaarwater aan bakboord (splitsing)','Preferred channel to port (junction)','Vorzugstonne – Hauptfahrwasser an Backbord','Canal preferido a babor (bifurcación)'],
+  ['Vert, large bande rouge, voyant cône pointe en haut, feu vert Fl(2+1). Le chenal principal est à BÂBORD : tu peux passer de chaque côté, mais le chenal préféré (principal) est à bâbord de la bouée. Se comporte comme une tribord pour le chenal principal.','Groen met brede rode band, groene kegel (punt omhoog) als topteken, groen licht Fl(2+1). Het hoofdvaarwater ligt aan BAKBOORD: je kunt aan beide zijden passeren, maar het voorkeursvaarwater ligt aan bakboord van de ton. Gedraagt zich als stuurboordtonne voor het hoofdvaarwater.','Green with one broad red band, green cone (point up) topmark, green light Fl(2+1). The main channel is to PORT: you may pass either side, but the preferred (main) channel lies to port of the buoy. It acts as a starboard-hand mark for the main channel.','Grün mit einem breiten roten Band, grünes Kegel-Toppzeichen (Spitze oben), grünes Licht Fl(2+1). Das Hauptfahrwasser liegt an BACKBORD: Passieren ist beidseitig möglich, das bevorzugte Fahrwasser liegt aber backbord der Tonne. Wirkt wie eine Steuerbordtonne für das Hauptfahrwasser.','Verde con una franja roja ancha, marca de tope cónica verde (punta arriba), luz verde Fl(2+1). El canal principal está a BABOR: puedes pasar por cualquier lado, pero el canal preferido queda a babor de la boya. Actúa como marca de estribor para el canal principal.']],
  [bz(bands([BK,YL]),cone(30,14,1,BK)+cone(30,23,1,BK)),
   ['Cardinale Nord','Noordtonne','North cardinal','Nordtonne','Cardinal Norte'],
   ['Noir au-dessus, jaune au-dessous ; deux cônes pointes en haut. Danger au sud : passe AU NORD. Feu blanc scintillant continu.','Zwart boven, geel onder; twee kegels punten omhoog. Gevaar ligt ten zuiden: passeer ten NOORDEN. Wit doorlopend flikkerlicht.','Black above, yellow below; two cones pointing up. Danger lies south: pass to the NORTH. White continuous quick light.','Oben schwarz, unten gelb; zwei Kegel Spitzen nach oben. Gefahr liegt südlich: NÖRDLICH passieren. Weißes ununterbrochenes Funkelfeuer.','Negro arriba, amarillo abajo; dos conos con vértices hacia arriba. Peligro al sur: pasa por el NORTE. Luz blanca centelleante continua.']],
@@ -3872,6 +3984,114 @@ recUI();
     return r};
   $('#dialStage').addEventListener('transitionend',()=>{try{updDials()}catch(_){}});
 })();
+
+/* ====== MOB : homme à la mer ====== */
+let MOB=null;try{MOB=JSON.parse(localStorage.getItem('mob')||'null')}catch(e){}
+const mobSave=()=>{try{MOB?localStorage.setItem('mob',JSON.stringify(MOB)):localStorage.removeItem('mob')}catch(e){}};
+const mmss=s=>Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');
+function mobPos(){
+  if(fresh('lat')&&fresh('lon'))return{lat:D.lat,lon:D.lon,src:'GPS bateau'};
+  if(GPS.phone&&Date.now()-GPS.phone.t<30000)return{lat:GPS.phone.lat,lon:GPS.phone.lon,src:'GPS téléphone'};
+  if(D.lat!=null&&D.lon!=null)return{lat:D.lat,lon:D.lon,src:'dernière position connue',stale:true};
+  return null;
+}
+function mobAlert(){
+  try{const o=cfg.haptic;cfg.haptic=true;hap('strong');setTimeout(()=>hap('strong'),350);setTimeout(()=>hap('strong'),700);cfg.haptic=o}catch(e){}
+  try{if(navigator.vibrate)navigator.vibrate([300,120,300,120,300])}catch(e){}
+  try{const A=new(window.AudioContext||window.webkitAudioContext)();[0,.3,.6].forEach(t=>{const o=A.createOscillator(),g=A.createGain();o.frequency.value=880;g.gain.value=.2;o.connect(g);g.connect(A.destination);o.start(A.currentTime+t);o.stop(A.currentTime+t+.18)});setTimeout(()=>{try{A.close()}catch(_){}},1500)}catch(e){}
+}
+function mobStart(){
+  if(MOB&&MOB.active){mobShow();return}
+  const p=mobPos(),t=NOW();
+  MOB={active:true,t,lat:p?p.lat:null,lon:p?p.lon:null,src:p?p.src:'',stale:!!(p&&p.stale)};
+  try{
+    if(!cur)startTrip(false);
+    const e=addLog('mob',p?'MOB':'MOB : position indisponible');
+    if(e){if(p&&(e.d.lat==null||e.d.lon==null)){e.d.lat=p.lat;e.d.lon=p.lon;e.orig.d.lat=p.lat;e.orig.d.lon=p.lon;db.put('trips',cur)}
+      MOB.trip=cur.id;MOB.entry=e.id}
+  }catch(err){logErr('MOB '+err.message)}
+  rlog('MOB','déclenché '+(p?p.lat.toFixed(5)+','+p.lon.toFixed(5)+' ('+p.src+')':'sans position'));
+  mobSave();mobAlert();mobShow();mobUpd();
+}
+function mobEnd(why){
+  if(!MOB)return;
+  try{if(cur&&MOB.trip===cur.id)addLog('mobend',why)}catch(e){}
+  rlog('MOB','terminé : '+why);
+  MOB=null;mobSave();mobHide();mobUpd();scheduleDraw();
+}
+const mobShow=()=>{$('#mobOv').classList.remove('hide');mobUpd()};
+const mobHide=()=>$('#mobOv').classList.add('hide');
+function mobUpd(){
+  const pill=$('#mobPill'),on=!!(MOB&&MOB.active);
+  pill.classList.toggle('hide',!on);$('#mobBar').classList.toggle('hide',!on);
+  $('#mobBtn').classList.toggle('on',on);
+  if(!on)return;
+  const el=Math.max(0,Math.floor((NOW()-MOB.t)/1000));
+  pill.textContent='MOB '+mmss(el);$('#mobEl').textContent=mmss(el);
+  const has=MOB.lat!=null;
+  $('#mobLL').textContent=has?dm(MOB.lat,'N','S',2)+'   '+dm(MOB.lon,'E','O',3):tr('Position indisponible');
+  $('#mobDec').textContent=has?MOB.lat.toFixed(5)+', '+MOB.lon.toFixed(5):'';
+  $('#mobT').textContent=fmtDT(MOB.t)+(MOB.src?' · '+tr(MOB.src):'')+(MOB.stale?' ⚠':'');
+  ['mobRoute','mobMap','mobCopy'].forEach(i=>$('#'+i).disabled=!has);
+  let dist='--',brg='--',eta='',rel=null;
+  if(has&&fresh('lat')&&fresh('lon')){
+    const a={lat:D.lat,lon:D.lon},b={lat:MOB.lat,lon:MOB.lon},d=hav(a,b),br=bearing(a,b);
+    dist=d<0.27?Math.round(d*1852)+' m':d.toFixed(2)+' NM';brg=String(Math.round(br)).padStart(3,'0')+'°';
+    const hd=fresh('hdg')?D.hdg:fresh('cog')?D.cog:null;if(hd!=null)rel=br-hd;
+    if(fresh('sog')&&D.sog>0.5){eta=tr('dans')+' '+mmss(d/D.sog*3600)}
+  }
+  $('#mobDist').textContent=dist;$('#mobBrg').textContent=tr('relèvement')+' '+brg;$('#mobEta').textContent=eta;
+  const ar=$('#mobArrow');ar.style.transform=rel==null?'':`rotate(${rel}deg)`;ar.style.opacity=rel==null?.25:1;
+  $('#mobBarTx').textContent='MOB · '+dist+' · '+brg+(eta?' · '+eta:'');
+}
+async function mobCopy(){
+  if(!MOB||MOB.lat==null)return;
+  const t=`MOB ${fmtDT(MOB.t)} — ${dm(MOB.lat,'N','S',2)} ${dm(MOB.lon,'E','O',3)} (${MOB.lat.toFixed(5)}, ${MOB.lon.toFixed(5)})`;
+  try{await navigator.clipboard.writeText(t);$('#mobCopy').textContent=tr('Copié ✓')}catch(e){prompt(tr('Coordonnées :'),t)}
+  setTimeout(()=>{$('#mobCopy').textContent=tr('Copier les coordonnées')},2000);
+}
+function mobRoute(){
+  if(!MOB||MOB.lat==null)return;
+  const A=mobPos();
+  $('#rA').value=A?A.lat.toFixed(5)+', '+A.lon.toFixed(5):'';
+  $('#rB').value=MOB.lat.toFixed(5)+', '+MOB.lon.toFixed(5);$('#rV').value='';
+  try{$('#rT').value=toLocalInput(NOW()+60000)}catch(e){}
+  wpFromFields();mobHide();mobShowMap();
+}
+function mobShowMap(){
+  go('map');
+  setTimeout(()=>{
+    if(!MOB||MOB.lat==null)return;
+    const A=mobPos(),pts=A?[A,MOB]:[MOB];
+    MV.auto=false;MV.lat=pts.reduce((s,p)=>s+p.lat,0)/pts.length;MV.lon=pts.reduce((s,p)=>s+p.lon,0)/pts.length;
+    if(A){const d=Math.max(0.03,hav(A,MOB));MV.z=Math.max(4,Math.min(18,Math.log2(156543*Math.cos(MV.lat*D2R)*230/(d*1852))));}else MV.z=15;
+    scheduleDraw();
+  },450);
+}
+function mobDraw(g,P){
+  if(!MOB||!MOB.active||MOB.lat==null)return;
+  const[x,y]=P({lat:MOB.lat,lon:MOB.lon});
+  if(fresh('lat')&&fresh('lon')){const[bx,by]=P({lat:D.lat,lon:D.lon});g.save();g.strokeStyle='#ff3b30';g.lineWidth=2.5;g.setLineDash([8,6]);g.shadowColor='#000';g.shadowBlur=4;g.beginPath();g.moveTo(bx,by);g.lineTo(x,y);g.stroke();g.restore()}
+  g.save();const k=(Date.now()%1200)/1200;
+  g.strokeStyle='rgba(255,59,48,'+(1-k)+')';g.lineWidth=3;g.beginPath();g.arc(x,y,12+k*26,0,6.2832);g.stroke();
+  g.fillStyle='#ff3b30';g.strokeStyle='#fff';g.lineWidth=2.5;g.beginPath();g.arc(x,y,11,0,6.2832);g.fill();g.stroke();
+  g.fillStyle='#fff';g.font='bold 9px system-ui';g.textAlign='center';g.textBaseline='middle';g.fillText('MOB',x,y+.5);
+  g.restore();
+}
+$('#mobBtn').onclick=mobStart;
+$('#mobPill').onclick=mobShow;
+$('#mobBarOpen').onclick=mobShow;
+$('#mobMin').onclick=mobHide;
+$('#mobCopy').onclick=mobCopy;
+$('#mobRoute').onclick=mobRoute;
+$('#mobMap').onclick=()=>{mobHide();mobShowMap()};
+$('#mobMayday').onclick=()=>{mobHide();openHelp('ref','vhf')};
+$('#mobCalc').onclick=()=>{go('route');setTimeout(()=>{const b=$('#rGo');b&&b.scrollIntoView({block:'center'})},300)};
+$('#mobEnd').onclick=()=>{if(confirm('Personne récupérée : terminer le MOB ?'))mobEnd('Personne récupérée')};
+$('#mobFalse').onclick=()=>{if(confirm('Déclenchement par erreur : annuler le MOB ?'))mobEnd('Fausse alerte')};
+setInterval(mobUpd,1000);
+if(MOB&&MOB.active){mobShow()}
+mobUpd();
 
 I18N.start();
 </script>
