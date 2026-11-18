@@ -204,6 +204,16 @@ nav{bottom:calc(16px + env(safe-area-inset-bottom))!important}
 /* bande pleine sous la barre du bas : le contenu ne passe plus sous les boutons Android */
 body::after{content:"";position:fixed;left:0;right:0;bottom:0;height:calc(env(safe-area-inset-bottom,0px) + 10px);background:var(--bg);z-index:4;pointer-events:none}
 nav{z-index:6}
+
+/* carte 3D */
+#mapTilt{transition:transform .5s}
+#mapStage.m3d #mapTilt{transform-origin:50% 50%;top:12%;transform:perspective(640px) rotateX(58deg) rotateZ(calc(var(--hd,0)*1deg)) scale(2.15)}
+#mapStage.m3d canvas#map{pointer-events:none}
+#map3dFog{position:absolute;left:0;right:0;top:0;height:42%;background:linear-gradient(var(--bg),transparent);pointer-events:none;display:none;z-index:1}
+#mapStage.m3d #map3dFog{display:block}
+#map3dBoat{position:absolute;left:50%;top:62%;width:230px;height:230px;margin:-208px 0 0 -115px;pointer-events:none;display:none;z-index:2}
+#mapStage.m3d #map3dBoat{display:block}
+#m3d[aria-pressed=true]{background:var(--acc);color:var(--on-acc)}
 </style>
 </head>
 <body>
@@ -242,12 +252,13 @@ nav{z-index:6}
     <select id="mapSel" style="flex:1;min-width:0"></select>
     <button class="b" id="wpToggle" style="padding:12px 14px">📍 Tracer une route</button>
   </div>
-  <div style="position:relative">
-    <canvas id="map"></canvas>
-    <canvas id="mapFx" style="position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;border-radius:12px"></canvas>
+  <div id="mapStage" style="position:relative;overflow:hidden;border-radius:12px">
+    <div id="mapTilt" style="position:relative"><canvas id="map"></canvas>
+    <canvas id="mapFx" style="position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;border-radius:12px"></canvas></div>
+    <div id="map3dFog"></div><div id="map3dBoat"></div>
     <div id="wpSheet" class="sheet hide"></div>
-    <div style="position:absolute;right:8px;top:8px;display:flex;flex-direction:column;gap:6px">
-      <button class="b sec" id="mZin" style="width:40px;padding:6px">+</button><button class="b sec" id="mZout" style="width:40px;padding:6px">−</button><button class="b sec" id="mFit" style="width:40px;padding:6px" title="Recentrer">⌖</button>
+    <div style="position:absolute;right:8px;top:8px;display:flex;flex-direction:column;gap:6px;z-index:3">
+      <button class="b sec" id="mZin" style="width:40px;padding:6px">+</button><button class="b sec" id="mZout" style="width:40px;padding:6px">−</button><button class="b sec" id="mFit" style="width:40px;padding:6px" title="Recentrer">⌖</button><button class="b sec" id="m3d" style="width:40px;padding:6px;font-weight:700" aria-pressed="false" title="Vue 3D">3D</button>
     </div>
   </div>
   <div class="card hide" id="wpPanel" style="margin-top:8px">
@@ -271,15 +282,7 @@ nav{z-index:6}
 
 <section id="v-route">
   <div class="card warn mut">⚠️ Aide à la décision uniquement. Le routage ne connaît ni la terre, ni les hauts-fonds, ni les dangers : vérifie toujours la route sur la carte et ajoute des points « Via » pour contourner les côtes.</div>
-  <div class="card" id="polCard">
-    <b>Polaire du bateau</b>
-    <div class="mut" id="polInfo" style="margin:4px 0"></div>
-    <div id="polSvg"></div>
-    <div id="polPerfRow" class="hide"><label>Performance réelle par rapport à la polaire : <b id="polPerfV"></b></label><input type="range" id="polPerf" min="50" max="110" step="1"><div class="mut">Les polaires sont théoriques : 85–95 % est courant en croisière.</div></div>
-    <div class="row" style="margin-top:10px"><label class="b" style="margin:0;color:var(--on-acc);display:inline-block;width:auto;cursor:pointer">Importer une polaire<input type="file" id="polFile" accept=".csv,.pol,.txt,.tsv,text/*" class="hide"></label><button class="b sec hide" id="polReset">Polaire générique</button></div>
-    <div class="mut" id="polMsg" style="margin-top:6px"></div>
-    <div class="mut" style="margin-top:8px">Cherche la polaire de ton bateau sur <a href="https://windregatta.com" target="_blank" rel="noopener" style="color:var(--acc)">windregatta.com</a>, puis importe le fichier ici. Formats acceptés : tableau angle du vent × vitesse du vent (CSV, POL, TXT, séparateurs ; , tabulation ou espace) ou lignes « vent, angle, vitesse, angle, vitesse… ».</div>
-  </div>
+  <div class="card" id="polShort"><div class="mut" id="polLine"></div><button class="b sec" id="polGoSet" style="margin-top:8px">Polaire : importer, activer, visualiser (Réglages)</button></div>
   <div class="card">
     <button class="b" id="rRoutePick" style="width:100%;padding:14px">📍 Placer les points sur la carte</button>
     <label>Départ (lat, lon en degrés décimaux)</label>
@@ -347,6 +350,11 @@ nav{z-index:6}
     <select id="mapBase"><option value="osm">OpenStreetMap</option><option value="voy">Carte claire (Carto)</option><option value="esri">Satellite (Esri)</option><option value="none">Aucun fond (hors ligne)</option></select>
     <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="mapSea" checked style="width:auto"> Balises et feux marins (OpenSeaMap)</label>
     <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="mapDepth" style="width:auto"> Profondeurs d'eau en couleur (EMODnet) · touche la carte pour lire la profondeur</label>
+    <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="map3dCb" style="width:auto"> Vue 3D inclinée (suit le bateau, cap en haut, bateau 3D)</label>
+    <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="lnHdg" style="width:auto"> Ligne de cap (là où pointe le bateau)</label>
+    <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="lnCog" style="width:auto"> Ligne de fond (route réelle, tient compte de la dérive)</label>
+    <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="lnLay" style="width:auto"> Laylines (selon la polaire et le vent vrai)</label>
+    <label>Longueur des lignes (minutes de navigation)</label><input id="lnMin" type="number" min="5" step="5">
     <h3 style="margin:18px 0 4px;font-size:15px">Routage : terres et profondeur</h3>
     <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="sAvoid" style="width:auto"> Éviter les terres</label>
     <label>Profondeur minimale à respecter (mètres, 0 = ignorer)</label><input id="sMinDepth" type="number" step="0.1" min="0">
@@ -392,6 +400,17 @@ nav{z-index:6}
       <label class="b sec" style="margin:0;color:var(--tx);display:inline-block;width:auto">Importer<input type="file" id="bImport" accept=".json" class="hide"></label>
     </div>
   </div>
+  <div class="card" id="polCard">
+    <b>Polaire du bateau</b>
+    <div class="mut" id="polInfo" style="margin:4px 0"></div>
+    <div id="polOnRow" class="hide"><label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="polOn" style="width:auto"> Utiliser cette polaire (routage, laylines). Sinon : polaire générique.</label></div>
+    <div id="polSvg"></div>
+    <div class="mut" id="polTbl" style="font-size:12px;margin:4px 0"></div>
+    <div id="polPerfRow" class="hide"><label>Performance réelle par rapport à la polaire : <b id="polPerfV"></b></label><input type="range" id="polPerf" min="50" max="110" step="1"><div class="mut">Les polaires sont théoriques : 85–95 % est courant en croisière.</div></div>
+    <div class="row" style="margin-top:10px"><label class="b" style="margin:0;color:var(--on-acc);display:inline-block;width:auto;cursor:pointer">Importer une polaire<input type="file" id="polFile" accept=".csv,.pol,.txt,.tsv,text/*" class="hide"></label><button class="b sec hide" id="polReset">Polaire générique</button></div>
+    <div class="mut" id="polMsg" style="margin-top:6px"></div>
+    <div class="mut" style="margin-top:8px">Cherche la polaire de ton bateau sur <a href="https://windregatta.com" target="_blank" rel="noopener" style="color:var(--acc)">windregatta.com</a>, puis importe le fichier ici. Formats acceptés : tableau angle du vent × vitesse du vent (CSV, POL, TXT, séparateurs ; , tabulation ou espace) ou lignes « vent, angle, vitesse, angle, vitesse… ».</div>
+  </div>
   <div class="card"><b>Diagnostic</b><div class="mut" id="diag" style="white-space:pre-wrap;font-size:12px;margin-top:6px"></div></div>
 </section>
 
@@ -421,7 +440,7 @@ nav{z-index:6}
 
 <script>
 let simT=null;
-const APPV='v10',ERRLOG=[];
+const APPV='v11',ERRLOG=[];
 const logErr=m=>{ERRLOG.push(new Date().toLocaleTimeString('fr-FR')+' '+String(m).slice(0,220));if(ERRLOG.length>25)ERRLOG.shift()};
 window.addEventListener('error',e=>logErr((e.message||'erreur')+' @'+String(e.filename||'').split('/').pop()+':'+e.lineno));
 window.addEventListener('unhandledrejection',e=>logErr('promesse : '+((e.reason&&e.reason.message)||e.reason)));
@@ -1017,15 +1036,17 @@ function buildBoat(){
 }
 const hexRGB=h=>{h=String(h).trim();if(h[0]!=='#')return[100,200,255];if(h.length===4)h='#'+[...h.slice(1)].map(c=>c+c).join('');return[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)]};
 const B3_VIEWS=[{psi:-34,e:15,n:'vue 3/4 arrière'},{psi:0,e:11,n:'vue arrière'},{psi:-90,e:7,n:'vue de côté'},{psi:-148,e:20,n:'vue 3/4 avant'}];
-function mkAtt3D(root){
+function mkAtt3D(root,opts){
+  const MO=!!(opts&&opts.boatOnly);
   BOAT3D=BOAT3D||buildBoat();
   const cv=document.createElement('canvas');cv.style.cssText='width:100%;aspect-ratio:1/1;display:block;cursor:pointer';cv.setAttribute('role','img');cv.setAttribute('aria-label','Bateau en 3D : roulis et tangage. Toucher pour changer de point de vue.');
   root.innerHTML='';root.appendChild(cv);
   const wc=document.createElement('canvas');const sc=document.createElement('canvas');
-  const S={roll:0,pitch:0,tr:0,tp:0,ok:false,psi:B3_VIEWS[0].psi,e:B3_VIEWS[0].e,v:0,tpsi:B3_VIEWS[0].psi,te:B3_VIEWS[0].e,dist:29,td:29,vn:B3_VIEWS[0].n,pw:null};let last=0;
+  const S={roll:0,pitch:0,tr:0,tp:0,ok:false,psi:B3_VIEWS[0].psi,e:B3_VIEWS[0].e,v:0,tpsi:B3_VIEWS[0].psi,te:B3_VIEWS[0].e,dist:29,td:29,vn:B3_VIEWS[0].n,pw:null};
+  if(MO){S.psi=S.tpsi=0;S.e=S.te=36;S.dist=S.td=34}let last=0;
   const preset=()=>{hap('light');S.v=(S.v+1)%B3_VIEWS.length;const V=B3_VIEWS[S.v];S.tpsi=V.psi;S.te=V.e;S.td=29;S.vn=V.n};
   const inStage=!!(root.closest&&root.closest('#dialStage'));
-  if(!inStage)cv.onclick=preset;
+  if(!inStage&&!MO)cv.onclick=preset;
   else{
     cv.style.touchAction='none';const ptr=new Map();let mv=0,d0=0,td0=29,pinched=false;
     cv.addEventListener('pointerdown',e=>{
@@ -1070,7 +1091,7 @@ function mkAtt3D(root){
     const dtf=Math.min(0.1,(now-last)/1000||0.033);last=now;
     const dpr=Math.min(2,window.devicePixelRatio||1),W=Math.max(120,Math.round(cv.clientWidth*dpr));
     if(cv.width!==W){cv.width=W;cv.height=W;wc.width=W;wc.height=W;sc.width=W;sc.height=W}
-    SEA.on=true;if(root._sl)root._sl.style.display=SEA.raw&&SEA.src==='windy'?'flex':'none';if(!SEA.t0||Date.now()-SEA.t0>5000){SEA.t0=Date.now();seaUpdate();wxUpdate()}
+    if(!MO)SEA.on=true;if(!MO&&root._sl)root._sl.style.display=SEA.raw&&SEA.src==='windy'?'flex':'none';if(!MO&&(!SEA.t0||Date.now()-SEA.t0>5000)){SEA.t0=Date.now();seaUpdate();wxUpdate()}
     draw(W,now/1000,dtf);requestAnimationFrame(frame);
   }
   function draw(W,t,dt){
@@ -1083,9 +1104,9 @@ function mkAtt3D(root){
     const dist=S.dist,F=W*1.4,cx=W/2,cy=W*0.56;
     const proj=p=>{const x=p[0],y=p[1]-1.6,z=p[2],d=x*fx+y*fy+z*fz+dist,sx=x*rx+z*rz,sy=x*ux+y*uy+z*uz;return[cx+sx*F/d,cy-sy*F/d,d]};
     // mouvement du bateau (valeurs mesurées) + léger mouvement sur l'eau
-    const sea=SEA.trains.length>0,hdg0=(typeof hdgNow==='function'&&hdgNow())||0,e0=sea?seaEta(0,0,t,hdg0):0,hv=sea?0:0.07*Math.sin(t*1.7)+0.04*Math.sin(t*2.9),cr=Math.cos(S.roll*D2R),sr=Math.sin(S.roll*D2R),cp=Math.cos(S.pitch*D2R),sp=Math.sin(S.pitch*D2R),SC=0.9;
+    const sea=!MO&&SEA.trains.length>0,hdg0=(typeof hdgNow==='function'&&hdgNow())||0,e0=sea?seaEta(0,0,t,hdg0):0,hv=sea?0:0.07*Math.sin(t*1.7)+0.04*Math.sin(t*2.9),cr=Math.cos(S.roll*D2R),sr=Math.sin(S.roll*D2R),cp=Math.cos(S.pitch*D2R),sp=Math.sin(S.pitch*D2R),SC=0.9;
     const xf=p=>{let x=p[0]*SC,y=p[1]*SC,z=p[2]*SC;const x1=x*cr+y*sr,y1=-x*sr+y*cr;const y2=y1*cp+z*sp,z2=-y1*sp+z*cp;return[x1,y2+hv,z2]};
-    const wxOn=cfg.b3wx!==false,wnOn=cfg.b3wind!==false;
+    const wxOn=!MO&&cfg.b3wx!==false,wnOn=!MO&&cfg.b3wind!==false;
     const srel=(WX.sunAz-hdg0)*D2R,sce=WX.sunEl*D2R,sunDir=[Math.sin(srel)*Math.cos(sce),Math.sin(sce),Math.cos(srel)*Math.cos(sce)];
     const Ld=(wxOn&&WX.sunEl>3)?sunDir.slice():[-0.45,0.8,-0.35],Ll=Math.hypot(...Ld);
     const COL={top:[236,244,250,.6],stripe:[acc[0],acc[1],acc[2],.78],bot:[28,66,116,.55],deck:[205,210,205,.62],cabin:[228,235,240,.6],glass:[16,34,52,.78],cockpit:[58,68,80,.62],keel:[46,108,172,.55],sail:[wnd[0],wnd[1],wnd[2],.30]};
@@ -1104,7 +1125,7 @@ function mkAtt3D(root){
     g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,W,W);
     g.lineJoin='round';g.lineCap='round';
     // halo
-    const hg=g.createRadialGradient(cx,cy,W*0.05,cx,cy,W*0.5);hg.addColorStop(0,`rgba(${wnd[0]},${wnd[1]},${wnd[2]},.16)`);hg.addColorStop(1,`rgba(${wnd[0]},${wnd[1]},${wnd[2]},0)`);g.fillStyle=hg;g.fillRect(0,0,W,W);
+    const hg=g.createRadialGradient(cx,cy,W*0.05,cx,cy,W*0.5);hg.addColorStop(0,`rgba(${wnd[0]},${wnd[1]},${wnd[2]},.16)`);hg.addColorStop(1,`rgba(${wnd[0]},${wnd[1]},${wnd[2]},0)`);if(!MO){g.fillStyle=hg;g.fillRect(0,0,W,W)}
     // météo : soleil et nuages lointains
     const gs=sc.getContext('2d');gs.setTransform(1,0,0,1,0,0);gs.clearRect(0,0,W,W);
     const skyEnd=()=>{const m=gs.createRadialGradient(cx,cy,W*0.22,cx,cy,W*0.52);m.addColorStop(0,'rgba(0,0,0,0)');m.addColorStop(1,'rgba(0,0,0,1)');gs.globalCompositeOperation='destination-out';gs.fillStyle=m;gs.fillRect(0,0,W,W);gs.globalCompositeOperation='source-over';g.drawImage(sc,0,0);gs.clearRect(0,0,W,W)};
@@ -1147,7 +1168,7 @@ function mkAtt3D(root){
     if(!sea)for(let r=0;r<3;r++){const f=((t*0.22+r/3)%1),rad=1.5+f*7;w2.strokeStyle=`rgba(255,255,255,${(0.42*(1-f)).toFixed(3)})`;w2.lineWidth=Math.max(1.5,W/330);w2.beginPath();for(let a=0;a<=64;a++){const q=proj([Math.cos(a/64*6.2832)*rad*0.8,0,Math.sin(a/64*6.2832)*rad*1.25-0.4]);a?w2.lineTo(q[0],q[1]):w2.moveTo(q[0],q[1])}w2.stroke()}
     const mg=w2.createRadialGradient(cx,cy*1.02,W*0.2,cx,cy*1.02,W*0.5);mg.addColorStop(0,'rgba(0,0,0,0)');mg.addColorStop(0.55,'rgba(0,0,0,0)');mg.addColorStop(1,'rgba(0,0,0,1)');
     w2.globalCompositeOperation='destination-out';w2.fillStyle=mg;w2.fillRect(0,0,W,W);w2.globalCompositeOperation='source-over';
-    g.drawImage(wc,0,0);
+    if(!MO)g.drawImage(wc,0,0);
     // parties émergées
     const items=above.concat(lines).sort((a,b)=>b.d-a.d);
     for(const p of items){
@@ -1185,6 +1206,7 @@ function mkAtt3D(root){
         }
       }
     }
+    if(MO)return;
     // ligne de flottaison lumineuse
     // texte
     const roll=S.roll,pit=S.pitch,okC=a=>S.ok?(Math.abs(a)>25?'#ff5a4d':Math.abs(a)>15?'#ffb224':`rgb(${tx[0]},${tx[1]},${tx[2]})`):mut;
@@ -1601,6 +1623,67 @@ async function download(name,txt,type){
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type}));a.download=name.replace(/[\\/:*?"<>|]/g,'_');a.click();setTimeout(()=>URL.revokeObjectURL(a.href),5000);
 }
 
+
+/* ---------- Lignes de cap / de fond (dérive) et laylines ---------- */
+let M3D=localStorage.getItem('map3d')==='1';
+const angD=(a,b)=>((a-b+540)%360)-180;
+function bestAngles(tws){
+  let u=45,vu=-1,d=150,vd=-1;
+  for(let a=25;a<=80;a+=1){const v=sailSpeed(cfg.cruise||6,tws,a)*Math.cos(a*D2R);if(v>vu){vu=v;u=a}}
+  for(let a=100;a<=178;a+=1){const v=-sailSpeed(cfg.cruise||6,tws,a)*Math.cos(a*D2R);if(v>vd){vd=v;d=a}}
+  return{up:u,dn:d};
+}
+function mapNav(g,P,W,H){
+  if($('#mapSel').value!=='live'||!fresh('lat')||!fresh('lon'))return;
+  const on=k=>cfg[k]!==false,pos={lat:D.lat,lon:D.lon},hd=fresh('hdg')?D.hdg:null,cg=fresh('cog')?D.cog:null,sog=fresh('sog')?D.sog:0,mins=cfg.lnMin||30;
+  const L=Math.max(0.4,Math.max(sog,1.5)*mins/60);
+  const go=(o,brg,nm)=>{const d=nm/60;return{lat:o.lat+d*Math.cos(brg*D2R),lon:o.lon+d*Math.sin(brg*D2R)/Math.cos(o.lat*D2R)}};
+  const seg=(a,b,col,w,dash,al)=>{const[x0,y0]=P(a),[x1,y1]=P(b);g.save();g.strokeStyle=col;g.lineWidth=w;g.setLineDash(dash||[]);g.lineCap='round';g.globalAlpha=al||1;g.shadowColor='rgba(0,0,0,.55)';g.shadowBlur=3;g.beginPath();g.moveTo(x0,y0);g.lineTo(x1,y1);g.stroke();g.restore()};
+  const txt=(a,t,col)=>{const[x,y]=P(a);g.save();g.font='600 11px system-ui';g.fillStyle=col;g.shadowColor='#000';g.shadowBlur=4;g.textAlign='center';g.fillText(t,x,y-6);g.restore()};
+  // laylines
+  if(on('lnLay')&&fresh('tws')&&fresh('twa')){
+    const h=hd!=null?hd:cg;
+    if(h!=null){
+      const twd=(h+D.twa+360)%360,A=bestAngles(D.tws),Ln=Math.max(2,L*3);
+      const col={s:'#3ddc97',p:'#ff6b5d'};
+      let T=null;if(WP&&WP.length>=2)T=WP[WP.length-1];else{const r=plan?.routes?.[plan.sel||0]?.route;if(r&&r.length)T={lat:r[r.length-1].la,lon:r[r.length-1].lo}}
+      const toT=T?bearing(pos,T):null,upT=toT!=null&&Math.abs(angD(toT,twd))<90;
+      const ang=T?(upT?A.up:A.dn):A.up;
+      // depuis le bateau
+      [[twd-A.up,col.s],[twd+A.up,col.p]].forEach(([b,c])=>seg(pos,go(pos,b,Ln),c,1.6,[10,7],.8));
+      txt(go(pos,twd-A.up,Ln),'près '+A.up+'°','#3ddc97');
+      // depuis la marque : bord à suivre pour l'atteindre
+      if(T){[[twd-ang,col.s],[twd+ang,col.p]].forEach(([b,c])=>seg(T,go(T,b+180,Ln),c,2.2,null,.9));
+        txt(go(T,twd-ang+180,Ln*0.9),'layline tribord','#3ddc97');txt(go(T,twd+ang+180,Ln*0.9),'layline bâbord','#ff6b5d')}
+    }
+  }
+  // ligne de fond : route réelle (courant et dérive inclus), repères toutes les 10 minutes
+  if(on('lnCog')&&cg!=null&&sog>0.3){
+    const e=go(pos,cg,L);seg(pos,e,'#ff9d2e',3.2,null,.95);
+    for(let m=10;m<=mins;m+=10){const q=go(pos,cg,sog*m/60),[x,y]=P(q);g.save();g.fillStyle='#ff9d2e';g.beginPath();g.arc(x,y,2.8,0,6.3);g.fill();g.restore()}
+    if(hd!=null&&Math.abs(angD(cg,hd))>=1){const dr=angD(cg,hd);txt(e,`fond ${String(Math.round(cg)).padStart(3,'0')}° · dérive ${Math.abs(dr).toFixed(0)}° ${dr>0?'tribord':'bâbord'}`,'#ffb868')}
+    else txt(e,`fond ${String(Math.round(cg)).padStart(3,'0')}° · ${mins} min`,'#ffb868');
+  }
+  // ligne de cap : là où pointe le bateau
+  if(on('lnHdg')&&(hd!=null||cg!=null)){const h=hd!=null?hd:cg;seg(pos,go(pos,h,L),'rgba(255,255,255,.95)',2,[9,6],.95)}
+}
+const m3dFrame=()=>{
+  const st=$('#mapStage');if(!st)return;
+  if(M3D&&$('#v-map').classList.contains('on')){
+    const h=hdgNow();if(h!=null){M3D_HD=unwrap(M3D_HD,-h);st.querySelector('#mapTilt').style.setProperty('--hd',M3D_HD)}
+    if(M3D_UP)M3D_UP();
+  }
+};
+let M3D_HD=0,M3D_UP=null;
+function setM3D(on){
+  M3D=!!on;localStorage.setItem('map3d',M3D?'1':'0');
+  $('#mapStage').classList.toggle('m3d',M3D);$('#m3d').setAttribute('aria-pressed',M3D);$('#map3dCb').checked=M3D;
+  if(M3D){if(!M3D_UP){try{M3D_UP=mkAtt3D($('#map3dBoat'),{boatOnly:true})}catch(e){logErr('3D carte : '+e.message)}}
+    if($('#mapSel').value!=='live'){$('#mapSel').value='live';try{drawMapSel(true)}catch(e){}}
+    MV.z=Math.max(MV.z,14);m3dFrame()}
+  scheduleDraw();
+}
+setInterval(()=>{m3dFrame();if(M3D&&$('#v-map').classList.contains('on'))scheduleDraw()},1500);
 /* ---------- Carte ---------- */
 const tileCache={}; let tileErr=0, drawQ=0;
 const MAPSRC={
@@ -1644,7 +1727,7 @@ function fitView(W,H){
 function renderMap(){
   const c=$('#map'),dpr=window.devicePixelRatio||1,W=c.clientWidth,H=c.clientHeight;if(!W||!H)return;
   c.width=W*dpr;c.height=H*dpr;const g=c.getContext('2d');g.scale(dpr,dpr);
-  if(MV.auto)fitView(W,H);
+  if(M3D&&fresh('lat')){MV.lat=D.lat;MV.lon=D.lon}else if(MV.auto)fitView(W,H);
   const z=MV.z,ox=wx(MV.lon,z)-W/2,oy=wy(MV.lat,z)-H/2;
   VT={ox,oy,z,W,H};
   const P=p=>[wx(p.lon,z)-ox,wy(p.lat,z)-oy];
@@ -1677,16 +1760,18 @@ function renderMap(){
   if(MD.ov&&MD.ov.length){dot(MD.ov[0],'#3fb6ff');dot(MD.ov[MD.ov.length-1],'#3fb6ff')}
   fxBase(g,W,H,ox,oy,z);
   wpDraw(g,P);
+  mapNav(g,P,W,H);
   // position du bateau
   if(fresh('lat')){const[x,y]=P({lat:D.lat,lon:D.lon});g.save();g.translate(x,y);g.rotate((fresh('cog')?D.cog:0)*D2R);
     const cs=getComputedStyle(document.documentElement),ac=cs.getPropertyValue('--acc').trim()||'#FFB224',wd=cs.getPropertyValue('--wind').trim()||'#5CC8FF';
     const hg=g.createRadialGradient(0,0,4,0,0,34);hg.addColorStop(0,wd+'88');hg.addColorStop(1,wd+'00');g.fillStyle=hg;g.beginPath();g.arc(0,0,34,0,6.2832);g.fill();
     if(fresh('sog')&&D.sog>0.5){const wk=g.createLinearGradient(0,10,0,10+Math.min(46,D.sog*7));wk.addColorStop(0,'rgba(255,255,255,.55)');wk.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=wk;g.beginPath();g.moveTo(-4,11);g.lineTo(4,11);g.lineTo(11,11+Math.min(46,D.sog*7));g.lineTo(-11,11+Math.min(46,D.sog*7));g.closePath();g.fill()}
+    if(M3D){g.restore();}else{
     g.shadowColor='rgba(0,0,0,.6)';g.shadowBlur=8;g.shadowOffsetY=2;
-    const bg=g.createLinearGradient(-9,-16,9,12);bg.addColorStop(0,'#ffffff');bg.addColorStop(.5,ac);bg.addColorStop(1,'#00000099');
-    g.fillStyle=bg;g.strokeStyle='#fff';g.lineWidth=1.8;g.beginPath();g.moveTo(0,-17);g.bezierCurveTo(7,-8,9,2,7,11);g.lineTo(-7,11);g.bezierCurveTo(-9,2,-7,-8,0,-17);g.closePath();g.fill();g.stroke();
-    g.shadowBlur=0;g.shadowOffsetY=0;g.strokeStyle='rgba(0,0,0,.55)';g.lineWidth=1.6;g.beginPath();g.moveTo(0,-8);g.lineTo(0,8);g.stroke();g.fillStyle='rgba(255,255,255,.9)';g.beginPath();g.moveTo(0,-9);g.quadraticCurveTo(6,-1,4,6);g.lineTo(0,6);g.closePath();g.fill();
-    g.restore()}
+    const bg=g.createLinearGradient(-6,-18,6,12);bg.addColorStop(0,'#ffffff');bg.addColorStop(.5,ac);bg.addColorStop(1,'#00000099');
+    g.fillStyle=bg;g.strokeStyle='#fff';g.lineWidth=1.8;g.beginPath();g.moveTo(0,-19);g.bezierCurveTo(4.2,-9,5.8,2,4.6,12);g.lineTo(-4.6,12);g.bezierCurveTo(-5.8,2,-4.2,-9,0,-19);g.closePath();g.fill();g.stroke();
+    g.shadowBlur=0;g.shadowOffsetY=0;g.strokeStyle='rgba(0,0,0,.55)';g.lineWidth=1.6;g.beginPath();g.moveTo(0,-8);g.lineTo(0,8);g.stroke();g.fillStyle='rgba(255,255,255,.9)';g.beginPath();g.moveTo(0,-10);g.quadraticCurveTo(3.8,-2,2.6,6);g.lineTo(0,6);g.closePath();g.fill();
+    g.restore()}}
   // échelle
   const mPx=156543.03*Math.cos(MV.lat*D2R)/2**z, nmPx=1852/mPx, nice=[0.01,0.02,0.05,0.1,0.2,0.5,1,2,5,10,20,50,100,200,500];
   let nm=nice[0];for(const v of nice)if(v*nmPx<=120)nm=v;
@@ -1736,6 +1821,7 @@ function renderMap(){
     tap=null;ptrs.delete(e.pointerId);last=0;
   };
   c.onwheel=e=>{e.preventDefault();zoomBy(e.deltaY<0?1:-1)};
+  $('#m3d').onclick=()=>setM3D(!M3D);$('#map3dCb').onchange=e=>setM3D(e.target.checked);$('#wpToggle').addEventListener('click',()=>{if(M3D)setM3D(false)});
   $('#mZin').onclick=()=>zoomBy(1);$('#mZout').onclick=()=>zoomBy(-1);$('#mFit').onclick=()=>drawMapSel(true);
   const b=localStorage.getItem('mapBase');if(b)$('#mapBase').value=b;
   $('#mapSea').checked=localStorage.getItem('mapSea')!=='0';$('#mapDepth').checked=localStorage.getItem('mapDepth')==='1';
@@ -2032,9 +2118,10 @@ function loadSettings(){
   $('#boat').textContent=cfg.boat;
   $('#sBoat').value=cfg.boat;$('#sSrc').value=cfg.src;$('#sGps').value=cfg.gpsSrc||'auto';$('#sHost').value=cfg.host;
   $('#sDemoSpd').value=String(cfg.demoSpeed||1);buildLogCfg();updDemoBar();
-  $('#sYdHost').value=cfg.ydHost;$('#sYdPort').value=cfg.ydPort;$('#sAwake').checked=!!cfg.awake;$('#sAvoid').checked=cfg.avoidLand!==false;$('#sMinDepth').value=cfg.minDepth??3;$('#sHaptic').checked=cfg.haptic!==false;$('#sCruise').value=cfg.cruise;$('#sKPoint').value=cfg.kPoint;$('#sKMap').value=cfg.kMap;
+  $('#sYdHost').value=cfg.ydHost;$('#sYdPort').value=cfg.ydPort;$('#sAwake').checked=!!cfg.awake;['lnHdg','lnCog','lnLay'].forEach(k=>$('#'+k).checked=cfg[k]!==false);$('#lnMin').value=cfg.lnMin||30;$('#map3dCb').checked=M3D;$('#sAvoid').checked=cfg.avoidLand!==false;$('#sMinDepth').value=cfg.minDepth??3;$('#sHaptic').checked=cfg.haptic!==false;$('#sCruise').value=cfg.cruise;$('#sKPoint').value=cfg.kPoint;$('#sKMap').value=cfg.kMap;
   $('#sStartKn').value=cfg.startKn;$('#sStartSec').value=cfg.startSec;$('#sStopKn').value=cfg.stopKn;$('#sStopMin').value=cfg.stopMin;$('#sInt').value=cfg.interval;
 }
+['lnHdg','lnCog','lnLay'].forEach(k=>$('#'+k).onchange=e=>{cfg[k]=e.target.checked;saveCfg();scheduleDraw()});$('#lnMin').onchange=e=>{cfg.lnMin=Math.max(5,+e.target.value||30);saveCfg();scheduleDraw()};
 $('#sHaptic').onchange=e=>{cfg.haptic=e.target.checked;saveCfg();if(cfg.haptic)hap('strong')};
 $('#sSave').onclick=()=>{
   cfg={...cfg,boat:$('#sBoat').value||DEF.boat,src:$('#sSrc').value,gpsSrc:$('#sGps').value,host:$('#sHost').value.trim(),
@@ -2069,7 +2156,7 @@ function lerpTab(tab,x){
 const POLAR_TWA=[[0,0],[30,0],[40,0.55],[52,0.8],[75,0.95],[90,1],[110,1.05],[135,1.05],[160,0.92],[180,0.85]];
 const POLAR_TWS=[[0,0],[5,0.55],[8,0.8],[12,1],[18,1.15],[25,1.15],[30,1],[40,0.6]];
 const angDiff=(a,b)=>Math.abs(((a-b+540)%360)-180);
-let USER_POLAR=null,POLAR_PERF=1;   // polaire importée : {tws:[],twa:[],bs:[[…]]} (vitesses en nœuds)
+let USER_POLAR=null,POLAR_PERF=1,POLAR_ON=true;   // polaire importée : {tws:[],twa:[],bs:[[…]]} (vitesses en nœuds)
 function polarSpeed(P,tws,twa){
   twa=Math.abs(twa)%360;if(twa>180)twa=360-twa;
   const idx=(arr,x)=>{if(x<=arr[0])return[0,0,0];if(x>=arr[arr.length-1])return[arr.length-1,arr.length-1,0];let i=1;while(arr[i]<x)i++;return[i-1,i,(x-arr[i-1])/(arr[i]-arr[i-1])]};
@@ -2077,7 +2164,7 @@ function polarSpeed(P,tws,twa){
   const[w0,w1,fw]=idx(P.tws,w),B=P.bs,v0=B[a0][w0]*(1-fw)+B[a0][w1]*fw,v1=B[a1][w0]*(1-fw)+B[a1][w1]*fw;
   return(v0*(1-fa)+v1*fa)*scale;
 }
-function sailSpeed(V,tws,twa){return USER_POLAR?polarSpeed(USER_POLAR,tws,twa)*POLAR_PERF:V*lerpTab(POLAR_TWA,twa)*lerpTab(POLAR_TWS,tws)}
+function sailSpeed(V,tws,twa){return USER_POLAR&&POLAR_ON?polarSpeed(USER_POLAR,tws,twa)*POLAR_PERF:V*lerpTab(POLAR_TWA,twa)*lerpTab(POLAR_TWS,tws)}
 function boat(V,hdg,s,o){
   const tws=s.tws||0, twa=angDiff(s.wdir||0,hdg);
   let stw,motor=false;
@@ -2358,7 +2445,7 @@ async function computePlan(force){
         route:res.path.map(n=>({la:+n.lat.toFixed(4),lo:+n.lon.toFixed(4),t:n.t,h:Math.round(n.hdg||0),w:n.stw||0,g:n.sog||0,ws:n.tws||0,wa:n.twa||0,hs:n.hs||0,sh:n.sh||0,cu:n.cu||0,cv:n.cv||0,m:n.motor?1:0}))});
     }
     if(!routes.some(r=>r.route)){st.textContent=routes[0].error;return}
-    common.unshift(USER_POLAR?`Polaire « ${USER_POLAR.name} » à ${Math.round(POLAR_PERF*100)} %.`:'Polaire générique (importe celle de ton bateau pour un routage plus fiable).');
+    common.unshift(USER_POLAR&&POLAR_ON?`Polaire « ${USER_POLAR.name} » à ${Math.round(POLAR_PERF*100)} %.`:USER_POLAR?'Polaire importée désactivée (Réglages) : polaire générique utilisée.':'Polaire générique (importe celle de ton bateau pour un routage plus fiable).');
     common.push(depthNote||'Le routage ignore la terre et les hauts-fonds : vérifie le tracé.');
     plan={at:NOW(),form:{A:$('#rA').value,B:$('#rB').value,V:$('#rV').value,wx:wxM,wave,cur:cur2,motor,maxW,maxH,t0},warns:common,routes,sel:Math.max(0,routes.findIndex(r=>r.route))};
     localStorage.setItem('plan',JSON.stringify(plan));
@@ -2689,7 +2776,7 @@ function parsePolar(text,name){
 }
 function polarInfo(){
   const P=USER_POLAR;
-  return P?`${esc(P.name)} · ${P.tws.length} vents (${P.tws[0]}–${P.tws[P.tws.length-1]} nds) · ${P.twa.length-2} angles`:'Polaire générique (calculée à partir de la vitesse de croisière)';
+  return P?`${POLAR_ON?'':'<b>(désactivée)</b> '}${esc(P.name)} · ${P.tws.length} vents (${P.tws[0]}–${P.tws[P.tws.length-1]} nds) · ${P.twa.length-2} angles`:'Polaire générique (calculée à partir de la vitesse de croisière)';
 }
 function polarSvg(){
   const P=USER_POLAR;if(!P)return'';
@@ -2705,8 +2792,19 @@ function polarSvg(){
     leg+=`<tspan x="8" dy="14" fill="${col}">● ${P.tws[j]} nds</tspan>`});
   return`<svg class="chart" viewBox="0 0 320 300" width="100%" style="max-width:380px;display:block;margin:8px auto"><text x="8" y="8" style="font-size:11px">${leg}</text>${g}<text x="${cx}" y="${cy-R-10}" text-anchor="middle">face au vent</text><text x="${cx}" y="${cy+R+22}" text-anchor="middle">vent arrière</text></svg>`;
 }
+function polarTable(){
+  const P=USER_POLAR;if(!P)return'';
+  const rows=[6,10,16].filter(t=>t>=P.tws[0]&&t<=P.tws[P.tws.length-1]).map(t=>{
+    let u=[0,-1],d=[0,-1];
+    for(let a=25;a<=80;a++){const v=polarSpeed(P,t,a)*Math.cos(a*D2R);if(v>u[1])u=[a,v]}
+    for(let a=100;a<=178;a++){const v=-polarSpeed(P,t,a)*Math.cos(a*D2R);if(v>d[1])d=[a,v]}
+    return `${t} nds : près ${u[0]}° (${polarSpeed(P,t,u[0]).toFixed(1)} nds, VMG ${u[1].toFixed(1)}) · portant ${d[0]}° (${polarSpeed(P,t,d[0]).toFixed(1)} nds, VMG ${d[1].toFixed(1)})`});
+  return rows.join('<br>');
+}
 function renderPolar(){
-  $('#polInfo').innerHTML=polarInfo();
+  $('#polInfo').innerHTML=polarInfo();$('#polTbl').innerHTML=polarTable();
+  $('#polOnRow').classList.toggle('hide',!USER_POLAR);$('#polOn').checked=POLAR_ON;$('#polSvg').style.opacity=POLAR_ON?1:.45;
+  $('#polLine').innerHTML=USER_POLAR?`Polaire : ${polarInfo()}${POLAR_ON?` · performance ${cfg.polarPerf??90} %`:''}`:'Polaire générique (calculée à partir de la vitesse de croisière).';
   $('#polSvg').innerHTML=polarSvg();
   $('#polPerf').value=cfg.polarPerf??90;$('#polPerfV').textContent=(cfg.polarPerf??90)+' %';
   $('#polReset').classList.toggle('hide',!USER_POLAR);$('#polPerfRow').classList.toggle('hide',!USER_POLAR);
@@ -2720,9 +2818,12 @@ $('#polFile').onchange=async e=>{
   try{const P=parsePolar(await f.text(),f.name.replace(/\.[^.]+$/,'').replace(/[-_]polar$/i,'').replace(/[-_]/g,' '));setPolar(P);$('#polMsg').textContent='Polaire importée : elle sera utilisée au prochain calcul de routage.'}
   catch(err){$('#polMsg').textContent='Import impossible : '+err.message}
 };
+$('#polOn').onchange=e=>{POLAR_ON=e.target.checked;cfg.polarOn=POLAR_ON;saveCfg();renderPolar()};
+$('#polGoSet').onclick=()=>{go('set');setTimeout(()=>$('#polCard').scrollIntoView({behavior:'smooth'}),80)};
 $('#polReset').onclick=()=>{setPolar(null);$('#polMsg').textContent='Polaire générique rétablie.'};
 $('#polPerf').oninput=e=>{cfg.polarPerf=+e.target.value;POLAR_PERF=cfg.polarPerf/100;$('#polPerfV').textContent=cfg.polarPerf+' %'};
 $('#polPerf').onchange=saveCfg;
+POLAR_ON=cfg.polarOn!==false;
 try{const sp=JSON.parse(localStorage.getItem('polar')||'null');if(sp&&sp.twa&&sp.tws&&sp.bs){USER_POLAR=sp;POLAR_PERF=(cfg.polarPerf??90)/100}}catch(e){}
 
 /* ---------- Navigation ---------- */
