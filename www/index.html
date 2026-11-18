@@ -200,6 +200,10 @@ nav{bottom:calc(16px + env(safe-area-inset-bottom))!important}
 .dial .ping{animation:ping 2.4s ease-out infinite;opacity:0}.dial .ping.p2{animation-delay:1.2s}
 @keyframes ping{0%{r:4;opacity:.85}100%{r:26;opacity:0}}
 @media (prefers-reduced-motion:reduce){.swv,.dial .ping{animation:none}}
+
+/* bande pleine sous la barre du bas : le contenu ne passe plus sous les boutons Android */
+body::after{content:"";position:fixed;left:0;right:0;bottom:0;height:calc(env(safe-area-inset-bottom,0px) + 10px);background:var(--bg);z-index:4;pointer-events:none}
+nav{z-index:6}
 </style>
 </head>
 <body>
@@ -237,10 +241,6 @@ nav{bottom:calc(16px + env(safe-area-inset-bottom))!important}
   <div class="row" style="margin-bottom:8px">
     <select id="mapSel" style="flex:1;min-width:0"></select>
     <button class="b" id="wpToggle" style="padding:12px 14px">📍 Tracer une route</button>
-  </div>
-  <div class="row" style="margin-bottom:8px">
-    <select id="mapBase" style="flex:1"><option value="osm">Fond : OpenStreetMap</option><option value="voy">Fond : carte claire (Carto)</option><option value="esri">Fond : satellite (Esri)</option><option value="none">Aucun fond (hors ligne)</option></select>
-    <label style="margin:0;display:flex;align-items:center;gap:6px;width:auto"><input type="checkbox" id="mapSea" checked style="width:auto"> balises marines</label>
   </div>
   <div style="position:relative">
     <canvas id="map"></canvas>
@@ -342,6 +342,15 @@ nav{bottom:calc(16px + env(safe-area-inset-bottom))!important}
     <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="sAwake" style="width:auto"> Garder l'écran allumé (Android)</label>
     <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="sHaptic" style="width:auto"> Retour haptique (vibration légère au toucher)</label>
     <label>Vitesse de croisière du bateau (nœuds)</label><input id="sCruise" type="number" step="0.1">
+    <h3 style="margin:18px 0 4px;font-size:15px">Carte</h3>
+    <label>Fond de carte</label>
+    <select id="mapBase"><option value="osm">OpenStreetMap</option><option value="voy">Carte claire (Carto)</option><option value="esri">Satellite (Esri)</option><option value="none">Aucun fond (hors ligne)</option></select>
+    <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="mapSea" checked style="width:auto"> Balises et feux marins (OpenSeaMap)</label>
+    <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="mapDepth" style="width:auto"> Profondeurs d'eau en couleur (EMODnet) · touche la carte pour lire la profondeur</label>
+    <h3 style="margin:18px 0 4px;font-size:15px">Routage : terres et profondeur</h3>
+    <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="sAvoid" style="width:auto"> Éviter les terres</label>
+    <label>Profondeur minimale à respecter (mètres, 0 = ignorer)</label><input id="sMinDepth" type="number" step="0.1" min="0">
+    <div class="mut">Tirant d'eau + marge de sécurité. Données EMODnet (mers d'Europe, résolution selon la taille de la zone), hauteur par rapport au zéro des cartes : à vérifier sur une carte marine officielle.</div>
     <label>Windy : clé Point Forecast (routage)</label><input id="sKPoint" type="password" autocomplete="off">
     <label>Windy : clé Map Forecast (carte)</label><input id="sKMap" type="password" autocomplete="off">
     <div class="mut">Les clés restent sur cet appareil (stockage local du navigateur).</div>
@@ -1588,6 +1597,7 @@ const MAPSRC={
   osm:{u:(z,x,y)=>`https://tile.openstreetmap.org/${z}/${x}/${y}.png`,max:19},
   voy:{u:(z,x,y)=>`https://a.basemaps.cartocdn.com/rastertiles/voyager/${z}/${x}/${y}.png`,max:19},
   esri:{u:(z,x,y)=>`https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${x}`,max:18},
+  depth:{u:(z,x,y)=>`https://tiles.emodnet-bathymetry.eu/2020/baselayer/web_mercator/${z}/${x}/${y}.png`,max:12,alpha:.55},
   sea:{u:(z,x,y)=>`https://tiles.openseamap.org/seamark/${z}/${x}/${y}.png`,max:18}};
 function tileImg(layer,z,x,y){
   const k=layer+'/'+z+'/'+x+'/'+y,c=tileCache[k];
@@ -1637,7 +1647,7 @@ function renderMap(){
   for(let lo=Math.ceil(lon0/st)*st;lo<=lon1;lo+=st){const x=wx(lo,z)-ox;g.beginPath();g.moveTo(x,0);g.lineTo(x,H);g.stroke();g.fillText(lo.toFixed(st<0.01?3:st<1?2:0)+'°',x+3,H-4)}
   for(let la=Math.ceil(lat0/st)*st;la<=lat1;la+=st){const y=wy(la,z)-oy;g.beginPath();g.moveTo(0,y);g.lineTo(W,y);g.stroke();g.fillText(la.toFixed(st<0.01?3:st<1?2:0)+'°',3,y-3)}
   // fonds de carte
-  const base=$('#mapBase').value,layers=[];if(base!=='none')layers.push(base);if($('#mapSea').checked)layers.push('sea');
+  const base=$('#mapBase').value,layers=[];if(base!=='none')layers.push(base);if($('#mapDepth').checked)layers.push('depth');if($('#mapSea').checked)layers.push('sea');
   const tz=Math.min(z,Math.max(...layers.map(l=>MAPSRC[l].max),0)),sc=2**(z-tz),n=2**tz;
   for(const layer of layers){
     const zz=Math.min(z,MAPSRC[layer].max),s2=2**(z-zz),nn=2**zz;
@@ -1645,7 +1655,7 @@ function renderMap(){
     for(let tx=x0;tx<=x1;tx++)for(let ty=y0;ty<=y1;ty++){
       if(ty<0||ty>=nn)continue;
       const im=tileImg(layer,zz,((tx%nn)+nn)%nn,ty);
-      if(im)g.drawImage(im,tx*256*s2-ox,ty*256*s2-oy,256*s2,256*s2);
+      if(im){if(MAPSRC[layer].alpha)g.globalAlpha=MAPSRC[layer].alpha;g.drawImage(im,tx*256*s2-ox,ty*256*s2-oy,256*s2,256*s2);g.globalAlpha=1}
     }
   }
   const line=(arr,col,dash)=>{if(arr.length<2)return;g.setLineDash(dash||[]);g.strokeStyle=col;g.lineWidth=3;g.lineJoin='round';g.beginPath();arr.forEach((p,i)=>{const[x,y]=P(p);i?g.lineTo(x,y):g.moveTo(x,y)});g.stroke();g.setLineDash([])};
@@ -1712,13 +1722,15 @@ function renderMap(){
     const[x,y]=rel(e),ok=e.type==='pointerup',d=WPE.drag;
     if(d&&d.id===e.pointerId){WPE.drag=null;if(d.moved){WPE.sel=-1;wpChanged()}else if(ok)wpTap(x,y);ptrs.delete(e.pointerId);tap=null;last=0;return}
     if(WPE.on&&ok&&tap&&!tap.moved&&ptrs.size===1&&NOW()-tap.t<700)wpTap(x,y);
+    else if(!WPE.on&&ok&&tap&&!tap.moved&&ptrs.size===1&&$('#mapDepth').checked)depthTap(toGeo(x,y));
     tap=null;ptrs.delete(e.pointerId);last=0;
   };
   c.onwheel=e=>{e.preventDefault();zoomBy(e.deltaY<0?1:-1)};
   $('#mZin').onclick=()=>zoomBy(1);$('#mZout').onclick=()=>zoomBy(-1);$('#mFit').onclick=()=>drawMapSel(true);
   const b=localStorage.getItem('mapBase');if(b)$('#mapBase').value=b;
-  const onLayer=()=>{localStorage.setItem('mapBase',$('#mapBase').value);tileErr=0;for(const k in tileCache)if(!tileCache[k].ok)delete tileCache[k];scheduleDraw()};
-  $('#mapBase').onchange=onLayer;$('#mapSea').onchange=onLayer;
+  $('#mapSea').checked=localStorage.getItem('mapSea')!=='0';$('#mapDepth').checked=localStorage.getItem('mapDepth')==='1';
+  const onLayer=()=>{localStorage.setItem('mapBase',$('#mapBase').value);localStorage.setItem('mapSea',$('#mapSea').checked?'1':'0');localStorage.setItem('mapDepth',$('#mapDepth').checked?'1':'0');tileErr=0;for(const k in tileCache)if(!tileCache[k].ok)delete tileCache[k];scheduleDraw()};
+  $('#mapBase').onchange=onLayer;$('#mapSea').onchange=onLayer;$('#mapDepth').onchange=onLayer;
   addEventListener('resize',scheduleDraw);
 })();
 /* ---------- Météo animée sur la carte ---------- */
@@ -2010,13 +2022,13 @@ function loadSettings(){
   $('#boat').textContent=cfg.boat;
   $('#sBoat').value=cfg.boat;$('#sSrc').value=cfg.src;$('#sGps').value=cfg.gpsSrc||'auto';$('#sHost').value=cfg.host;
   $('#sDemoSpd').value=String(cfg.demoSpeed||1);buildLogCfg();updDemoBar();
-  $('#sYdHost').value=cfg.ydHost;$('#sYdPort').value=cfg.ydPort;$('#sAwake').checked=!!cfg.awake;$('#sHaptic').checked=cfg.haptic!==false;$('#sCruise').value=cfg.cruise;$('#sKPoint').value=cfg.kPoint;$('#sKMap').value=cfg.kMap;
+  $('#sYdHost').value=cfg.ydHost;$('#sYdPort').value=cfg.ydPort;$('#sAwake').checked=!!cfg.awake;$('#sAvoid').checked=cfg.avoidLand!==false;$('#sMinDepth').value=cfg.minDepth??3;$('#sHaptic').checked=cfg.haptic!==false;$('#sCruise').value=cfg.cruise;$('#sKPoint').value=cfg.kPoint;$('#sKMap').value=cfg.kMap;
   $('#sStartKn').value=cfg.startKn;$('#sStartSec').value=cfg.startSec;$('#sStopKn').value=cfg.stopKn;$('#sStopMin').value=cfg.stopMin;$('#sInt').value=cfg.interval;
 }
 $('#sHaptic').onchange=e=>{cfg.haptic=e.target.checked;saveCfg();if(cfg.haptic)hap('strong')};
 $('#sSave').onclick=()=>{
   cfg={...cfg,boat:$('#sBoat').value||DEF.boat,src:$('#sSrc').value,gpsSrc:$('#sGps').value,host:$('#sHost').value.trim(),
-   ydHost:$('#sYdHost').value.trim()||DEF.ydHost,ydPort:+$('#sYdPort').value||DEF.ydPort,awake:$('#sAwake').checked,
+   ydHost:$('#sYdHost').value.trim()||DEF.ydHost,ydPort:+$('#sYdPort').value||DEF.ydPort,awake:$('#sAwake').checked,avoidLand:$('#sAvoid').checked,minDepth:Math.max(0,+$('#sMinDepth').value||0),
    cruise:+$('#sCruise').value||DEF.cruise,kPoint:$('#sKPoint').value.trim(),kMap:$('#sKMap').value.trim(),
    startKn:+$('#sStartKn').value||DEF.startKn,startSec:+$('#sStartSec').value||DEF.startSec,
    stopKn:+$('#sStopKn').value||DEF.stopKn,stopMin:+$('#sStopMin').value||DEF.stopMin,interval:Math.max(1,+$('#sInt').value||DEF.interval)};
@@ -2089,9 +2101,10 @@ function routeLeg(A,B,t0,V,smp,o){
         const info={hdg,stw:b.stw,sog,tws:b.tws,twa:b.twa,hs:s.hs||0,sh:s.sh||0,cu:s.cu||0,cv:s.cv||0,motor:b.motor};
         if(k===nHd){
           const sp=vx*Math.sin(toB*D2R)+vy*Math.cos(toB*D2R);
-          if(sp>0.3&&dB<=sp*dt){const t=n.t+dB/sp*3600000;if(!best||t<best.t)best={lat:B.lat,lon:B.lon,t,p:n,...info,hdg:toB};continue}
+          if(sp>0.3&&dB<=sp*dt&&!(o.blocked&&o.blocked(n,B))){const t=n.t+dB/sp*3600000;if(!best||t<best.t)best={lat:B.lat,lon:B.lon,t,p:n,...info,hdg:toB};continue}
         }
         const np={lat:n.lat+vy*dt/60,lon:n.lon+vx*dt/(60*Math.cos(n.lat*D2R)),t:n.t+dt*3600000,p:n,...info};
+        if(o.blocked&&o.blocked(n,np))continue;
         const ang=((bearing(A,np)-brg0+540)%360)-180; if(Math.abs(ang)>100)continue;
         const key=Math.round(ang/binW),d=hav(A,np),c=bins.get(key);
         if(!c||d>c.d){np.d=d;bins.set(key,np)}
@@ -2107,7 +2120,7 @@ function routeAll(pts,t0,V,smp,o){
   let path=[],t=t0,relaxed=0;
   for(let i=0;i<pts.length-1;i++){
     const leg=routeLeg(pts[i],pts[i+1],t,V,smp,o);
-    if(!leg)return{error:`Destination non atteinte sur le tronçon ${i+1} (conditions trop défavorables ou trop loin).`};
+    if(!leg)return{error:`Destination non atteinte sur le tronçon ${i+1} (conditions défavorables, terre ou fonds trop faibles, ou trop loin) : ajoute des points « Via ».`};
     relaxed+=leg.relaxed||0;
     if(path.length)leg.shift();
     path=path.concat(leg);t=leg[leg.length-1].t;
@@ -2242,6 +2255,53 @@ function fillRoute(){
   $('#rCruise').value=cfg.cruise;
   if(localStorage.getItem('wp')){try{WP=JSON.parse(localStorage.getItem('wp'))||[];wpToFields()}catch(e){WP=[]}}else wpFromFields();
 }
+
+/* ---------- Profondeurs (EMODnet) : lecture ponctuelle, grille pour le routage ---------- */
+let depthMark=null;
+async function depthTap(g){
+  $('#mapInfo').textContent='Profondeur…';
+  try{
+    const r=await fetch(`https://rest.emodnet-bathymetry.eu/depth_sample?geom=POINT(${g.lon.toFixed(5)}%20${g.lat.toFixed(5)})`);
+    if(!r.ok)throw new Error('HTTP '+r.status);const j=await r.json(),v=j&&j.avg!=null?j.avg:null;
+    $('#mapInfo').textContent=v==null?'Pas de données de profondeur ici (hors zone EMODnet).':v>0?`Terre ferme (altitude ≈ ${v.toFixed(0)} m) · ${g.lat.toFixed(4)}, ${g.lon.toFixed(4)}`:`Profondeur ≈ ${(-v).toFixed(1)} m (min ${(-j.max).toFixed(1)} · max ${(-j.min).toFixed(1)}) · EMODnet · ${g.lat.toFixed(4)}, ${g.lon.toFixed(4)}`;
+  }catch(e){$('#mapInfo').textContent='Profondeur indisponible : '+e.message}
+}
+async function loadDepthGrid(bb,prog){
+  const spLat=Math.max(0.02,bb.n-bb.s),spLon=Math.max(0.02,bb.e-bb.w);
+  let step=Math.max(0.01,Math.max(spLat,spLon)/90);
+  const chunkDeg=1.2;
+  for(;;){const rows=Math.ceil(spLat/step)+1,ch=Math.ceil(spLon/chunkDeg);if(rows*ch<=380||step>0.5)break;step*=1.25}
+  const rows=Math.ceil(spLat/step)+1,cols=Math.ceil(spLon/step)+1,dLa=spLat/(rows-1),dLo=spLon/(cols-1);
+  const v=new Float32Array(rows*cols).fill(NaN),per=Math.max(2,Math.floor(chunkDeg/dLo)),jobs=[];
+  for(let i=0;i<rows;i++)for(let j0=0;j0<cols;j0+=per-1){const j1=Math.min(cols-1,j0+per-1);if(j1>j0)jobs.push([i,j0,j1])}
+  let done=0,ok=0,fail=0;
+  await pool(jobs,6,async([i,j0,j1])=>{
+    const la=bb.s+i*dLa,w0=bb.w+j0*dLo,w1=bb.w+j1*dLo;
+    try{
+      const r=await fetch(`https://rest.emodnet-bathymetry.eu/depth_profile?geom=LINESTRING(${w0.toFixed(5)}%20${la.toFixed(5)},${w1.toFixed(5)}%20${la.toFixed(5)})&nSamples=${(j1-j0)*4+1}`);
+      if(!r.ok)throw new Error('HTTP '+r.status);const a=await r.json();
+      if(Array.isArray(a)&&a.length>1){for(let j=j0;j<=j1;j++){const q=a[Math.round((j-j0)/(j1-j0)*(a.length-1))];v[i*cols+j]=q==null?NaN:q}ok++}else fail++
+    }catch(e){fail++}
+    prog&&prog(`Profondeurs EMODnet : ${Math.min(++done,jobs.length)}/${jobs.length}`);
+  });
+  if(!ok||fail>jobs.length*0.5)return null;
+  return{bb,rows,cols,dLa,dLo,v,cellNM:Math.max(dLa*60,dLo*60*Math.cos((bb.s+bb.n)/2*D2R)),fail};
+}
+function depthAt(G,lat,lon){
+  const i=Math.round((lat-G.bb.s)/G.dLa),j=Math.round((lon-G.bb.w)/G.dLo);
+  if(i<0||j<0||i>=G.rows||j>=G.cols)return NaN;return G.v[i*G.cols+j];
+}
+function makeBlocker(G,pts,avoidLand,minDepth){
+  const grace=Math.max(1.5,G.cellNM*1.3),thr=-minDepth;
+  const bad=(la,lo)=>{const d=depthAt(G,la,lo);if(isNaN(d))return false;return d>0?avoidLand:(minDepth>0&&d>thr)};
+  const near=(la,lo)=>pts.some(p=>hav(p,{lat:la,lon:lo})<grace);
+  const f=(a,b)=>{
+    const dn=hav(a,b),n=Math.max(1,Math.ceil(dn/(G.cellNM*0.5)));
+    for(let k=1;k<=n;k++){const t=k/n,la=a.lat+(b.lat-a.lat)*t,lo=a.lon+(b.lon-a.lon)*t;if(bad(la,lo)&&!near(la,lo))return true}
+    return false;
+  };
+  f.depthAt=(la,lo)=>depthAt(G,la,lo);return f;
+}
 async function computePlan(force){
   const st={set textContent(v){$('#rStat').textContent=v;$('#wpStat').textContent=v}};
   const A=parseLL($('#rA').value),B=parseLL($('#rB').value);
@@ -2265,13 +2325,22 @@ async function computePlan(force){
       if(!L||NOW()-L.at>3600000){L=await loadAll(bb,wxM,wave,cur2,m=>{st.textContent=m});L.at=NOW();gridCache[key]=L}
       smp=makeSampler(L);horizon=L.horizon;common.push(...L.warns);setRouteMeteo({smp,bb:{...bb},wave:!!L.wave,cur:!!L.cur,t0,horizon:L.horizon});
     }
-    const defs=[{...STRATS[0],o:{motorBelow:motor}},{...STRATS[1],o:{motorBelow:motor,maxTws:maxW,maxHs:maxH}},{...STRATS[2],o:{motorBelow:0}}];
+    let blocked=null,depthNote='';
+    const avoid=cfg.avoidLand!==false,minD=Math.max(0,+cfg.minDepth||0);
+    if(avoid||minD>0){
+      const bb2=bboxOf(pts),dk='dg|'+[bb2.s,bb2.n,bb2.w,bb2.e].map(x=>x.toFixed(3)).join('|');
+      let G=gridCache[dk];if(!G){st.textContent='Profondeurs EMODnet…';G=await loadDepthGrid(bb2,m=>{st.textContent=m});if(G)gridCache[dk]=G}
+      if(G){blocked=makeBlocker(G,pts,avoid,minD);depthNote=`Terres ${avoid?'évitées':'non évitées'}${minD>0?` et fonds < ${minD} m évités`:''} (EMODnet, maille ≈ ${G.cellNM.toFixed(1)} NM${G.fail?`, ${G.fail} requêtes manquantes`:''}). Maille grossière : ajoute des points « Via » près des côtes.`}
+      else common.push("Profondeurs EMODnet indisponibles (hors Europe, hors ligne ou service bloqué) : le routage ignore la terre et les hauts-fonds.");
+    }
+    const defs=[{...STRATS[0],o:{motorBelow:motor,blocked}},{...STRATS[1],o:{motorBelow:motor,maxTws:maxW,maxHs:maxH,blocked}},{...STRATS[2],o:{motorBelow:0,blocked}}];
     const routes=[];
     for(const d of defs){
       st.textContent=`Calcul du routage « ${d.name} »…`;await new Promise(r=>setTimeout(r,30));
       let res=routeAll(pts,t0,V,smp,d.o),w=[];
-      if(res.error&&d.id==='sail'){res=routeAll(pts,t0,V,smp,{motorBelow:3});w.push('Vent trop faible pour tout faire à la voile : moteur autorisé sous 3 nds.')}
+      if(res.error&&d.id==='sail'){res=routeAll(pts,t0,V,smp,{motorBelow:3,blocked});w.push('Vent trop faible pour tout faire à la voile : moteur autorisé sous 3 nds.')}
       if(res.error){routes.push({id:d.id,name:d.name,color:d.color,error:res.error});continue}
+      if(blocked){let mn=Infinity;for(const n of res.path){const d=blocked.depthAt(n.lat,n.lon);if(!isNaN(d)&&d<0)mn=Math.min(mn,-d)}if(mn<Infinity)w.push(`Profondeur minimale sur le tracé ≈ ${mn.toFixed(1)} m (EMODnet, à vérifier).`)}
       if(res.relaxed)w.push(`Impossible de rester sous ${maxW} nds / ${maxH} m sur tout le trajet : limites dépassées par endroits.`);
       if(res.path[res.path.length-1].t>horizon)w.push("Une partie du trajet dépasse l'horizon des prévisions : dernières valeurs prolongées.");
       routes.push({id:d.id,name:d.name,color:d.color,warns:w,
@@ -2280,7 +2349,7 @@ async function computePlan(force){
     }
     if(!routes.some(r=>r.route)){st.textContent=routes[0].error;return}
     common.unshift(USER_POLAR?`Polaire « ${USER_POLAR.name} » à ${Math.round(POLAR_PERF*100)} %.`:'Polaire générique (importe celle de ton bateau pour un routage plus fiable).');
-    common.push('Le routage ignore la terre et les hauts-fonds : vérifie le tracé.');
+    common.push(depthNote||'Le routage ignore la terre et les hauts-fonds : vérifie le tracé.');
     plan={at:NOW(),form:{A:$('#rA').value,B:$('#rB').value,V:$('#rV').value,wx:wxM,wave,cur:cur2,motor,maxW,maxH,t0},warns:common,routes,sel:Math.max(0,routes.findIndex(r=>r.route))};
     localStorage.setItem('plan',JSON.stringify(plan));
     st.textContent='3 routages calculés.';renderPlan();drawPlanOnWindy();FX.key='';updFxLbl();
