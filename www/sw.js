@@ -1,4 +1,4 @@
-const C='carnet-v18';
+const C='carnet-v19';
 const TILE_HOSTS=['tile.openstreetmap.org','basemaps.cartocdn.com','server.arcgisonline.com','tiles.openseamap.org'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(['./','./index.html','./manifest.webmanifest'])));self.skipWaiting()});
 self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));
