@@ -392,6 +392,7 @@ nav{z-index:6}
       <label class="b sec" style="margin:0;color:var(--tx);display:inline-block;width:auto">Importer<input type="file" id="bImport" accept=".json" class="hide"></label>
     </div>
   </div>
+  <div class="card"><b>Diagnostic</b><div class="mut" id="diag" style="white-space:pre-wrap;font-size:12px;margin-top:6px"></div></div>
 </section>
 
 <div id="auditView" class="overlay hide" role="dialog" aria-label="Journal d'audit">
@@ -419,6 +420,12 @@ nav{z-index:6}
 </nav>
 
 <script>
+const APPV='v10',ERRLOG=[];
+const logErr=m=>{ERRLOG.push(new Date().toLocaleTimeString('fr-FR')+' '+String(m).slice(0,220));if(ERRLOG.length>25)ERRLOG.shift()};
+window.addEventListener('error',e=>logErr((e.message||'erreur')+' @'+String(e.filename||'').split('/').pop()+':'+e.lineno));
+window.addEventListener('unhandledrejection',e=>logErr('promesse : '+((e.reason&&e.reason.message)||e.reason)));
+const plug=n=>{const C=window.Capacitor;if(C&&typeof C.registerPlugin==='function')return C.registerPlugin(n);if(C&&C.Plugins&&C.Plugins[n])return C.Plugins[n];throw new Error('plugin natif « '+n+' » introuvable')};
+
 'use strict';
 const CLK={base:Date.now(),v:Date.now(),k:1};   // horloge virtuelle : en démo accélérée, le temps de l'appli s'écoule ×N
 const NOW=()=>CLK.v+(Date.now()-CLK.base)*CLK.k;
@@ -461,7 +468,7 @@ let HAPT=null;
 function hap(kind){
   if(cfg.haptic===false)return;
   try{
-    if(NATIVE){HAPT=HAPT||Capacitor.registerPlugin('Haptics');
+    if(NATIVE){HAPT=HAPT||plug('Haptics');
       if(kind==='tick'){HAPT.selectionStart&&HAPT.selectionStart();HAPT.selectionChanged&&HAPT.selectionChanged();HAPT.selectionEnd&&HAPT.selectionEnd()}
       else HAPT.impact({style:kind==='strong'?'MEDIUM':'LIGHT'}).catch(()=>{if(navigator.vibrate)navigator.vibrate(10)});
     }else if(navigator.vibrate)navigator.vibrate(kind==='strong'?18:9);
@@ -496,7 +503,7 @@ async function startPhoneGps(force){
   const onErr=e=>{GPS.testing=false;const c=e&&e.code,m=c===1?'autorisation refusée : autorise la localisation pour l\'appli dans les réglages du téléphone':c===2?'position indisponible (active le GPS du téléphone, va à l\'extérieur)':c===3?'délai dépassé, pas de point GPS':(e&&(e.message||e.code))?String(e.message||e.code):'erreur';GPS.err=m;updGpsPill()};
   try{
     if(NATIVE){
-      GEO=GEO||Capacitor.registerPlugin('Geolocation');
+      GEO=GEO||plug('Geolocation');
       GPS.diag='plugin natif OK';let st=await GEO.checkPermissions();GPS.diag='permission : '+st.location+' / approx. '+st.coarseLocation;updGpsPill();
       if(st.location!=='granted'&&st.coarseLocation!=='granted')st=await GEO.requestPermissions({permissions:['location','coarseLocation']});
       GPS.diag='permission : '+st.location+' / approx. '+st.coarseLocation;
@@ -524,7 +531,8 @@ function updGpsPill(){
   $('#gpsTest').innerHTML=lines.map(esc).join('<br>');
 }
 $('#gpsAsk').onclick=()=>{if(cfg.gpsSrc==='nmea'){cfg.gpsSrc='auto';$('#sGps').value='auto';saveCfg()}GPS.testing=true;GPS.err='';updGpsPill();startPhoneGps(true)};
-setInterval(updGpsPill,2000);
+const updDiag=()=>{const e=$('#diag');if(!e)return;e.textContent=`Appli ${APPV} · ${NATIVE?'Android':'navigateur'} · source ${cfg.src} · Capacitor ${window.Capacitor?(typeof window.Capacitor.registerPlugin==='function'?'registerPlugin':'Plugins'):'absent'}\nDonnées reçues : vitesse ${fresh('sog')?'oui':'non'}, vent ${fresh('tws')||fresh('aws')?'oui':'non'}, cap ${fresh('cog')||fresh('hdg')?'oui':'non'} · simulation ${simT?'active':'arrêtée'}\nErreurs (${ERRLOG.length}) :\n`+(ERRLOG.length?ERRLOG.slice(-8).join('\n'):'aucune')};
+setInterval(()=>{updGpsPill();updDiag()},2000);updDiag();
 
 
 function computeTrueWind(){
@@ -647,9 +655,9 @@ let BL=null;
 function startYdwg(){
   closeSrc();
   if(!NATIVE){setSrc('appli Android requise','bad');return}
-  BL=BL||Capacitor.registerPlugin('BoatLink');
+  BL=BL||plug('BoatLink');
   setSrc('connexion…','');
-  BL.removeAllListeners().then(async()=>{
+  Promise.resolve(BL.removeAllListeners?BL.removeAllListeners():null).then(async()=>{
     await BL.addListener('lines',e=>{parseRawLines(e.data);onBoatData()});
     await BL.addListener('status',e=>setSrc(e.state==='connected'?'YDWG-02':e.state==='connecting'?'connexion…':'déconnecté',e.state==='connected'?'ok':e.state==='connecting'?'':'bad'));
     try{await BL.requestNotifications()}catch(e){}
@@ -1296,8 +1304,9 @@ function buildStage(){
   layoutStage(0);updDials();
 }
 function updDials(){
-  if($('#v-live').classList.contains('on'))DS.ids.forEach(id=>DS.ups[id]&&DS.ups[id]());
-  if(!$('#dialCfg').classList.contains('hide'))Object.values(DC.ups).forEach(u=>u());
+  const safe=f=>{try{f()}catch(e){logErr('cadran : '+e.message)}};
+  if($('#v-live').classList.contains('on'))DS.ids.forEach(id=>DS.ups[id]&&safe(DS.ups[id]));
+  if(!$('#dialCfg').classList.contains('hide'))Object.values(DC.ups).forEach(safe);
 }
 (()=>{
   const stg=$('#dialStage');let s=null;
@@ -1583,7 +1592,7 @@ let FS=null,SH=null;
 async function download(name,txt,type){
   const fn=name.replace(/[\\/:*?"<>|]/g,'_');
   if(NATIVE){   // dans l'appli Android : on écrit le fichier puis on ouvre le partage (e-mail, Drive, etc.)
-    try{FS=FS||Capacitor.registerPlugin('Filesystem');SH=SH||Capacitor.registerPlugin('Share');
+    try{FS=FS||plug('Filesystem');SH=SH||plug('Share');
       const r=await FS.writeFile({path:fn,data:txt,directory:'CACHE',encoding:'utf8'});await SH.share({title:fn,url:r.uri})}
     catch(e){alert('Export impossible : '+(e.message||e))}
     return;
