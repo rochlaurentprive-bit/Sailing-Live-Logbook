@@ -90,6 +90,7 @@ th:first-child,td:first-child{text-align:left}
 canvas#map{width:100%;height:58vh;background:var(--map);border-radius:var(--r);border:1px solid var(--line);touch-action:none;display:block}
 .bar{height:8px;background:var(--acc);border-radius:4px}
 .hide{display:none!important}
+.gf{display:flex;gap:10px;justify-content:space-between;align-items:center;border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px}.gf .b{padding:8px 12px;flex:none}
 .sg{background:var(--card);border:1px solid var(--line);border-radius:14px;margin:0 0 10px;overflow:hidden}.sg>summary{list-style:none;cursor:pointer;padding:15px 16px;font-weight:600;font-size:16px;display:flex;align-items:center;gap:8px}.sg>summary::-webkit-details-marker{display:none}.sg>summary::after{content:"›";margin-left:auto;font-size:24px;line-height:1;color:var(--mut);transition:transform .2s}.sg[open]>summary::after{transform:rotate(90deg)}.sg[open]>summary{border-bottom:1px solid var(--line)}.sgb{padding:6px 16px 16px}
 nav{transition:transform .28s ease,opacity .2s}
 body.navc nav{transform:translateX(-130%);opacity:0;pointer-events:none}
@@ -346,6 +347,7 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
     <label>Points « Via » (un par ligne, facultatif)</label><textarea id="rV" rows="2"></textarea>
     <label>Départ le</label><input id="rT" type="datetime-local">
     <label>Vitesse de croisière (nœuds)</label><input id="rCruise" type="number" step="0.1">
+    <div class="mut" id="rGribNote"></div>
     <label>Modèle météo (vent)</label><select id="rWx"></select>
     <label>Modèle de vagues / houle</label><select id="rWave"></select>
     <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="rCur" style="width:auto"> Courants (modèle CMEMS, si inclus dans ta clé)</label>
@@ -433,6 +435,18 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
     <label>Windy : clé Map Forecast (carte)</label><input id="sKMap" type="password" autocomplete="off">
     <div class="mut">Les clés restent sur cet appareil (stockage local du navigateur).</div>
     <div class="row" style="margin-top:12px"><button class="b saveb">Enregistrer</button></div>
+  </div></details>
+  <details class="sg" data-g="grib"><summary>Météo GRIB (fichiers importés)</summary><div class="sgb">
+    <div class="mut" style="margin:6px 0 10px">Importe des fichiers GRIB pour naviguer sans Internet. Ils remplacent Windy pour le routage, l'état de mer et la 3D, là où ils couvrent la zone.</div>
+    <label>Origine du fichier</label>
+    <select id="gribSrc"></select>
+    <div class="mut" id="gribHow" style="margin:6px 0"></div>
+    <button class="b" id="gribPick" style="width:100%;padding:14px">📂 Importer un ou plusieurs fichiers GRIB</button>
+    <input type="file" id="gribFile" multiple class="hide">
+    <div class="mut" id="gribMsg" style="white-space:pre-wrap;margin-top:6px"></div>
+    <div id="gribList" style="margin-top:10px"></div>
+    <div id="gribUseRow" class="hide"><label style="display:flex;gap:8px;align-items:center;color:var(--tx);margin-top:8px"><input type="checkbox" id="gribUse" style="width:auto"> Utiliser les GRIB importés (sinon Windy)</label></div>
+    <div class="mut" style="margin-top:10px">Formats gérés : GRIB 1 et GRIB 2, grille latitude/longitude régulière, compression simple ou complexe. Non gérés : JPEG 2000, PNG et CCSDS (ré-exporte alors le fichier en GRIB « simple »). Vent 10 m, rafales, pression, vagues, houle et courant sont lus.</div>
   </div></details>
   <details class="sg" data-g="auto"><summary>Enregistrement automatique</summary><div class="sgb">
     <label>Démarrage auto : vitesse mini (nœuds)</label><input id="sStartKn" type="number" step="0.1">
@@ -1085,7 +1099,9 @@ L'alerte MOB vibre toujours à pleine puissance.|De MOB-alarm trilt altijd op vo
 Routage et météo (Windy)|Routering en weer (Windy)|Routing and weather (Windy)|Routenplanung und Wetter (Windy)|Rutas y meteorología (Windy)
 Enregistrement automatique|Automatische registratie|Automatic recording|Automatische Aufzeichnung|Registro automático
 Diagnostic et log|Diagnose en log|Diagnostics and log|Diagnose und Protokoll|Diagnóstico y registro
-Enregistrer|Opslaan|Save|Speichern|Guardar`;
+Enregistrer|Opslaan|Save|Speichern|Guardar
+vitesse surface|snelheid door het water|speed through water|Fahrt durchs Wasser|velocidad en la superficie
+courant|stroom|current|Strom|corriente`;
   const EX=new Map(),PAT=[];
   RAW.split('\n').forEach(l=>{const a=l.split('|');if(a.length!==5)return;const fr=a[0],t=a.slice(1);
     if(/\{\d\}/.test(fr)){const parts=fr.split(/\{\d\}/).map(x=>x.replace(/[.*+?^$()|[\]\\{}]/g,'\\$&'));PAT.push([new RegExp('^'+parts.join('(.+?)')+'$'),t,fr.length])}
@@ -1189,7 +1205,7 @@ const tr=I18N.tr,LOC=()=>I18N.LOC();
 </div>
 <script>
 let simT=null;
-const APPV='v20',ERRLOG=[];
+const APPV='v21',ERRLOG=[];
 const logErr=m=>{ERRLOG.push(new Date().toLocaleTimeString(LOC())+' '+String(m).slice(0,220));if(ERRLOG.length>25)ERRLOG.shift()};
 window.addEventListener('error',e=>logErr((e.message||'erreur')+' @'+String(e.filename||'').split('/').pop()+':'+e.lineno));
 window.addEventListener('unhandledrejection',e=>logErr('promesse : '+((e.reason&&e.reason.message)||e.reason)));
@@ -1226,8 +1242,8 @@ if(NATIVE)document.body.classList.add('native');
 
 /* ---------- Stockage IndexedDB ---------- */
 const db={h:null,
-  open(){return new Promise((ok,ko)=>{const r=indexedDB.open('carnet',2);
-    r.onupgradeneeded=()=>{const d=r.result;['trips','notes','photos','audit'].forEach(n=>{if(!d.objectStoreNames.contains(n))d.createObjectStore(n,{keyPath:'id'})})};
+  open(){return new Promise((ok,ko)=>{const r=indexedDB.open('carnet',3);
+    r.onupgradeneeded=()=>{const d=r.result;['trips','notes','photos','audit','grib'].forEach(n=>{if(!d.objectStoreNames.contains(n))d.createObjectStore(n,{keyPath:'id'})})};
     r.onsuccess=()=>{this.h=r.result;ok()};r.onerror=()=>ko(r.error)})},
   st(s,m){return this.h.transaction(s,m||'readonly').objectStore(s)},
   req(q){return new Promise((ok,ko)=>{q.onsuccess=()=>ok(q.result);q.onerror=()=>ko(q.error)})},
@@ -1605,13 +1621,15 @@ const hdgNow=()=>fresh('cog')?D.cog:(fresh('hdg')?D.hdg:null);
 
 /* 1. Vent : cap, vitesse fond, vent apparent / vrai */
 function mkWind(root){
-  root.innerHTML=SVG(' stale',`${FACE(146)}<g class="dArcs" style="filter:url(#fGlow)"><path d="${arcPath(138,25,110)}" fill="none" stroke="var(--stbd)" stroke-width="5" stroke-linecap="round" opacity=".95"/><path d="${arcPath(138,-110,-25)}" fill="none" stroke="var(--port)" stroke-width="5" stroke-linecap="round" opacity=".95"/></g>
+  root.innerHTML=SVG(' stale',`${FACE(146)}<g class="dArcs" style="filter:url(#fGlow)"><path class="dArcS" d="${arcPath(138,25,110)}" fill="none" stroke="var(--stbd)" stroke-width="5" stroke-linecap="round" opacity=".95"/><path class="dArcP" d="${arcPath(138,-110,-25)}" fill="none" stroke="var(--port)" stroke-width="5" stroke-linecap="round" opacity=".95"/></g>
    <g class="dNoGo"></g>${BOATTOP}<g class="dRing">${staticFace()}</g><path d="M150 14 l-9 -14 h18 z" fill="var(--acc)" style="filter:url(#fDrop)"/>
-   <g class="dTw needle" opacity="0"><path d="M150 76 L141 52 L150 58 L159 52 Z" fill="none" stroke="var(--tx)" stroke-width="2.4" stroke-linejoin="round" style="filter:url(#fGlow)"/></g>
-   <g class="dAw needle" opacity="0"><path d="M150 52 L138 24 L150 32 L162 24 Z" fill="url(#gAw)" stroke="var(--tx)" stroke-opacity=".55" stroke-width="1" style="filter:url(#fGlow)"/></g>
+   <g class="dTw needle" opacity="0"><path d="M150 76V150" stroke="var(--tx)" stroke-width="2" stroke-dasharray="5 4" opacity=".22" fill="none"/><path d="M150 76 L141 52 L150 58 L159 52 Z" fill="none" stroke="var(--tx)" stroke-width="2.4" stroke-linejoin="round" style="filter:url(#fGlow)"/></g>
+   <g class="dAw needle" opacity="0"><path d="M150 52V76" stroke="var(--wind)" stroke-width="2.4" opacity=".9" fill="none"/><path d="M150 76V150" stroke="var(--wind)" stroke-width="2.4" opacity=".2" fill="none"/><path d="M150 52 L138 24 L150 32 L162 24 Z" fill="url(#gAw)" stroke="var(--tx)" stroke-opacity=".55" stroke-width="1" style="filter:url(#fGlow)"/></g>
    <text x="150" y="104" text-anchor="middle" class="dlab">vitesse fond</text>
    <text class="dSog dnum" x="150" y="168" text-anchor="middle">--</text>
    <text x="150" y="192" text-anchor="middle" class="dlab">nœuds</text>
+   <text class="dStw" x="150" y="212" text-anchor="middle" style="font-family:var(--num);font-size:12.5px;fill:var(--tx)"></text>
+   <text class="dCur" x="150" y="228" text-anchor="middle" style="font-family:var(--num);font-size:12.5px;fill:var(--wind)"></text>
    <g class="dCornA"><text class="dAsv" x="-38" y="284" text-anchor="start" style="font-family:var(--num);font-size:24px;font-weight:600;fill:var(--tx)">--</text><text x="-38" y="300" text-anchor="start" class="dlab" style="font-size:10px">vent apparent · nds</text></g>
    <g class="dCornT"><text class="dTsv" x="338" y="284" text-anchor="end" style="font-family:var(--num);font-size:24px;font-weight:600;fill:var(--tx)">--</text><text x="338" y="300" text-anchor="end" class="dlab" style="font-size:10px">vent vrai · nds</text></g>
    <g class="dSideA"><text class="dlab" x="-38" y="8" text-anchor="start" style="font-size:10px">apparent</text><text class="dAv" x="-38" y="31" text-anchor="start" style="font-family:var(--num);font-size:26px;font-weight:600;fill:var(--mut)">--</text><text class="dAs" x="-38" y="44" text-anchor="start" style="font-size:11px;font-weight:600">&#8203;</text></g>
@@ -1625,10 +1643,14 @@ function mkWind(root){
     nd('.dAw',fresh('awa'),D.awa);nd('.dTw',fresh('twa'),D.twa);
     const side=(ok,ang,v,sd)=>{const ev=q(v),es=q(sd);if(!ok){ev.textContent='--';ev.style.fill='var(--mut)';es.textContent='';return}
       const a=((ang%360)+540)%360-180;ev.textContent=Math.round(Math.abs(a))+'°';es.textContent=tr(a>=0?'tribord':'bâbord');const c=a>=0?'var(--stbd)':'var(--port)';ev.style.fill=c;es.style.fill=c};
+    {const st=fresh('stw')?D.stw:null;q('.dStw').textContent=st!=null?tr('vitesse surface')+' '+num(st)+' nds':'';
+      let ct='';if(st!=null&&fresh('sog')&&fresh('cog')&&fresh('hdg')){const vx=D.sog*Math.sin(D.cog*D2R)-st*Math.sin(D.hdg*D2R),vy=D.sog*Math.cos(D.cog*D2R)-st*Math.cos(D.hdg*D2R),c=Math.hypot(vx,vy),dr=((Math.atan2(vx,vy)/D2R)+360)%360;
+        ct=tr('courant')+' '+num(c)+' nds'+(c>=0.2?' → '+String(Math.round(dr)%360).padStart(3,'0')+'°':'')}
+      q('.dCur').textContent=ct}
     q('.dAsv').textContent=fresh('aws')?num(D.aws):'--';q('.dTsv').textContent=fresh('tws')?num(D.tws):'--';
     side(fresh('awa'),D.awa,'.dAv','.dAs');side(fresh('twa'),D.twa,'.dTv','.dTs');
     const ng=Math.max(0,Math.min(80,+cfg.noGo||0)),gE=q('.dNoGo');
-    if(gE.dataset.n!==String(ng)){gE.dataset.n=String(ng);
+    if(gE.dataset.n!==String(ng)){gE.dataset.n=String(ng);const a0=ng>0?ng:25;q('.dArcS').setAttribute('d',arcPath(138,a0,110));q('.dArcP').setAttribute('d',arcPath(138,-110,-a0));
       if(!ng)gE.innerHTML='';
       else{const[xa,ya]=polar(104,-ng),[xb,yb]=polar(104,ng),[xc,yc]=polar(150,-ng),[xd,yd]=polar(150,ng);
         gE.innerHTML=`<path class="ngB" d="${arcPath(130,-ng,ng)}" fill="none" stroke="var(--bad)" stroke-width="26" opacity=".32"/>
@@ -1763,7 +1785,7 @@ async function seaUpdate(){
   if(SEA.busy)return;
   if(cfg.src==='demo'){SEA.src='demo';SEA.err='';seaPick();return}
   SEA.src='windy';
-  if(!cfg.kPoint){SEA.err='clé Windy Point Forecast absente (Réglages)';SEA.trains=[];return}
+  if(!cfg.kPoint&&!GRIBS.on()){SEA.err='clé Windy Point Forecast absente (Réglages)';SEA.trains=[];return}
   if(!fresh('lat')){SEA.err='pas de position GPS';return}
   const moved=Math.abs(D.lat-SEA.lat)>0.25||Math.abs(D.lon-SEA.lon)>0.25;
   if(SEA.raw&&!moved&&Date.now()-SEA.at<30*60e3){seaPick();return}
@@ -2780,7 +2802,7 @@ async function loadZone(){
   try{
     if(wxM==='demo'){LAST_ZONE={smp:demoSampler,bb:null,wave:true,cur:true,t0,horizon:Infinity,zone:true};st.textContent='Météo de démonstration (données fictives).'}
     else{
-      if(!cfg.kPoint)throw new Error('clé Windy Point Forecast manquante (⚙️ Réglages)');
+      if(!cfg.kPoint&&!GRIBS.on())throw new Error('clé Windy Point Forecast manquante (⚙️ Réglages)');
       const key='Z|'+[wxM,wave,cur2,bb.s.toFixed(1),bb.n.toFixed(1),bb.w.toFixed(1),bb.e.toFixed(1)].join('|');
       let L=gridCache[key];
       if(!L||NOW()-L.at>3600000){L=await loadAll(bb,wxM,wave,cur2,m=>{st.textContent=m});L.at=NOW();gridCache[key]=L}
@@ -3079,7 +3101,232 @@ function demoSampler(lat,lon,t){
 /* ---------- Routage météo : données Windy ---------- */
 const WX_MODELS=[['demo','Démo (sans clé, données fictives)'],['gfs','GFS (mondial)'],['icon','ICON (mondial)'],['iconEu','ICON-EU (Europe)'],['iconD2','ICON-D2 (Europe centrale)'],['aromeFrance','AROME France'],['arome','AROME']];
 const WAVE_MODELS=[['none','Aucun (pas de vagues)'],['gfsWave','GFS Wave (mondial)'],['iconWave','ICON Wave (mondial)'],['iconEuWave','ICON-EU Wave (Europe)']];
+
+/* ====== Fichiers GRIB (import) : GRIB1 et GRIB2, grilles lat/lon régulières ====== */
+const GRIBS=(()=>{
+  const be=(b,o,n)=>{let v=0;for(let i=0;i<n;i++)v=v*256+b[o+i];return v};
+  const sm=(b,o,n)=>{const v=be(b,o,n),m=Math.pow(2,8*n-1);return v>=m?-(v-m):v};
+  const f32=(b,o)=>new DataView(b.buffer,b.byteOffset+o,4).getFloat32(0);
+  const ibm=(b,o)=>{const s=b[o]&128?-1:1,e=b[o]&127,m=be(b,o+1,3);return s*m/16777216*Math.pow(16,e-64)};
+  const P2=n=>Math.pow(2,n);
+  function BR(b,byte){this.b=b;this.p=byte*8}
+  BR.prototype.read=function(n){if(!n)return 0;let v=0,need=n;while(need>0){const by=this.b[this.p>>3],off=this.p&7,take=Math.min(8-off,need);v=v*P2(take)+((by>>(8-off-take))&((1<<take)-1));this.p+=take;need-=take}return v};
+  BR.prototype.align=function(){this.p=(this.p+7)&~7};
+  BR.prototype.byte=function(){return this.p>>3};
+  const UNIT={0:60,1:3600,2:86400,3:2592000,10:10800,11:21600,12:43200,13:1};
+  const unitSec=u=>UNIT[u]||3600;
+  const NO={err:'format de compression non géré'};
+  function unpackSimple(b,s7,n,R,E,D,nb){
+    const out=new Float32Array(n),br=new BR(b,s7),sc=P2(E),dd=Math.pow(10,D);
+    if(nb===0){out.fill(R/dd);return out}
+    for(let i=0;i<n;i++)out[i]=(R+br.read(nb)*sc)/dd;return out;
+  }
+  function unpackComplex(b,s5,s7,end,n,R,E,D,nb,diff){
+    const g=(o,l)=>be(b,s5+o-1,l);
+    const mm=g(23,1),NG=g(32,4),refW=g(36,1),bitsW=g(37,1),refL=g(38,4),incL=g(42,1),lastL=g(43,4),bitsL=g(47,1);
+    const order=diff?g(48,1):0,nx=diff?g(49,1):0;
+    if(NG<=0)return null;
+    let pos=s7,g1=0,g2=0,mn=0;
+    if(order>0){g1=sm(b,pos,nx);pos+=nx;if(order===2){g2=sm(b,pos,nx);pos+=nx}mn=sm(b,pos,nx);pos+=nx}
+    const br=new BR(b,pos);
+    const gref=new Array(NG),gw=new Array(NG),gl=new Array(NG);
+    for(let i=0;i<NG;i++)gref[i]=br.read(nb);br.align();
+    for(let i=0;i<NG;i++)gw[i]=refW+br.read(bitsW);br.align();
+    for(let i=0;i<NG;i++)gl[i]=refL+br.read(bitsL)*incL;br.align();
+    gl[NG-1]=lastL;
+    const X=new Float64Array(n),miss=new Uint8Array(n);let k=0;
+    const maxNB=P2(nb)-1;
+    for(let i=0;i<NG&&k<n;i++){
+      const w=gw[i],L=gl[i];
+      for(let j=0;j<L&&k<n;j++,k++){
+        if(w===0){X[k]=gref[i];if(mm>0&&gref[i]===maxNB)miss[k]=1}
+        else{const v=br.read(w);X[k]=gref[i]+v;if(mm>0&&v===P2(w)-1)miss[k]=1}
+      }
+    }
+    if(order>0){
+      if(order===1){X[0]=g1;for(let i=1;i<n;i++){X[i]+=mn;X[i]+=X[i-1]}}
+      else{X[0]=g1;X[1]=g2;for(let i=2;i<n;i++){X[i]+=mn;X[i]=X[i]+2*X[i-1]-X[i-2]}}
+    }
+    const out=new Float32Array(n),sc=P2(E),dd=Math.pow(10,D);
+    for(let i=0;i<n;i++)out[i]=miss[i]?NaN:(R+X[i]*sc)/dd;
+    return out;
+  }
+  function mk2(disc,cat,num,lt,lv){
+    if(disc===0&&cat===2){
+      if(num===2&&lv===10)return'u10';if(num===3&&lv===10)return'v10';
+      if(num===22)return'gust';
+    }
+    if(disc===0&&cat===3&&num===1)return'msl';
+    if(disc===10&&cat===0){return({3:'hs',10:'hsDir',11:'hsPer',5:'ww',4:'wwDir',6:'wwPer',8:'sw',7:'swDir',9:'swPer'})[num]||null}
+    if(disc===10&&cat===1){if(num===2)return'cu';if(num===3)return'cv'}
+    return null;
+  }
+  function mk1(par,lt,lv){
+    if((par===33||par===34)&&(lv===10||lt===1))return par===33?'u10':'v10';
+    if(par===180)return'gust';
+    if(par===2)return'msl';
+    return({100:'hs',107:'hsDir',108:'hsPer',102:'ww',101:'wwDir',103:'wwPer',105:'sw',104:'swDir',106:'swPer',49:'cu',50:'cv'})[par]||null;
+  }
+  function gridOf(ni,nj,la1,lo1,la2,lo2,scan){
+    if(scan&0x20)return null;
+    const iNeg=!!(scan&0x80);let l2=lo2;
+    if(iNeg){while(l2>lo1)l2-=360}else{while(l2<lo1)l2+=360}
+    return{ni,nj,la1,lo1,dla:nj>1?(la2-la1)/(nj-1):0,dlo:ni>1?(l2-lo1)/(ni-1):0,global:Math.abs(ni*(ni>1?(l2-lo1)/(ni-1):0))>=359.5};
+  }
+  function parse(buf,name){
+    const b=new Uint8Array(buf),F=[],warn=new Set();let o=0,nMsg=0;
+    const ensure=()=>{while(o<b.length-3&&!(b[o]===71&&b[o+1]===82&&b[o+2]===73&&b[o+3]===66))o++;return o<b.length-3};
+    while(ensure()){
+      const ed=b[o+7];let len,end;
+      if(ed===2){len=be(b,o+8,8);end=o+len;nMsg++;
+        const disc=b[o+6];let pos=o+16,ref=0,grid=null,pd=null,dr=null,bm=null,lastBm=null;
+        while(pos<end-4){
+          const sl=be(b,pos,4),sn=b[pos+4];if(sl<5)break;
+          if(sn===1)ref=Date.UTC(be(b,pos+12,2),b[pos+14]-1,b[pos+15],b[pos+16],b[pos+17],b[pos+18]);
+          else if(sn===3){
+            const t=be(b,pos+12,2);
+            if(t===0){const ni=be(b,pos+30,4),nj=be(b,pos+34,4),la1=sm(b,pos+46,4)/1e6,lo1=sm(b,pos+50,4)/1e6,la2=sm(b,pos+55,4)/1e6,lo2=sm(b,pos+59,4)/1e6,scan=b[pos+71];
+              grid=gridOf(ni,nj,la1,lo1,la2,lo2,scan)}
+            else{grid=null;warn.add('grille non régulière (lat/lon uniquement)')}
+          }else if(sn===4){
+            const tm=be(b,pos+7,2),sc=b[pos+23],lvRaw=be(b,pos+24,4),lv=lvRaw/Math.pow(10,sc>127?-(sc-128):sc);
+            pd={tm,cat:b[pos+9],num:b[pos+10],t:ref+be(b,pos+18,4)*unitSec(b[pos+17])*1000,lt:b[pos+22],lv};
+          }else if(sn===5){
+            dr={n:be(b,pos+5,4),tm:be(b,pos+9,2),R:f32(b,pos+11),E:sm(b,pos+15,2),D:sm(b,pos+17,2),nb:b[pos+19],s5:pos};
+          }else if(sn===6){
+            const ind=b[pos+5];if(ind===0){bm=b.subarray(pos+6,pos+sl);lastBm=bm}else if(ind===254)bm=lastBm;else bm=null;
+          }else if(sn===7){
+            const key=pd&&grid&&dr?mk2(disc,pd.cat,pd.num,pd.lt,pd.lv):null;
+            if(key){
+              const npts=grid.ni*grid.nj,nv=bm?(()=>{let c=0;for(let i=0;i<npts;i++)if(bm[i>>3]&(128>>(i&7)))c++;return c})():npts;
+              let vals=null;
+              if(dr.tm===0)vals=unpackSimple(b,pos+5,nv,dr.R,dr.E,dr.D,dr.nb);
+              else if(dr.tm===2||dr.tm===3)vals=unpackComplex(b,dr.s5,pos+5,pos+sl,nv,dr.R,dr.E,dr.D,dr.nb,dr.tm===3);
+              else warn.add('compression GRIB2 modèle 5.'+dr.tm+' non gérée (JPEG2000, PNG ou CCSDS) : ré-exporte en GRIB « simple » ou « complexe »');
+              if(vals){
+                let full=vals;
+                if(bm){full=new Float32Array(npts);let k=0;for(let i=0;i<npts;i++)full[i]=(bm[i>>3]&(128>>(i&7)))?vals[k++]:NaN}
+                F.push({k:key,t:pd.t,g:grid,v:full,lt:pd.lt+':'+pd.lv});
+              }
+            }
+          }
+          pos+=sl;
+        }
+      }else if(ed===1){
+        len=be(b,o+4,3);end=o+len;nMsg++;
+        let pos=o+8;const pl=be(b,pos,3),yoc=b[pos+12],cen=b[pos+24],par=b[pos+8],lt=b[pos+9],lv=lt===100||lt===105||lt===103?be(b,pos+10,2):be(b,pos+10,2);
+        const flags=b[pos+7],tu=b[pos+17],p1=b[pos+18],p2=b[pos+19],tri=b[pos+20];
+        const year=yoc===0?cen*100:(cen-1)*100+yoc;
+        const ref=Date.UTC(year,b[pos+13]-1,b[pos+14],b[pos+15],b[pos+16]);
+        const P=tri===10?p1*256+p2:(tri>=2&&tri<=5)?p2:p1;
+        const t=ref+P*unitSec(tu)*1000,dsc=sm(b,pos+26,2);
+        pos+=pl;let grid=null;
+        if(flags&128){const gl=be(b,pos,3),dt=b[pos+5];
+          if(dt===0){grid=gridOf(be(b,pos+6,2),be(b,pos+8,2),sm(b,pos+10,3)/1000,sm(b,pos+13,3)/1000,sm(b,pos+17,3)/1000,sm(b,pos+20,3)/1000,b[pos+27])}
+          else warn.add('grille non régulière (lat/lon uniquement)');
+          pos+=gl}
+        let bm=null;
+        if(flags&64){const bl=be(b,pos,3);if(be(b,pos+4,2)===0)bm=b.subarray(pos+6,pos+bl);pos+=bl}
+        const bl=be(b,pos,3),bf=b[pos+3],E=sm(b,pos+4,2),R=ibm(b,pos+6),nb=b[pos+10];
+        const key=grid?mk1(par,lt,lv):null;
+        if(key){
+          if(bf&0x80||bf&0x40)warn.add('GRIB1 en harmoniques sphériques ou compression complexe non géré');
+          else{
+            const npts=grid.ni*grid.nj;let nv=npts;if(bm){nv=0;for(let i=0;i<npts;i++)if(bm[i>>3]&(128>>(i&7)))nv++}
+            const vals=unpackSimple(b,pos+11,nv,R,E,dsc,nb);let full=vals;
+            if(bm){full=new Float32Array(npts);let k=0;for(let i=0;i<npts;i++)full[i]=(bm[i>>3]&(128>>(i&7)))?vals[k++]:NaN}
+            F.push({k:key,t,g:grid,v:full,lt:lt+':'+lv});
+          }
+        }
+      }else{o+=4;continue}
+      o=end>o?end:o+4;
+    }
+    return{name,fields:F,warn:[...warn],nMsg};
+  }
+  /* --- base de fichiers --- */
+  let FILES=[];const BY={};
+  function index(){
+    for(const k in BY)delete BY[k];
+    const first={};
+    for(const f of FILES)for(const x of f.fields){
+      if((x.k==='sw'||x.k==='swDir'||x.k==='swPer'||x.k==='hs'||x.k==='ww')){const kk=x.k,id=x.lt;if(first[kk]==null)first[kk]=id;else if(first[kk]!==id)continue}
+      (BY[x.k]=BY[x.k]||[]).push(x);
+    }
+    for(const k in BY)BY[k].sort((a,b)=>a.t-b.t);
+  }
+  function spatial(f,lat,lon){
+    const g=f.g;let fj=g.dla?(lat-g.la1)/g.dla:0,x=lon;
+    if(!g.dlo)return null;
+    while(x<g.lo1-(g.dlo>0?0:360)&&g.dlo>0)x+=360;while(x>g.lo1+360&&g.dlo>0)x-=360;
+    if(g.dlo<0){while(x>g.lo1)x-=360;while(x<g.lo1-360)x+=360}
+    let fi=(x-g.lo1)/g.dlo;
+    if(fj<-1e-6||fj>g.nj-1+1e-6)return null;
+    if(g.global){if(fi<0)fi+=g.ni;if(fi>g.ni-1+1e-6&&fi<g.ni){}}
+    else if(fi<-1e-6||fi>g.ni-1+1e-6)return null;
+    const i0=Math.max(0,Math.min(g.ni-1,Math.floor(fi))),j0=Math.max(0,Math.min(g.nj-2<0?0:g.nj-2,Math.floor(fj)));
+    let i1=i0+1;if(i1>g.ni-1)i1=g.global?0:g.ni-1;const j1=Math.min(g.nj-1,j0+1);
+    const ax=Math.max(0,Math.min(1,fi-i0)),ay=Math.max(0,Math.min(1,fj-j0));
+    const v00=f.v[j0*g.ni+i0],v10=f.v[j0*g.ni+i1],v01=f.v[j1*g.ni+i0],v11=f.v[j1*g.ni+i1];
+    const w=[[v00,(1-ax)*(1-ay)],[v10,ax*(1-ay)],[v01,(1-ax)*ay],[v11,ax*ay]].filter(a=>!isNaN(a[0]));
+    if(!w.length)return NaN;const sw=w.reduce((s,a)=>s+a[1],0);if(sw<=0)return w[0][0];
+    return w.reduce((s,a)=>s+a[0]*a[1],0)/sw;
+  }
+  function series(key,lat,lon,ts){
+    const L=BY[key];if(!L||!L.length)return null;
+    const v=L.map(f=>spatial(f,lat,lon));if(v.every(x=>x==null))return null;
+    return ts.map(t=>{
+      if(L.length===1)return Math.abs(t-L[0].t)<=1.5*3600e3&&v[0]!=null&&!isNaN(v[0])?v[0]:null;
+      let i=L.findIndex(f=>f.t>=t);if(i<0)return Math.abs(t-L[L.length-1].t)<3600e3&&!isNaN(v[L.length-1])?v[L.length-1]:null;
+      if(i===0)return L[0].t-t<3600e3&&v[0]!=null&&!isNaN(v[0])?v[0]:null;
+      const a=v[i-1],bb=v[i];if(a==null||bb==null||isNaN(a)||isNaN(bb))return null;
+      const k=(t-L[i-1].t)/(L[i].t-L[i-1].t);return a+(bb-a)*k;
+    });
+  }
+  function angSeries(key,lat,lon,ts){ // direction : interpolation par composantes
+    const s=series(key,lat,lon,ts);return s;
+  }
+  function point(lat,lon,params){
+    if(!FILES.length)return null;
+    const want=new Set(params||[]);
+    const wantWind=want.has('wind'),wantWave=want.has('waves')||want.has('swell1')||want.has('windWaves'),wantCur=want.has('currents');
+    const out={};let ts=null;
+    const base=wantWind?'u10':wantWave?(BY.hs?'hs':BY.ww?'ww':'sw'):wantCur?'cu':null;
+    if(!base||!BY[base])return null;
+    ts=BY[base].map(f=>f.t);
+    const first=series(base,lat,lon,ts);if(!first||first.every(x=>x==null))return null;
+    out.ts=ts;
+    const put=(name,key,sc)=>{const s=series(key,lat,lon,ts);if(s)out[name]=s.map(x=>x==null?null:x*(sc||1))};
+    if(wantWind){put('wind_u-surface','u10');put('wind_v-surface','v10');put('gust-surface','gust');put('pressure-surface','msl');if(!out['wind_v-surface'])return null}
+    if(wantWave){
+      const hk=BY.hs?'hs':'ww';put('waves_height-surface',hk);put('waves_direction-surface',hk==='hs'?'hsDir':'wwDir');put('waves_period-surface',hk==='hs'?'hsPer':'wwPer');
+      if(!out['waves_direction-surface'])put('waves_direction-surface','wwDir');if(!out['waves_period-surface'])put('waves_period-surface','wwPer');
+      put('swell1_height-surface','sw');put('swell1_direction-surface','swDir');put('swell1_period-surface','swPer');
+    }
+    if(wantCur){put('seacurrents_u-surface','cu');put('seacurrents_v-surface','cv');if(!out['seacurrents_v-surface'])return null}
+    return out;
+  }
+  function info(){
+    const keys=Object.keys(BY),t=[].concat(...keys.map(k=>BY[k].map(f=>f.t)));
+    if(!t.length)return null;
+    let s=90,n=-90,w=1e9,e=-1e9;
+    for(const k of keys)for(const f of BY[k]){const g=f.g;const la2=g.la1+g.dla*(g.nj-1),lo2=g.lo1+g.dlo*(g.ni-1);s=Math.min(s,g.la1,la2);n=Math.max(n,g.la1,la2);w=Math.min(w,g.lo1,lo2);e=Math.max(e,g.lo1,lo2)}
+    return{keys,from:Math.min(...t),to:Math.max(...t),s,n,w,e};
+  }
+  const has=k=>!!BY[k];
+  return{
+    parse,
+    on(){return FILES.length>0&&(typeof cfg==='undefined'||cfg.gribUse!==false)},
+    count(){return FILES.length},
+    set(list){FILES=list;index()},
+    add(p){FILES.push(p);index()},
+    remove(i){FILES.splice(i,1);index()},
+    files(){return FILES},
+    point,info,has,series
+  };
+})();
+
 async function windyPoint(lat,lon,model,params){
+  if(GRIBS.on()&&!(params||[]).some(x=>/clouds|precip/.test(x))){const g=GRIBS.point(lat,lon,params);if(g)return g}
   let r;
   try{r=await fetch('https://api.windy.com/api/point-forecast/v2',{method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({lat:+lat.toFixed(2),lon:+lon.toFixed(2),model,parameters:params,levels:['surface'],key:cfg.kPoint})})}
@@ -3183,7 +3430,7 @@ function fillRoute(){
   $('#rWave').innerHTML=WAVE_MODELS.map(m=>`<option value="${m[0]}">${m[1]}</option>`).join('');
   const f=plan?.form||{};
   $('#rA').value=f.A||'';$('#rB').value=f.B||'';$('#rV').value=f.V||'';
-  $('#rWx').value=f.wx||(cfg.kPoint?'gfs':'demo');$('#rWave').value=f.wave||(cfg.kPoint?'gfsWave':'none');
+  $('#rWx').value=f.wx||(cfg.kPoint||GRIBS.on()?'gfs':'demo');$('#rWave').value=f.wave||(cfg.kPoint||GRIBS.on()?'gfsWave':'none');
   $('#rCur').checked=!!f.cur;$('#rMotor').value=f.motor??5;$('#rMaxW').value=f.maxW??22;$('#rMaxH').value=f.maxH??2;
   $('#rT').value=toLocalInput(Math.max(NOW()+3600000,f.t0||0)>NOW()&&f.t0>NOW()?f.t0:NOW()+3600000);
   $('#rCruise').value=cfg.cruise;
@@ -3253,7 +3500,7 @@ async function computePlan(force){
   try{
     if(wxM==='demo'){smp=demoSampler;setRouteMeteo({smp,bb:null,wave:true,cur:true,t0,horizon:Infinity});common.push('Météo de démonstration (données fictives) : ne pas utiliser pour naviguer.')}
     else{
-      if(!cfg.kPoint)throw new Error('clé Windy Point Forecast manquante (⚙️ Réglages)');
+      if(!cfg.kPoint&&!GRIBS.on())throw new Error('clé Windy Point Forecast manquante (⚙️ Réglages)');
       const bb=bboxOf(pts),key=[wxM,wave,cur2,bb.s,bb.n,bb.w,bb.e].join('|');
       let L=force?null:gridCache[key];
       if(!L||NOW()-L.at>3600000){L=await loadAll(bb,wxM,wave,cur2,m=>{st.textContent=m});L.at=NOW();gridCache[key]=L}
@@ -3728,7 +3975,7 @@ function startSource(){
 
 /* ---------- Démarrage ---------- */
 (async()=>{
-  await db.open();
+  await db.open();gribLoadAll();
   // reprise d'un trajet interrompu
   const open=(await db.all('trips')).find(t=>t.open);
   if(open&&!open.demo){const last=open.points.length?open.points[open.points.length-1].t:open.start;
@@ -4247,6 +4494,54 @@ $('#mobFalse').onclick=()=>{if(confirm('Déclenchement par erreur : annuler le M
 setInterval(mobUpd,1000);
 if(MOB&&MOB.active){mobShow()}
 mobUpd();
+
+/* --- Import GRIB : stockage, interface --- */
+const GRIB_SRC=[
+ ['gc','Great Circle · Squid','Dans Squid (logiciel de Great Circle, Rixensart), exporte les prévisions (vent, vagues, courant) au format GRIB, puis importe le fichier ici.'],
+ ['sd','Saildocs','Envoie une demande par e-mail à query@saildocs.com (ex. : send GFS:45N,50N,10W,0E|0.5,0.5|0,3..120|WIND,WAVES,PRMSL). Enregistre la pièce jointe .grb reçue, puis importe-la.'],
+ ['zy','zyGrib / OpenGribs','Choisis la zone et les paramètres (vent à 10 m, vagues) dans zyGrib ou OpenGribs, enregistre le fichier .grb ou .grb2, puis importe-le.'],
+ ['no','NOAA GFS (NOMADS)','Sur nomads.ncep.noaa.gov, utilise le filtre GRIB : coche UGRD et VGRD « 10 m above ground », GUST et PRMSL, choisis la zone, puis télécharge le .grb2.'],
+ ['ot','Autre logiciel (OpenCPN, Météo Consult…)','Exporte ou enregistre les prévisions en fichier GRIB depuis ton logiciel, puis importe-le ici.']];
+const GRIB_LBL={u10:'vent',v10:'vent',gust:'rafales',msl:'pression',hs:'vagues',ww:'vagues',sw:'houle',cu:'courant',cv:'courant'};
+async function gribLoadAll(){
+  try{const all=await db.all('grib');GRIBS.set(all.map(r=>{const p=GRIBS.parse(r.buf,r.name);p.id=r.id;p.size=r.buf.byteLength;p.at=r.at;return p}))}catch(e){logErr('GRIB : '+e.message)}
+  gribUI();
+}
+async function gribImport(files){
+  const msg=$('#gribMsg');msg.textContent='';const notes=[];
+  for(const f of files){
+    try{
+      const buf=await f.arrayBuffer(),p=GRIBS.parse(buf,f.name);
+      if(!p.fields.length){notes.push(`${f.name} : aucune donnée utilisable (vent 10 m, vagues, courant)${p.warn.length?' · '+p.warn.join(' · '):''}`);continue}
+      p.id=uid();p.size=buf.byteLength;p.at=Date.now();
+      await db.put('grib',{id:p.id,name:f.name,buf,at:p.at});GRIBS.add(p);
+      if(p.warn.length)notes.push(`${f.name} : ${p.warn.join(' · ')}`);
+    }catch(e){notes.push(`${f.name} : ${e.message}`)}
+  }
+  if(GRIBS.count()&&cfg.gribUse===undefined){cfg.gribUse=true;saveCfg()}
+  msg.textContent=notes.join('\n');gribUI();
+}
+function gribUI(){
+  const L=$('#gribList');if(!L)return;
+  const fs=GRIBS.files();
+  L.innerHTML=fs.length?fs.map((p,i)=>{
+    const ks=[...new Set(p.fields.map(x=>GRIB_LBL[x.k]).filter(Boolean))],ts=p.fields.map(x=>x.t),g=p.fields[0].g;
+    const la2=g.la1+g.dla*(g.nj-1),lo2=g.lo1+g.dlo*(g.ni-1);
+    return`<div class="gf"><div><b>${esc2(p.name)}</b><div class="mut">${esc2(ks.map(k=>tr(k)).join(' · '))}</div><div class="mut">${fmtDT(Math.min(...ts))} → ${fmtDT(Math.max(...ts))}</div><div class="mut">${Math.min(g.la1,la2).toFixed(1)}…${Math.max(g.la1,la2).toFixed(1)}° N · ${Math.min(g.lo1,lo2).toFixed(1)}…${Math.max(g.lo1,lo2).toFixed(1)}° E · ${Math.round(p.size/1024)} ko</div></div><button class="b sec" data-gdel="${i}">Supprimer</button></div>`}).join(''):'<div class="mut">Aucun fichier GRIB importé.</div>';
+  $('#gribUseRow').classList.toggle('hide',!fs.length);
+  $('#gribUse').checked=cfg.gribUse!==false;
+  const n=$('#rGribNote');if(n)n.textContent=GRIBS.on()?'✓ Fichiers GRIB importés : ils remplacent Windy là où ils couvrent la zone.':'';
+}
+{
+  const sel=$('#gribSrc');sel.innerHTML=GRIB_SRC.map(([k,n])=>`<option value="${k}">${n}</option>`).join('');
+  const how=()=>{const s=GRIB_SRC.find(x=>x[0]===sel.value);$('#gribHow').textContent=tr(s[2])};
+  sel.onchange=how;how();
+  $('#gribPick').onclick=()=>$('#gribFile').click();
+  $('#gribFile').onchange=e=>{const fl=[...e.target.files];e.target.value='';if(fl.length)gribImport(fl)};
+  $('#gribUse').onchange=e=>{cfg.gribUse=e.target.checked;saveCfg();gribUI()};
+  $('#gribList').addEventListener('click',async e=>{const b=e.target.closest('[data-gdel]');if(!b)return;const i=+b.dataset.gdel,p=GRIBS.files()[i];
+    if(!p||!confirm(tr('Supprimer ce fichier GRIB ?')))return;await db.del('grib',p.id);GRIBS.remove(i);gribUI()});
+}
 
 I18N.start();
 </script>
