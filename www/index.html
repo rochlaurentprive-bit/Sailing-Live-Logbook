@@ -245,10 +245,11 @@ nav{z-index:6}
 #m3d[aria-pressed=true]{background:var(--acc);color:var(--on-acc)}
 
 /* aide / pense-bête */
-#helpTabs,#helpSubs{display:flex;gap:8px;overflow-x:auto;padding:4px 0 8px;scrollbar-width:none}
+#helpTabs,#helpSubs{display:flex;flex-wrap:wrap;gap:8px;padding:4px 0 8px}
 .hc{flex:none;margin:0;padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--tx);font:inherit;font-size:14px}
 .hc.on{background:var(--acc);color:var(--on-acc);border-color:var(--acc)}
 .hcard p,.hcard li{margin:8px 0;line-height:1.45;color:var(--tx)}
+.rdw{margin:8px 0;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px}.rdg{width:100%;max-width:420px;display:block;margin:0 auto}.rdl{display:flex;flex-direction:column;gap:5px}.rdr{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;font-size:14px}.rdr span{font-size:18px}.rdn{font-size:12px;color:var(--mut);text-align:center;margin-top:2px}
 .hcard.warn{border-color:var(--acc)}
 .hcard ol,.hcard ul{padding-left:20px;margin:8px 0}
 table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.35;text-align:left;white-space:normal}
@@ -1031,7 +1032,41 @@ vent apparent|schijnbare wind|apparent wind|scheinbarer Wind|viento aparente
 Chenal préféré à tribord (bifurcation)|Voorkeursvaarwater aan stuurboord (splitsing)|Preferred channel to starboard (junction)|Vorzugstonne – Hauptfahrwasser an Steuerbord|Canal preferido a estribor (bifurcación)
 Maintenir 1 seconde|1 seconde ingedrukt houden|Hold for 1 second|1 Sekunde gedrückt halten|Mantener 1 segundo
 Replier le menu|Menu inklappen|Collapse menu|Menü einklappen|Replegar el menú
-Déployer le menu|Menu uitklappen|Expand menu|Menü ausklappen|Desplegar el menú`;
+Déployer le menu|Menu uitklappen|Expand menu|Menü ausklappen|Desplegar el menú
+vent apparent · nds|schijnbare wind · kn|apparent wind · kn|scheinbarer Wind · kn|viento aparente · nd
+vent vrai · nds|ware wind · kn|true wind · kn|wahrer Wind · kn|viento real · nd
+Vent|Wind|Wind|Wind|Viento
+Relèvement constant = risque d'abordage|Constante peiling = aanvaringsgevaar|Constant bearing = risk of collision|Konstante Peilung = Kollisionsgefahr|Demora constante = riesgo de abordaje
+Les relèvements restent parallèles|De peilingen blijven parallel|The bearings stay parallel|Die Peilungen bleiben parallel|Las demoras permanecen paralelas
+Chacun reste|Ieder blijft|Each keeps|Jeder hält sich|Cada uno se mantiene
+à tribord du chenal|aan stuurboord van het vaarwater|to starboard of the channel|an Steuerbord des Fahrwassers|a estribor del canal
+Voie|Baan|Lane|Bahn|Carril
+Traverse à 90°|Steek over onder 90°|Cross at 90°|Mit 90° kreuzen|Cruza a 90°
+Zone de séparation|Scheidingszone|Separation zone|Trennzone|Zona de separación
+Tribord amures|Stuurboordhalzen|Starboard tack|Steuerbordhalsen|Amuras a estribor
+Bâbord amures|Bakboordhalzen|Port tack|Backbordhalsen|Amuras a babor
+Bâbord amures cède la route à tribord amures|Bakboordhalzen geeft voorrang aan stuurboordhalzen|Port tack gives way to starboard tack|Backbordhalsen weicht Steuerbordhalsen aus|Amuras a babor cede el paso a amuras a estribor
+Au vent : manœuvre|Loef: uitwijken|Windward: gives way|Luv: weicht aus|Barlovento: cede el paso
+Sous le vent : privilégié|Lij: voorrang|Leeward: stands on|Lee: Vorrang|Sotavento: tiene preferencia
+Même bord : le bateau au vent cède la route|Zelfde boeg: het loefwaartse schip wijkt|Same tack: the windward boat gives way|Gleicher Bug: das Luvschiff weicht aus|Misma amura: el barco de barlovento cede el paso
+Dépassé :|Ingehaald:|Overtaken:|Überholt:|Adelantado:
+garde son cap|houdt koers|keeps course|hält Kurs|mantiene el rumbo
+Dépasse :|Haalt in:|Overtaking:|Überholer:|Adelanta:
+reste à l'écart|blijft vrij|keeps clear|hält sich frei|se mantiene alejado
+Chacun vire|Ieder draait|Each turns|Jeder dreht|Cada uno vira
+à tribord|naar stuurboord|to starboard|nach Steuerbord|a estribor
+Passage|Passeren|Passing|Passieren|Cruce
+bâbord / bâbord|bakboord / bakboord|port to port|Backbord an Backbord|babor con babor
+Doit manœuvrer|Moet uitwijken|Must give way|Muss ausweichen|Debe maniobrar
+(l'autre est à tribord)|(de ander is aan stuurboord)|(the other is to starboard)|(der andere ist an Steuerbord)|(el otro está a estribor)
+Garde son cap|Houdt koers|Keeps course|Hält Kurs|Mantiene el rumbo
+Navire non maître de sa manœuvre|Schip niet in staat te manoeuvreren|Vessel not under command|Manövrierunfähiges Fahrzeug|Buque sin gobierno
+Capacité de manœuvre restreinte|Beperkt manoeuvreerbaar|Restricted in ability to manoeuvre|Manövrierbehindertes Fahrzeug|Capacidad de maniobra restringida
+Contraint par son tirant d'eau|Door diepgang beperkt|Constrained by draught|Tiefgangbehindertes Fahrzeug|Condicionado por su calado
+Navire engagé dans la pêche|Vissend schip|Vessel engaged in fishing|Fischendes Fahrzeug|Buque dedicado a la pesca
+Voilier|Zeilschip|Sailing vessel|Segelfahrzeug|Velero
+Navire à moteur|Motorschip|Power-driven vessel|Maschinenfahrzeug|Buque de propulsión mecánica
+⬇ Chaque catégorie laisse la route libre à celles du dessus|⬇ Elke categorie wijkt voor die erboven|⬇ Each category keeps clear of those above|⬇ Jede Kategorie weicht denen darüber aus|⬇ Cada categoría cede el paso a las de arriba`;
   const EX=new Map(),PAT=[];
   RAW.split('\n').forEach(l=>{const a=l.split('|');if(a.length!==5)return;const fr=a[0],t=a.slice(1);
     if(/\{\d\}/.test(fr)){const parts=fr.split(/\{\d\}/).map(x=>x.replace(/[.*+?^$()|[\]\\{}]/g,'\\$&'));PAT.push([new RegExp('^'+parts.join('(.+?)')+'$'),t,fr.length])}
@@ -1135,7 +1170,7 @@ const tr=I18N.tr,LOC=()=>I18N.LOC();
 </div>
 <script>
 let simT=null;
-const APPV='v14',ERRLOG=[];
+const APPV='v15',ERRLOG=[];
 const logErr=m=>{ERRLOG.push(new Date().toLocaleTimeString(LOC())+' '+String(m).slice(0,220));if(ERRLOG.length>25)ERRLOG.shift()};
 window.addEventListener('error',e=>logErr((e.message||'erreur')+' @'+String(e.filename||'').split('/').pop()+':'+e.lineno));
 window.addEventListener('unhandledrejection',e=>logErr('promesse : '+((e.reason&&e.reason.message)||e.reason)));
@@ -1548,6 +1583,8 @@ function mkWind(root){
    <text x="150" y="104" text-anchor="middle" class="dlab">vitesse fond</text>
    <text class="dSog dnum" x="150" y="168" text-anchor="middle">--</text>
    <text x="150" y="192" text-anchor="middle" class="dlab">nœuds</text>
+   <g class="dCornA"><text class="dAsv" x="-2" y="284" text-anchor="start" style="font-family:var(--num);font-size:24px;font-weight:600;fill:var(--tx)">--</text><text x="-2" y="300" text-anchor="start" class="dlab" style="font-size:10px">vent apparent · nds</text></g>
+   <g class="dCornT"><text class="dTsv" x="302" y="284" text-anchor="end" style="font-family:var(--num);font-size:24px;font-weight:600;fill:var(--tx)">--</text><text x="302" y="300" text-anchor="end" class="dlab" style="font-size:10px">vent vrai · nds</text></g>
    <g class="dSideA"><text class="dlab" x="92" y="232" text-anchor="middle" style="font-size:10px">apparent</text><text class="dAv" x="92" y="254" text-anchor="middle" style="font-family:var(--num);font-size:24px;font-weight:600;fill:var(--mut)">--</text><text class="dAs" x="92" y="269" text-anchor="middle" style="font-size:11px;font-weight:600">&#8203;</text></g>
    <g class="dSideT"><text class="dlab" x="208" y="232" text-anchor="middle" style="font-size:10px">vrai</text><text class="dTv" x="208" y="254" text-anchor="middle" style="font-family:var(--num);font-size:24px;font-weight:600;fill:var(--mut)">--</text><text class="dTs" x="208" y="269" text-anchor="middle" style="font-size:11px;font-weight:600">&#8203;</text></g>`);
   const q=s=>root.querySelector(s);let dh=0;
@@ -1560,6 +1597,7 @@ function mkWind(root){
     nd('.dAw',fresh('awa'),D.awa);nd('.dTw',fresh('twa'),D.twa);
     const side=(ok,ang,v,sd)=>{const ev=q(v),es=q(sd);if(!ok){ev.textContent='--';ev.style.fill='var(--mut)';es.textContent='';return}
       const a=((ang%360)+540)%360-180;ev.textContent=Math.round(Math.abs(a))+'°';es.textContent=tr(a>=0?'tribord':'bâbord');const c=a>=0?'var(--stbd)':'var(--port)';ev.style.fill=c;es.style.fill=c};
+    q('.dAsv').textContent=fresh('aws')?num(D.aws):'--';q('.dTsv').textContent=fresh('tws')?num(D.tws):'--';
     side(fresh('awa'),D.awa,'.dAv','.dAs');side(fresh('twa'),D.twa,'.dTv','.dTs');
     const ng=Math.max(0,Math.min(80,+cfg.noGo||0)),gE=q('.dNoGo');
     if(gE.dataset.n!==String(ng)){gE.dataset.n=String(ng);
@@ -3909,10 +3947,30 @@ function renderHelp(){
   }else if(RTAB==='flag'){
     h=sec2('Pavillons du code international',`<div class="flags">${FLAGS.map(([L,n,svg,m])=>`<div class="fg">${svg||`<div class="fl nofl">${L}</div>`}<div><b>${L}</b> ${n}<span>${esc2(X(m))}</span></div></div>`).join('')}</div><p class="mut">${esc2(X(FLAG_NOTE))}</p>`);
   }else{
-    h=sec2('Règles de route (RIPAM / COLREG)',RULES.map(([t,p])=>`<div class="rl"><b>${esc2(X(t))}</b><p>${esc2(X(p))}</p></div>`).join(''));
+    h=sec2('Règles de route (RIPAM / COLREG)',RULES.map(([t,p])=>`<div class="rl"><b>${esc2(X(t))}</b>${(RDG[t[0].split(' ·')[0]]||[]).map(g=>`<div class="rdw">${g}</div>`).join('')}<p>${esc2(X(p))}</p></div>`).join(''));
   }
   $('#helpBody').innerHTML=h;
 }
+/* --- Schémas des règles de route --- */
+const RDc={give:'var(--bad)',stand:'var(--ok)',n:'var(--mut)'};
+const rdBoat=(x,y,rot,col,sail,tack)=>`<g transform="translate(${x} ${y}) rotate(${rot})"><path d="M0 -15C7 -7 7 8 4.5 14L-4.5 14C-7 8 -7 -7 0 -15Z" fill="${col}" stroke="var(--tx)" stroke-width="1"/>${sail?`<path d="M0 -9Q${tack>0?-9:9} 0 0 10Z" fill="var(--card)" stroke="var(--tx)" stroke-width=".9"/>`:`<rect x="-3" y="-3" width="6" height="7" rx="1" fill="var(--card)" opacity=".8"/>`}</g>`;
+const rdT=(x,y,t,col,anc)=>`<text x="${x}" y="${y}" text-anchor="${anc||'middle'}" style="font:600 11px system-ui;fill:${col||'var(--tx)'}">${t}</text>`;
+const rdP=(d,col)=>`<path d="${d}" fill="none" stroke="${col||'var(--tx)'}" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#rdA)"/>`;
+const rdWrap=b=>`<svg class="rdg" viewBox="0 0 300 150" role="img"><defs><marker id="rdA" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--tx)"/></marker></defs>${b}</svg>`;
+const rdWind=(x,y)=>`<g transform="translate(${x} ${y+8})"><path d="M0 0V26" stroke="var(--wind)" stroke-width="3" marker-end="url(#rdA)"/>${rdT(0,-3,'Vent','var(--wind)')}</g>`;
+const RDG={
+ 'Règles 6, 7, 8':[rdWrap(`<path d="M50 120L200 50M100 120L200 73M150 120L200 97" stroke="var(--mut)" stroke-dasharray="3 3"/>${rdBoat(50,120,90,'var(--mut)')}${rdBoat(100,120,90,'var(--mut)')}${rdBoat(150,120,90,RDc.give)}${rdBoat(200,50,180,'var(--mut)')}${rdBoat(200,73,180,'var(--mut)')}${rdBoat(200,97,180,RDc.stand)}${rdP('M165 120H196',RDc.give)}${rdT(150,18,'Relèvement constant = risque d\'abordage','var(--bad)')}${rdT(150,142,'Les relèvements restent parallèles')}`)],
+ 'Règle 9':[rdWrap(`<path d="M80 5V145M220 5V145" stroke="var(--mut)" stroke-width="2" stroke-dasharray="8 6"/>${rdBoat(195,110,0,RDc.n)}${rdBoat(105,40,180,RDc.n)}${rdP('M195 85V30',RDc.n)}${rdP('M105 65V120',RDc.n)}${rdT(150,76,'Chacun reste','var(--tx)')}${rdT(150,90,'à tribord du chenal','var(--tx)')}`)],
+ 'Règle 10':[rdWrap(`<rect x="0" y="40" width="300" height="25" fill="var(--card)" stroke="var(--line)"/><rect x="0" y="85" width="300" height="25" fill="var(--card)" stroke="var(--line)"/><rect x="0" y="65" width="300" height="20" fill="var(--line)" opacity=".5"/><path d="M40 52H120M260 97H180" stroke="var(--mut)" stroke-width="3" marker-end="url(#rdA)"/>${rdBoat(220,130,0,RDc.stand)}${rdP('M220 113V20',RDc.stand)}${rdT(70,34,'Voie')}${rdT(205,142,'Traverse à 90°',RDc.stand,'end')}${rdT(150,79,'Zone de séparation','var(--mut)')}`)],
+ 'Règle 12':[rdWrap(`${rdWind(150,8)}${rdBoat(205,100,-45,RDc.stand,1,-1)}${rdBoat(95,100,45,RDc.give,1,1)}${rdP('M205 85L175 55',RDc.stand)}${rdP('M95 85L125 55',RDc.give)}${rdT(235,130,'Tribord amures',RDc.stand)}${rdT(65,130,'Bâbord amures',RDc.give)}${rdT(150,142,'Bâbord amures cède la route à tribord amures','var(--tx)')}`),
+  rdWrap(`${rdWind(150,8)}${rdBoat(80,62,90,RDc.give,1,1)}${rdBoat(120,108,90,RDc.stand,1,1)}${rdP('M100 62H180',RDc.give)}${rdP('M140 108H220',RDc.stand)}${rdT(292,58,'Au vent : manœuvre',RDc.give,'end')}${rdT(292,132,'Sous le vent : privilégié',RDc.stand,'end')}${rdT(150,146,'Même bord : le bateau au vent cède la route')}`.replace('y="146"','y="147"'))],
+ 'Règle 13':[rdWrap(`${rdBoat(150,60,0,RDc.stand)}${rdBoat(150,125,0,RDc.give)}${rdP('M150 105C150 80 195 90 195 55S160 20 150 15',RDc.give)}${rdT(220,62,'Dépassé :','var(--ok)','start').replace('x="220"','x="168"').replace('y="62"','y="64"')}${rdT(168,76,'garde son cap','var(--ok)','start')}${rdT(105,125,'Dépasse :',RDc.give,'end')}${rdT(105,138,'reste à l\'écart',RDc.give,'end')}`)],
+ 'Règle 14':[rdWrap(`${rdBoat(150,122,0,RDc.n)}${rdBoat(150,28,180,RDc.n)}${rdP('M150 100V84Q150 70 186 62V22',RDc.n)}${rdP('M150 50V66Q150 80 114 88V128',RDc.n)}${rdT(235,75,'Chacun vire','var(--tx)').replace('x="235"','x="245"')}${rdT(245,89,'à tribord','var(--tx)')}${rdT(55,75,'Passage','var(--mut)')}${rdT(55,89,'bâbord / bâbord','var(--mut)')}`)],
+ 'Règle 15':[rdWrap(`${rdBoat(150,122,0,RDc.give)}${rdBoat(200,62,-90,RDc.stand)}${rdP('M150 100C150 92 180 96 240 88L240 22',RDc.give)}${rdP('M178 62H60',RDc.stand)}${rdT(8,112,'Doit manœuvrer',RDc.give,'start')}${rdT(8,126,'(l\'autre est à tribord)',RDc.give,'start')}${rdT(110,48,'Garde son cap',RDc.stand)}`)],
+};
+const RD18=[['Navire non maître de sa manœuvre','🚩'],['Capacité de manœuvre restreinte','⚠'],['Contraint par son tirant d\'eau','⚓'],['Navire engagé dans la pêche','🎣'],['Voilier','⛵'],['Navire à moteur','🚤']];
+RDG['Règle 18']=[`<div class="rdl">${RD18.map(([t,i],k)=>`<div class="rdr" style="margin-left:${k*6}px;background:color-mix(in srgb,var(--acc) ${100-k*16}%,var(--card));color:${k<3?'var(--on-acc)':'var(--tx)'}"><span>${i}</span><b>${t}</b></div>`).join('')}<div class="rdn">⬇ Chaque catégorie laisse la route libre à celles du dessus</div></div>`];
+
 document.addEventListener('click',e=>{
   const t=e.target.closest&&e.target.closest('[data-ht],[data-rt]');if(!t)return;
   if(t.dataset.ht){HTAB=t.dataset.ht}else{HTAB='ref';RTAB=t.dataset.rt}
