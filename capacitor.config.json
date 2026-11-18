@@ -1,0 +1,8 @@
+{
+  "appId": "com.carnetdebord.app",
+  "appName": "Carnet de bord",
+  "webDir": "www",
+  "server": { "androidScheme": "https", "cleartext": true },
+  "android": { "allowMixedContent": true },
+  "plugins": { "CapacitorHttp": { "enabled": true } }
+}

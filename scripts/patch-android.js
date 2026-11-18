@@ -1,0 +1,63 @@
+// Exécuté après « npx cap add android » : ajoute le plugin natif, les permissions, le service et l'icône.
+const fs = require('fs');
+const path = require('path');
+
+const root = path.join(__dirname, '..');
+const appDir = path.join(root, 'android', 'app', 'src', 'main');
+const javaDir = path.join(appDir, 'java', 'com', 'carnetdebord', 'app');
+
+// 1) fichiers Java (remplace MainActivity, ajoute le plugin et le service)
+fs.mkdirSync(javaDir, { recursive: true });
+for (const f of fs.readdirSync(path.join(root, 'native', 'java'))) {
+  fs.copyFileSync(path.join(root, 'native', 'java', f), path.join(javaDir, f));
+  console.log('copié', f);
+}
+
+// 2) AndroidManifest : permissions, service au premier plan, trafic http/ws local autorisé
+const manifestPath = path.join(appDir, 'AndroidManifest.xml');
+let m = fs.readFileSync(manifestPath, 'utf8');
+const perms = [
+  'android.permission.INTERNET',
+  'android.permission.ACCESS_NETWORK_STATE',
+  'android.permission.CHANGE_NETWORK_STATE',
+  'android.permission.CHANGE_WIFI_STATE',
+  'android.permission.WAKE_LOCK',
+  'android.permission.FOREGROUND_SERVICE',
+  'android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE',
+  'android.permission.POST_NOTIFICATIONS',
+];
+const missing = perms.filter((p) => !m.includes(`"${p}"`));
+if (missing.length) {
+  const block = missing.map((p) => `    <uses-permission android:name="${p}" />`).join('\n') + '\n';
+  m = m.replace(/(\s*)<\/manifest>/, `\n${block}$1</manifest>`);
+}
+if (!m.includes('usesCleartextTraffic')) {
+  m = m.replace('<application', '<application android:usesCleartextTraffic="true"');
+}
+if (!m.includes('.BoatService')) {
+  m = m.replace('</application>', '    <service android:name=".BoatService" android:exported="false" android:foregroundServiceType="connectedDevice" />\n    </application>');
+}
+fs.writeFileSync(manifestPath, m);
+console.log('AndroidManifest.xml mis à jour');
+
+// 3) icône
+const resSrc = path.join(root, 'native', 'res');
+if (fs.existsSync(resSrc)) {
+  const walk = (dir, rel = '') => {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      const p = path.join(dir, e.name), r = path.join(rel, e.name);
+      if (e.isDirectory()) walk(p, r);
+      else {
+        const dest = path.join(appDir, 'res', r);
+        fs.mkdirSync(path.dirname(dest), { recursive: true });
+        fs.copyFileSync(p, dest);
+      }
+    }
+  };
+  walk(resSrc);
+  // les icônes adaptatives du modèle utilisent un fond défini ici
+  const bg = path.join(appDir, 'res', 'values', 'ic_launcher_background.xml');
+  fs.mkdirSync(path.dirname(bg), { recursive: true });
+  fs.writeFileSync(bg, '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <color name="ic_launcher_background">#0A1316</color>\n</resources>\n');
+  console.log('icônes copiées');
+}
