@@ -132,7 +132,7 @@ header{padding:calc(var(--sat) + 12px) max(env(safe-area-inset-right),20px) 10px
 section{padding-left:max(env(safe-area-inset-left),16px)!important;padding-right:max(env(safe-area-inset-right),16px)!important}
 body{padding-bottom:124px!important}
 nav{bottom:calc(16px + env(safe-area-inset-bottom))!important}
-.stage{position:relative;width:100%;max-width:420px;margin:0 auto;aspect-ratio:1/1;overflow:hidden;touch-action:pan-y;user-select:none;-webkit-user-select:none}
+.stage{position:relative;width:100%;max-width:420px;margin:0 auto;aspect-ratio:380/316;overflow:hidden;touch-action:pan-y;user-select:none;-webkit-user-select:none}
 .stage .dc{position:absolute;inset:0;visibility:hidden;transition:transform .32s cubic-bezier(.2,.8,.2,1),visibility 0s linear .32s}
 .stage .dc.vis{visibility:visible;transition:transform .32s cubic-bezier(.2,.8,.2,1)}
 .stage.drag .dc{transition:none!important}
@@ -1189,7 +1189,7 @@ const tr=I18N.tr,LOC=()=>I18N.LOC();
 </div>
 <script>
 let simT=null;
-const APPV='v19',ERRLOG=[];
+const APPV='v20',ERRLOG=[];
 const logErr=m=>{ERRLOG.push(new Date().toLocaleTimeString(LOC())+' '+String(m).slice(0,220));if(ERRLOG.length>25)ERRLOG.shift()};
 window.addEventListener('error',e=>logErr((e.message||'erreur')+' @'+String(e.filename||'').split('/').pop()+':'+e.lineno));
 window.addEventListener('unhandledrejection',e=>logErr('promesse : '+((e.reason&&e.reason.message)||e.reason)));
@@ -1551,7 +1551,7 @@ let dialUid=0;
 const SESS={maxSog:0,maxRoll:0,maxPitch:0}, HIST={depth:[],dt:0};
 const polar=(r,a)=>[150+r*Math.sin(a*D2R),150-r*Math.cos(a*D2R)];
 function arcPath(r,a0,a1){const[x0,y0]=polar(r,a0),[x1,y1]=polar(r,a1);return`M${x0.toFixed(1)} ${y0.toFixed(1)}A${r} ${r} 0 ${Math.abs(a1-a0)>180?1:0} ${a1>a0?1:0} ${x1.toFixed(1)} ${y1.toFixed(1)}`}
-const SVG=(c,body)=>`<svg class="dial${c}" viewBox="-8 -8 316 316" role="img">${body}</svg>`;
+const SVG=(c,body)=>`<svg class="dial${c}" viewBox="-40 -8 380 316" role="img">${body}</svg>`;
 const unwrap=(prev,t)=>prev+(((t-prev)%360+540)%360-180);
 /* ---------- Style « verre » commun à tous les cadrans ---------- */
 const DEFS=`<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
@@ -1612,10 +1612,10 @@ function mkWind(root){
    <text x="150" y="104" text-anchor="middle" class="dlab">vitesse fond</text>
    <text class="dSog dnum" x="150" y="168" text-anchor="middle">--</text>
    <text x="150" y="192" text-anchor="middle" class="dlab">nœuds</text>
-   <g class="dCornA"><text class="dAsv" x="-2" y="284" text-anchor="start" style="font-family:var(--num);font-size:24px;font-weight:600;fill:var(--tx)">--</text><text x="-2" y="300" text-anchor="start" class="dlab" style="font-size:10px">vent apparent · nds</text></g>
-   <g class="dCornT"><text class="dTsv" x="302" y="284" text-anchor="end" style="font-family:var(--num);font-size:24px;font-weight:600;fill:var(--tx)">--</text><text x="302" y="300" text-anchor="end" class="dlab" style="font-size:10px">vent vrai · nds</text></g>
-   <g class="dSideA"><text class="dlab" x="-2" y="8" text-anchor="start" style="font-size:10px">apparent</text><text class="dAv" x="-2" y="31" text-anchor="start" style="font-family:var(--num);font-size:26px;font-weight:600;fill:var(--mut)">--</text><text class="dAs" x="-2" y="44" text-anchor="start" style="font-size:11px;font-weight:600">&#8203;</text></g>
-   <g class="dSideT"><text class="dlab" x="302" y="8" text-anchor="end" style="font-size:10px">vrai</text><text class="dTv" x="302" y="31" text-anchor="end" style="font-family:var(--num);font-size:26px;font-weight:600;fill:var(--mut)">--</text><text class="dTs" x="302" y="44" text-anchor="end" style="font-size:11px;font-weight:600">&#8203;</text></g>`);
+   <g class="dCornA"><text class="dAsv" x="-38" y="284" text-anchor="start" style="font-family:var(--num);font-size:24px;font-weight:600;fill:var(--tx)">--</text><text x="-38" y="300" text-anchor="start" class="dlab" style="font-size:10px">vent apparent · nds</text></g>
+   <g class="dCornT"><text class="dTsv" x="338" y="284" text-anchor="end" style="font-family:var(--num);font-size:24px;font-weight:600;fill:var(--tx)">--</text><text x="338" y="300" text-anchor="end" class="dlab" style="font-size:10px">vent vrai · nds</text></g>
+   <g class="dSideA"><text class="dlab" x="-38" y="8" text-anchor="start" style="font-size:10px">apparent</text><text class="dAv" x="-38" y="31" text-anchor="start" style="font-family:var(--num);font-size:26px;font-weight:600;fill:var(--mut)">--</text><text class="dAs" x="-38" y="44" text-anchor="start" style="font-size:11px;font-weight:600">&#8203;</text></g>
+   <g class="dSideT"><text class="dlab" x="338" y="8" text-anchor="end" style="font-size:10px">vrai</text><text class="dTv" x="338" y="31" text-anchor="end" style="font-family:var(--num);font-size:26px;font-weight:600;fill:var(--mut)">--</text><text class="dTs" x="338" y="44" text-anchor="end" style="font-size:11px;font-weight:600">&#8203;</text></g>`);
   const q=s=>root.querySelector(s);let dh=0;
   return()=>{
     const h=hdgNow();
@@ -1824,7 +1824,7 @@ const B3_VIEWS=[{psi:-34,e:15,n:'vue 3/4 arrière'},{psi:0,e:11,n:'vue arrière'
 function mkAtt3D(root,opts){
   const MO=!!(opts&&opts.boatOnly);
   BOAT3D=BOAT3D||buildBoat();
-  const cv=document.createElement('canvas');cv.style.cssText='width:100%;aspect-ratio:1/1;display:block;cursor:pointer';cv.setAttribute('role','img');cv.setAttribute('aria-label','Bateau en 3D : roulis et tangage. Toucher pour changer de point de vue.');
+  const cv=document.createElement('canvas');cv.style.cssText=((root.closest&&root.closest('#dialStage'))?'width:83.2%;margin:0 auto;':'width:100%;')+'aspect-ratio:1/1;display:block;cursor:pointer';cv.setAttribute('role','img');cv.setAttribute('aria-label','Bateau en 3D : roulis et tangage. Toucher pour changer de point de vue.');
   root.innerHTML='';root.appendChild(cv);
   const wc=document.createElement('canvas');const sc=document.createElement('canvas');
   const S={roll:0,pitch:0,tr:0,tp:0,ok:false,psi:B3_VIEWS[0].psi,e:B3_VIEWS[0].e,v:0,tpsi:B3_VIEWS[0].psi,te:B3_VIEWS[0].e,dist:29,td:29,vn:B3_VIEWS[0].n,pw:null};
