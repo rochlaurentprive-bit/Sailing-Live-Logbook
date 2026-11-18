@@ -262,7 +262,7 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
 .rl{padding:8px 0;border-bottom:1px solid var(--line)}
 #ackModal{position:fixed;inset:0;z-index:50;background:#000b;display:flex;align-items:center;justify-content:center;padding:20px}#ackModal .card{max-width:420px;margin:0}
 .b.danger{background:var(--bad);color:#fff}
-.dtop{text-align:center;font-family:var(--num);font-size:22px;font-weight:600;min-height:30px;line-height:30px;color:var(--tx)}
+.dtop{text-align:center;min-height:0;margin-bottom:4px}
 .dtop small{font-size:13px;font-weight:400;color:var(--mut);margin-right:6px}
 </style>
 </head>
@@ -1170,7 +1170,7 @@ const tr=I18N.tr,LOC=()=>I18N.LOC();
 </div>
 <script>
 let simT=null;
-const APPV='v15',ERRLOG=[];
+const APPV='v16',ERRLOG=[];
 const logErr=m=>{ERRLOG.push(new Date().toLocaleTimeString(LOC())+' '+String(m).slice(0,220));if(ERRLOG.length>25)ERRLOG.shift()};
 window.addEventListener('error',e=>logErr((e.message||'erreur')+' @'+String(e.filename||'').split('/').pop()+':'+e.lineno));
 window.addEventListener('unhandledrejection',e=>logErr('promesse : '+((e.reason&&e.reason.message)||e.reason)));
@@ -1225,16 +1225,17 @@ const GPS={diag:'',nmeaT:0,phone:null,watch:null,err:'',asked:false};
 let GEO=null;
 
 /* ---------- Retour tactile : animation + vibration (réglable) ---------- */
-let HAPT=null;const HAP={msg:'pas encore testé'};
-function hap(kind){
-  if(cfg.haptic===false)return;
-  const ms=kind==='strong'?40:kind==='tick'?12:22;
-  const web=()=>{try{navigator.vibrate&&navigator.vibrate(ms);HAP.msg='navigator.vibrate '+ms+' ms'}catch(e){}};
+let HAPT=null,BLV=null;const HAP={msg:'pas encore testé'};
+function hap(kind,pattern){
+  if(cfg.haptic===false&&!pattern)return;
+  const ms=kind==='strong'?50:kind==='tick'?20:30;
+  const web=()=>{try{navigator.vibrate&&navigator.vibrate(pattern||ms);HAP.msg='navigator.vibrate '+ms+' ms'}catch(e){}};
+  const old=()=>{try{HAPT=HAPT||plug('Haptics');return Promise.resolve(HAPT.vibrate({duration:ms})).then(()=>{HAP.msg='Haptics.vibrate '+ms+' ms : OK'}).catch(e=>{HAP.msg='Haptics.vibrate : '+(e&&e.message||e);web()})}catch(e){HAP.msg='plugin Haptics : '+(e&&e.message||e);web()}};
   try{
-    if(NATIVE){HAPT=HAPT||plug('Haptics');
-      Promise.resolve(HAPT.vibrate({duration:ms})).then(()=>{HAP.msg='Haptics.vibrate '+ms+' ms : OK'}).catch(e=>{HAP.msg='Haptics.vibrate : '+(e&&e.message||e);web()});
+    if(NATIVE){BLV=BLV||plug('BoatLink');
+      Promise.resolve(BLV.vibrate(pattern?{pattern}:{duration:ms})).then(()=>{HAP.msg='BoatLink.vibrate '+(pattern?'motif':ms+' ms')+' : OK'}).catch(e=>{HAP.msg='BoatLink.vibrate : '+(e&&e.message||e);old()});
     }else web();
-  }catch(e){HAP.msg='plugin Haptics : '+(e&&e.message||e);web()}
+  }catch(e){HAP.msg='vibration native : '+(e&&e.message||e);old()}
 }
 const PRESS_SEL='button,.b,.icon,[role=button],nav a,label.sw,summary,.chip,.tile.click,.card.click';
 document.addEventListener('pointerdown',e=>{
@@ -1561,6 +1562,14 @@ function gaugeTicks(maxV,step,fmt,sub){
     if(major){const[x2,y2]=polar(88,a);t+=`<text class="sm" x="${x2.toFixed(1)}" y="${(y2+5).toFixed(1)}" text-anchor="middle">${fmt(v)}</text>`}}
   return t;
 }
+function staticFace(){   // graduations fixes (angles par rapport à l'étrave), sans cap
+  let h='';
+  for(let a=0;a<360;a+=10){const m=a%30===0,[x0,y0]=polar(m?102:107,a),[x1,y1]=polar(120,a);
+    h+=`<line class="tick${m?' m':''}" x1="${x0.toFixed(1)}" y1="${y0.toFixed(1)}" x2="${x1.toFixed(1)}" y2="${y1.toFixed(1)}"/>`}
+  [[60,60],[90,90],[120,120],[240,120],[270,90],[300,60]].forEach(([a,l])=>{const[x,y]=polar(93,a);
+    h+=`<text class="sm" x="${x.toFixed(1)}" y="${(y+4).toFixed(1)}" text-anchor="middle" style="font-size:10px;opacity:.6">${l}</text>`});
+  return h;
+}
 function ringFace(){   // graduations + points cardinaux (anneau qui tourne avec le cap)
   let h='';
   for(let a=0;a<360;a+=5){const m=a%30===0,md=a%10===0,r0=m?102:md?107:111,[x0,y0]=polar(r0,a),[x1,y1]=polar(120,a);
@@ -1577,7 +1586,7 @@ const hdgNow=()=>fresh('cog')?D.cog:(fresh('hdg')?D.hdg:null);
 /* 1. Vent : cap, vitesse fond, vent apparent / vrai */
 function mkWind(root){
   root.innerHTML=SVG(' stale',`${FACE(146)}<g class="dArcs" style="filter:url(#fGlow)"><path d="${arcPath(138,25,110)}" fill="none" stroke="var(--stbd)" stroke-width="5" stroke-linecap="round" opacity=".95"/><path d="${arcPath(138,-110,-25)}" fill="none" stroke="var(--port)" stroke-width="5" stroke-linecap="round" opacity=".95"/></g>
-   <g class="dNoGo"></g>${BOATTOP}<g class="dRing ring">${ringFace()}</g><path d="M150 14 l-9 -14 h18 z" fill="var(--acc)" style="filter:url(#fDrop)"/>
+   <g class="dNoGo"></g>${BOATTOP}<g class="dRing">${staticFace()}</g><path d="M150 14 l-9 -14 h18 z" fill="var(--acc)" style="filter:url(#fDrop)"/>
    <g class="dTw needle" opacity="0"><path d="M150 76 L141 52 L150 58 L159 52 Z" fill="none" stroke="var(--tx)" stroke-width="2.4" stroke-linejoin="round" style="filter:url(#fGlow)"/></g>
    <g class="dAw needle" opacity="0"><path d="M150 52 L138 24 L150 32 L162 24 Z" fill="url(#gAw)" stroke="var(--tx)" stroke-opacity=".55" stroke-width="1" style="filter:url(#fGlow)"/></g>
    <text x="150" y="104" text-anchor="middle" class="dlab">vitesse fond</text>
@@ -1592,7 +1601,6 @@ function mkWind(root){
     const h=hdgNow();
     q('svg').classList.toggle('stale',!fresh('sog'));
     q('.dSog').textContent=fresh('sog')?num(D.sog):'--';
-    if(h!=null){dh=unwrap(dh,-h);q('.dRing').style.transform=`rotate(${dh}deg)`}
     const nd=(s,ok,ang)=>{const e=q(s);e.setAttribute('opacity',ok?1:0);if(ok)e.style.transform=`rotate(${ang}deg)`};
     nd('.dAw',fresh('awa'),D.awa);nd('.dTw',fresh('twa'),D.twa);
     const side=(ok,ang,v,sd)=>{const ev=q(v),es=q(sd);if(!ok){ev.textContent='--';ev.style.fill='var(--mut)';es.textContent='';return}
@@ -4047,16 +4055,51 @@ window.addEventListener('online',()=>rlog('réseau','en ligne'));window.addEvent
 recUI();
 
 
-/* Cap au-dessus de l'anémomètre */
+/* Barre de compas animée au-dessus de l'anémomètre */
 (function(){
-  const _ud=updDials;
-  updDials=function(){
-    const r=_ud.apply(this,arguments);
-    try{const id=DS.ids[DS.idx],e=$('#dialTop');
-      if(id==='wind'){const h=hdgNow();e.innerHTML=h!=null?'<small>'+esc2(tr('cap'))+'</small>'+String(Math.round(h)%360).padStart(3,'0')+'°':'<small>'+esc2(tr('cap'))+'</small>--'}
-      else e.textContent=''}catch(_){}
-    return r};
-  $('#dialStage').addEventListener('transitionend',()=>{try{updDials()}catch(_){}});
+  const top=$('#dialTop');top.innerHTML='<canvas id="tape" style="width:100%;height:50px;display:block"></canvas>';
+  const cv=$('#tape'),CARD={fr:['N','E','S','O'],nl:['N','O','Z','W'],en:['N','E','S','W'],de:['N','O','S','W'],es:['N','E','S','O']};
+  let cur=null,tgt=null,last=0,cs=null,csT=0;
+  const sh=(a,b)=>((a-b+540)%360)-180;
+  function frame(now){
+    requestAnimationFrame(frame);
+    const on=DS&&DS.ids&&DS.ids[DS.idx]==='wind'&&$('#v-live').classList.contains('on');
+    top.style.display=on?'':'none';if(!on)return;
+    if(now-last<30)return;const dt=Math.min(.1,(now-last)/1000);last=now;
+    const h=fresh('hdg')?D.hdg:hdgNow();tgt=h;
+    if(h!=null){cur=cur==null?h:cur+sh(h,cur)*(1-Math.exp(-dt*6))}
+    if(!cs||now-csT>1000){csT=now;const c=getComputedStyle(document.documentElement);cs={tx:c.getPropertyValue('--tx').trim()||'#111',mut:c.getPropertyValue('--mut').trim()||'#888',card:c.getPropertyValue('--card').trim()||'#fff',line:c.getPropertyValue('--line').trim()||'#ccc',acc:c.getPropertyValue('--acc').trim()||'#c60',wind:c.getPropertyValue('--wind').trim()||'#2a8',bad:c.getPropertyValue('--bad').trim()||'#d33'}}
+    const dpr=Math.min(2,devicePixelRatio||1),W=Math.max(100,cv.clientWidth),H=50;
+    if(cv.width!==Math.round(W*dpr)){cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr)}
+    const g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,W,H);
+    g.fillStyle=cs.card;g.strokeStyle=cs.line;g.lineWidth=1;g.beginPath();g.roundRect?g.roundRect(.5,.5,W-1,H-1,12):g.rect(.5,.5,W-1,H-1);g.fill();g.stroke();
+    g.save();g.beginPath();g.rect(2,2,W-4,H-4);g.clip();
+    if(cur==null){g.fillStyle=cs.mut;g.font='600 14px system-ui';g.textAlign='center';g.textBaseline='middle';g.fillText('cap --',W/2,H/2);g.restore();return}
+    const span=110,ppd=W/span,L=(CARD[(cfg.lang||'fr')]||CARD.fr);
+    const x0=Math.floor((cur-span/2)/5)*5;
+    g.textAlign='center';
+    for(let a=x0;a<=cur+span/2+5;a+=5){
+      const x=W/2+(a-cur)*ppd,ang=((a%360)+360)%360,ten=ang%10===0,card=ang%90===0;
+      g.strokeStyle=ang===0?cs.bad:cs.mut;g.lineWidth=ten?1.6:1;g.beginPath();g.moveTo(x,H-3);g.lineTo(x,H-(card?20:ten?14:9));g.stroke();
+      if(ten){g.textBaseline='alphabetic';
+        if(card){g.font='700 15px system-ui';g.fillStyle=ang===0?cs.bad:cs.tx;g.fillText(L[ang/90],x,18)}
+        else if(ang%30===0){g.font='600 11px system-ui';g.fillStyle=cs.tx;g.fillText(String(ang/10).padStart(2,'0'),x,17)}}
+    }
+    // vent vrai (direction d'où il vient) et cap fond
+    const mark=(ang,col,sym)=>{if(ang==null)return;const d=sh(ang,cur);let x=W/2+d*ppd;const out=Math.abs(d)>span/2-4;if(out)x=d>0?W-10:10;
+      g.fillStyle=col;g.beginPath();g.moveTo(x,H-3);g.lineTo(x-6,H-12);g.lineTo(x+6,H-12);g.closePath();g.fill();
+      g.font='700 9px system-ui';g.fillStyle=col;g.textBaseline='alphabetic';g.fillText(sym,x,H-14)};
+    if(fresh('twd'))mark(D.twd,cs.wind,'V');
+    if(fresh('cog')&&Math.abs(sh(D.cog,cur))>1.5)mark(D.cog,cs.acc,'F');
+    g.restore();
+    // pastille du cap au centre
+    const t=String(Math.round(((cur%360)+360)%360)).padStart(3,'0')+'°';
+    g.font='700 20px system-ui';const tw=g.measureText(t).width+20;
+    g.fillStyle=cs.acc;g.beginPath();g.roundRect?g.roundRect(W/2-tw/2,5,tw,26,13):g.rect(W/2-tw/2,5,tw,26);g.fill();
+    g.fillStyle='#fff';g.textAlign='center';g.textBaseline='middle';g.fillText(t,W/2,19);
+    g.fillStyle=cs.acc;g.beginPath();g.moveTo(W/2-5,H-1);g.lineTo(W/2+5,H-1);g.lineTo(W/2,H-9);g.closePath();g.fill();
+  }
+  requestAnimationFrame(frame);
 })();
 
 /* ====== MOB : homme à la mer ====== */
@@ -4070,8 +4113,7 @@ function mobPos(){
   return null;
 }
 function mobAlert(){
-  try{const o=cfg.haptic;cfg.haptic=true;hap('strong');setTimeout(()=>hap('strong'),350);setTimeout(()=>hap('strong'),700);cfg.haptic=o}catch(e){}
-  try{if(navigator.vibrate)navigator.vibrate([300,120,300,120,300])}catch(e){}
+  try{hap('strong',[0,300,120,300,120,300,120,500])}catch(e){}
   try{const A=new(window.AudioContext||window.webkitAudioContext)();[0,.3,.6].forEach(t=>{const o=A.createOscillator(),g=A.createGain();o.frequency.value=880;g.gain.value=.2;o.connect(g);g.connect(A.destination);o.start(A.currentTime+t);o.stop(A.currentTime+t+.18)});setTimeout(()=>{try{A.close()}catch(_){}},1500)}catch(e){}
 }
 function mobStart(){

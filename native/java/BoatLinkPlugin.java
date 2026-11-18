@@ -9,7 +9,11 @@ import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
 import android.os.Build;
 import android.os.Handler;
+import android.media.AudioAttributes;
 import android.os.Looper;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
+import android.os.VibratorManager;
 import android.view.WindowManager;
 
 import com.getcapacitor.JSObject;
@@ -46,6 +50,45 @@ public class BoatLinkPlugin extends Plugin {
     private ConnectivityManager.NetworkCallback netCb = null;
     private String host = "192.168.4.1";
     private int port = 1456;
+
+    /** Vibration directe (usage « alarme » : fonctionne même si le retour tactile système est coupé). */
+    @PluginMethod
+    public void vibrate(PluginCall call) {
+        try {
+            Context c = getContext();
+            Vibrator v;
+            if (Build.VERSION.SDK_INT >= 31) {
+                VibratorManager vm = (VibratorManager) c.getSystemService(Context.VIBRATOR_MANAGER_SERVICE);
+                v = vm.getDefaultVibrator();
+            } else {
+                v = (Vibrator) c.getSystemService(Context.VIBRATOR_SERVICE);
+            }
+            if (v == null || !v.hasVibrator()) {
+                call.reject("pas de vibreur sur cet appareil");
+                return;
+            }
+            int ms = call.getInt("duration", 30);
+            org.json.JSONArray arr = call.getArray("pattern");
+            VibrationEffect fx;
+            if (arr != null && arr.length() > 0) {
+                long[] pat = new long[arr.length()];
+                for (int i = 0; i < pat.length; i++) pat[i] = arr.optLong(i, 0);
+                fx = VibrationEffect.createWaveform(pat, -1);
+            } else {
+                fx = VibrationEffect.createOneShot(Math.max(1, ms), VibrationEffect.DEFAULT_AMPLITUDE);
+            }
+            AudioAttributes aa = new AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_ALARM)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build();
+            v.vibrate(fx, aa);
+            JSObject r = new JSObject();
+            r.put("ok", true);
+            call.resolve(r);
+        } catch (Exception e) {
+            call.reject("vibrate : " + e.getMessage());
+        }
+    }
 
     @PluginMethod
     public void requestNotifications(PluginCall call) {
