@@ -815,6 +815,135 @@ function mkAtt(root){
   };
 }
 
+/* 4bis. Roulis et tangage : bateau en 3D qui flotte sur l'eau (projection maison, sans bibliothèque) */
+let BOAT3D=null;
+function buildBoat(){
+  const P=[],L=[],N=18,zs=u=>-5.2+10.8*u;
+  const beam=u=>1.65*(u<0.55?0.62+0.38*Math.sin(u/0.55*Math.PI/2):Math.pow(Math.cos((u-0.55)/0.45*Math.PI/2),0.85));
+  const deckY=u=>0.85+0.42*u*u,keelY=u=>-(0.18+0.42*Math.sin(Math.PI*Math.pow(u,0.85)));
+  const prof=u=>{const w=beam(u),yd=deckY(u),yb=keelY(u);return[[w,yd],[w*0.97,0],[w*0.72,yb*0.5],[w*0.28,yb*0.95],[0,yb]]};
+  const poly=(k,p)=>P.push({k,p}),line=(k,a,b,w)=>L.push({k,p:[a,b],w});
+  const lerp2=(a,b,t)=>[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t];
+  for(let i=0;i<N;i++){
+    const a=prof(i/N),b=prof((i+1)/N),z0=zs(i/N),z1=zs((i+1)/N);
+    for(const s of[1,-1]){
+      // flancs : bordé blanc, liston de couleur, puis francs-bords et carène
+      const seg=(ja,jb,k,t0=0,t1=1)=>{
+        const A0=lerp2(a[ja],a[jb],t0),A1=lerp2(a[ja],a[jb],t1),B0=lerp2(b[ja],b[jb],t0),B1=lerp2(b[ja],b[jb],t1);
+        poly(k,[[s*A0[0],A0[1],z0],[s*A1[0],A1[1],z0],[s*B1[0],B1[1],z1],[s*B0[0],B0[1],z1]]);
+      };
+      seg(0,1,'top',0,0.3);seg(0,1,'stripe',0.3,0.42);seg(0,1,'top',0.42,1);
+      for(let j=1;j<4;j++)seg(j,j+1,'bot');
+    }
+    poly('deck',[[-a[0][0],a[0][1]+0.02,z0],[a[0][0],a[0][1]+0.02,z0],[b[0][0],b[0][1]+0.02,z1],[-b[0][0],b[0][1]+0.02,z1]]);
+  }
+  const t0=prof(0),ring=[];for(let j=0;j<5;j++)ring.push([t0[j][0],t0[j][1],zs(0)]);for(let j=3;j>=0;j--)ring.push([-t0[j][0],t0[j][1],zs(0)]);poly('top',ring);
+  // roof de rouf, hublots, cockpit
+  const yc=0.99,yt=yc+0.62;
+  const B=[[-.95,yc,-1.7],[.95,yc,-1.7],[.95,yc,1.9],[-.95,yc,1.9]],T=[[-.7,yt,-1.35],[.7,yt,-1.35],[.7,yt,1.25],[-.7,yt,1.25]];
+  poly('cabin',T);poly('cabin',[B[1],B[2],T[2],T[1]]);poly('cabin',[B[0],B[3],T[3],T[0]]);poly('cabin',[B[2],B[3],T[3],T[2]]);poly('cabin',[B[0],B[1],T[1],T[0]]);
+  for(const s of[1,-1]){const x1=s*0.885,x2=s*0.775;poly('glass',[[x1,yc+0.18,-1.0],[x1,yc+0.18,0.8],[x2,yc+0.46,0.8],[x2,yc+0.46,-1.0]])}
+  poly('cockpit',[[-.95,0.93,-4.7],[.95,0.93,-4.7],[.95,0.93,-2.3],[-.95,0.93,-2.3]]);
+  // gréement et voiles
+  const H=yt+11,mz=0.7;
+  line('mast',[0,yt,mz],[0,H,mz],3.2);line('mast',[0,yt+1.35,mz],[0,yt+1.35,-3.6],2.4);
+  poly('sail',[[0,yt+1.45,0.78],[0,H-0.4,0.8],[0,yt+1.45,-3.5]]);
+  poly('sail',[[0,deckY(0.97)+0.15,5.1],[0,H-1.4,0.85],[0,yt+0.5,-0.2]]);
+  line('rig',[0,deckY(1)+0.1,5.35],[0,H,mz],1);line('rig',[0,H,mz],[0,deckY(0)+0.2,-5.2],1);
+  for(const s of[1,-1])line('rig',[0,yt+8,mz],[s*1.5,1.0,0.6],1);
+  // quille et safran
+  for(const s of[1,-1]){poly('keel',[[s*.07,-0.5,1.7],[s*.07,-0.58,-0.5],[s*.07,-2.4,0.0],[s*.07,-2.4,1.0]]);poly('keel',[[s*.04,-0.2,-4.75],[s*.04,-1.8,-4.45],[s*.04,-1.8,-4.95],[s*.04,-0.2,-5.0]])}
+  return{P,L};
+}
+const hexRGB=h=>{h=String(h).trim();if(h[0]!=='#')return[100,200,255];if(h.length===4)h='#'+[...h.slice(1)].map(c=>c+c).join('');return[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)]};
+const B3_VIEWS=[{psi:-34,e:15,n:'vue 3/4 arrière'},{psi:0,e:11,n:'vue arrière'},{psi:-90,e:7,n:'vue de côté'},{psi:-148,e:20,n:'vue 3/4 avant'}];
+function mkAtt3D(root){
+  BOAT3D=BOAT3D||buildBoat();
+  const cv=document.createElement('canvas');cv.style.cssText='width:100%;aspect-ratio:1/1;display:block;cursor:pointer';cv.setAttribute('role','img');cv.setAttribute('aria-label','Bateau en 3D : roulis et tangage. Toucher pour changer de point de vue.');
+  root.innerHTML='';root.appendChild(cv);
+  const wc=document.createElement('canvas');
+  const S={roll:0,pitch:0,tr:0,tp:0,ok:false,psi:B3_VIEWS[0].psi,e:B3_VIEWS[0].e,v:0};let last=0;
+  cv.onclick=()=>{S.v=(S.v+1)%B3_VIEWS.length};
+  const vis=()=>root.isConnected&&root.offsetParent!==null&&!document.hidden&&(!root.classList.contains('dc')||root.classList.contains('vis'));
+  function frame(now){
+    if(!root.isConnected)return;
+    if(!vis()){setTimeout(()=>requestAnimationFrame(frame),400);return}
+    if(now-last<33){requestAnimationFrame(frame);return}
+    const dtf=Math.min(0.1,(now-last)/1000||0.033);last=now;
+    const dpr=Math.min(2,window.devicePixelRatio||1),W=Math.max(120,Math.round(cv.clientWidth*dpr));
+    if(cv.width!==W){cv.width=W;cv.height=W;wc.width=W;wc.height=W}
+    draw(W,now/1000,dtf);requestAnimationFrame(frame);
+  }
+  function draw(W,t,dt){
+    const g=cv.getContext('2d'),cs=getComputedStyle(document.documentElement),acc=hexRGB(cs.getPropertyValue('--acc')),wnd=hexRGB(cs.getPropertyValue('--wind')),tx=hexRGB(cs.getPropertyValue('--tx')),mut=cs.getPropertyValue('--mut').trim(),font=cs.getPropertyValue('--num');
+    const k=1-Math.exp(-dt*5);
+    S.roll+=(S.tr-S.roll)*k;S.pitch+=(S.tp-S.pitch)*k;
+    const V=B3_VIEWS[S.v],dpsi=((V.psi-S.psi+540)%360)-180;S.psi+=dpsi*k;S.e+=(V.e-S.e)*k;
+    const psi=(S.psi+3*Math.sin(t*0.35))*D2R,el=(S.e+1.2*Math.sin(t*0.5))*D2R;
+    const fx=Math.sin(psi)*Math.cos(el),fy=-Math.sin(el),fz=Math.cos(psi)*Math.cos(el),rx=Math.cos(psi),rz=-Math.sin(psi),ux=Math.sin(psi)*Math.sin(el),uy=Math.cos(el),uz=Math.cos(psi)*Math.sin(el);
+    const dist=29,F=W*1.4,cx=W/2,cy=W*0.56;
+    const proj=p=>{const x=p[0],y=p[1]-1.6,z=p[2],d=x*fx+y*fy+z*fz+dist,sx=x*rx+z*rz,sy=x*ux+y*uy+z*uz;return[cx+sx*F/d,cy-sy*F/d,d]};
+    // mouvement du bateau (valeurs mesurées) + léger mouvement sur l'eau
+    const hv=0.07*Math.sin(t*1.7)+0.04*Math.sin(t*2.9),cr=Math.cos(S.roll*D2R),sr=Math.sin(S.roll*D2R),cp=Math.cos(S.pitch*D2R),sp=Math.sin(S.pitch*D2R),SC=0.9;
+    const xf=p=>{let x=p[0]*SC,y=p[1]*SC,z=p[2]*SC;const x1=x*cr+y*sr,y1=-x*sr+y*cr;const y2=y1*cp+z*sp,z2=-y1*sp+z*cp;return[x1,y2+hv,z2]};
+    const Ld=[-0.45,0.8,-0.35],Ll=Math.hypot(...Ld);
+    const COL={top:[236,244,250,.6],stripe:[acc[0],acc[1],acc[2],.78],bot:[28,66,116,.55],deck:[205,210,205,.62],cabin:[228,235,240,.6],glass:[16,34,52,.78],cockpit:[58,68,80,.62],keel:[46,108,172,.55],sail:[wnd[0],wnd[1],wnd[2],.30]};
+    const under=[],above=[];
+    const clip=(pts,side)=>{const out=[];for(let i=0;i<pts.length;i++){const a=pts[i],b=pts[(i+1)%pts.length],ia=a[1]*side>=0,ib=b[1]*side>=0;if(ia)out.push(a);if(ia!==ib){const f=a[1]/(a[1]-b[1]);out.push([a[0]+(b[0]-a[0])*f,0,a[2]+(b[2]-a[2])*f])}}return out};
+    for(const pl of BOAT3D.P){
+      const w=pl.p.map(xf),n=(()=>{const a=w[0],b=w[1],c=w[2],u=[b[0]-a[0],b[1]-a[1],b[2]-a[2]],v=[c[0]-a[0],c[1]-a[1],c[2]-a[2]],nn=[u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0]],l=Math.hypot(...nn)||1;return Math.abs((nn[0]*Ld[0]+nn[1]*Ld[1]+nn[2]*Ld[2])/l/Ll)})();
+      const c=COL[pl.k],sh=0.55+0.45*n;
+      const push=(arr,pts,wet)=>{if(pts.length<3)return;const q=pts.map(proj),d=q.reduce((s,r)=>s+r[2],0)/q.length;arr.push({q,d,c,sh,wet,k:pl.k})};
+      const ys=w.map(p=>p[1]);
+      if(Math.min(...ys)>=0)push(above,w,false);else if(Math.max(...ys)<=0)push(under,w,true);else{push(above,clip(w,1),false);push(under,clip(w,-1),true)}
+    }
+    const lines=BOAT3D.L.map(l=>{const a=proj(xf(l.p[0])),b=proj(xf(l.p[1]));return{q:[a,b],d:(a[2]+b[2])/2,k:l.k,w:l.w}});
+    under.sort((a,b)=>b.d-a.d);above.sort((a,b)=>b.d-a.d);
+    const rgba=(c,sh,aMul)=>`rgba(${Math.round(c[0]*sh)},${Math.round(c[1]*sh)},${Math.round(c[2]*sh)},${(c[3]*(aMul||1)).toFixed(3)})`;
+    g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,W,W);
+    g.lineJoin='round';g.lineCap='round';
+    // halo
+    const hg=g.createRadialGradient(cx,cy,W*0.05,cx,cy,W*0.5);hg.addColorStop(0,`rgba(${wnd[0]},${wnd[1]},${wnd[2]},.16)`);hg.addColorStop(1,`rgba(${wnd[0]},${wnd[1]},${wnd[2]},0)`);g.fillStyle=hg;g.fillRect(0,0,W,W);
+    // parties immergées (vues à travers l'eau)
+    for(const p of under){g.beginPath();p.q.forEach((r,i)=>i?g.lineTo(r[0],r[1]):g.moveTo(r[0],r[1]));g.closePath();g.fillStyle=rgba([p.c[0]*0.6+wnd[0]*0.4,p.c[1]*0.6+wnd[1]*0.4,p.c[2]*0.6+wnd[2]*0.4,p.c[3]],p.sh,0.85);g.fill();g.strokeStyle=`rgba(${wnd[0]},${wnd[1]},${wnd[2]},.5)`;g.lineWidth=Math.max(1,W/520);g.stroke()}
+    // surface de l'eau : plan transparent, grille et ondes qui s'éloignent du bateau
+    const w2=wc.getContext('2d');w2.setTransform(1,0,0,1,0,0);w2.clearRect(0,0,W,W);
+    const R0=9.5,corner=[[-R0,0,-R0],[R0,0,-R0],[R0,0,R0],[-R0,0,R0]].map(proj);
+    w2.beginPath();corner.forEach((r,i)=>i?w2.lineTo(r[0],r[1]):w2.moveTo(r[0],r[1]));w2.closePath();
+    const wg=w2.createLinearGradient(0,corner[0][1],0,corner[2][1]);wg.addColorStop(0,`rgba(${wnd[0]},${wnd[1]},${wnd[2]},.10)`);wg.addColorStop(1,`rgba(${wnd[0]},${wnd[1]},${wnd[2]},.30)`);w2.fillStyle=wg;w2.fill();
+    w2.strokeStyle=`rgba(${wnd[0]},${wnd[1]},${wnd[2]},.38)`;w2.lineWidth=Math.max(1,W/600);
+    const ph=t*0.6;
+    for(let i=-R0;i<=R0;i+=1.9){
+      w2.beginPath();for(let s=-R0;s<=R0;s+=0.95){const y=0.07*Math.sin(s*0.9+ph+i*0.4)*Math.cos(i*0.5-ph*0.7),q=proj([i,y,s]);s===-R0?w2.moveTo(q[0],q[1]):w2.lineTo(q[0],q[1])}w2.stroke();
+      w2.beginPath();for(let s=-R0;s<=R0;s+=0.95){const y=0.07*Math.sin(i*0.9+ph+s*0.4)*Math.cos(s*0.5-ph*0.7),q=proj([s,y,i]);s===-R0?w2.moveTo(q[0],q[1]):w2.lineTo(q[0],q[1])}w2.stroke();
+    }
+    for(let r=0;r<3;r++){const f=((t*0.22+r/3)%1),rad=1.5+f*7;w2.strokeStyle=`rgba(255,255,255,${(0.42*(1-f)).toFixed(3)})`;w2.lineWidth=Math.max(1.5,W/330);w2.beginPath();for(let a=0;a<=64;a++){const q=proj([Math.cos(a/64*6.2832)*rad*0.8,0,Math.sin(a/64*6.2832)*rad*1.25-0.4]);a?w2.lineTo(q[0],q[1]):w2.moveTo(q[0],q[1])}w2.stroke()}
+    const mg=w2.createRadialGradient(cx,cy*1.02,W*0.2,cx,cy*1.02,W*0.5);mg.addColorStop(0,'rgba(0,0,0,0)');mg.addColorStop(0.55,'rgba(0,0,0,0)');mg.addColorStop(1,'rgba(0,0,0,1)');
+    w2.globalCompositeOperation='destination-out';w2.fillStyle=mg;w2.fillRect(0,0,W,W);w2.globalCompositeOperation='source-over';
+    g.drawImage(wc,0,0);
+    // parties émergées
+    const items=above.concat(lines).sort((a,b)=>b.d-a.d);
+    for(const p of items){
+      if(p.w){g.strokeStyle=p.k==='mast'?`rgba(${tx[0]},${tx[1]},${tx[2]},.85)`:`rgba(${tx[0]},${tx[1]},${tx[2]},.4)`;g.lineWidth=p.w*W/600;g.beginPath();g.moveTo(p.q[0][0],p.q[0][1]);g.lineTo(p.q[1][0],p.q[1][1]);g.stroke();continue}
+      g.beginPath();p.q.forEach((r,i)=>i?g.lineTo(r[0],r[1]):g.moveTo(r[0],r[1]));g.closePath();
+      g.fillStyle=rgba(p.c,p.k==='sail'?1:p.sh);g.fill();
+      if(p.k==='top'||p.k==='bot'||p.k==='deck'){g.strokeStyle=g.fillStyle;g.lineWidth=1;g.stroke();continue}g.strokeStyle=p.k==='stripe'?`rgba(${acc[0]},${acc[1]},${acc[2]},.9)`:p.k==='sail'?`rgba(${tx[0]},${tx[1]},${tx[2]},.55)`:'rgba(255,255,255,.4)';g.lineWidth=Math.max(1,W/560);g.stroke();
+    }
+    // ligne de flottaison lumineuse
+    // texte
+    const roll=S.roll,pit=S.pitch,okC=a=>S.ok?(Math.abs(a)>25?'#ff5a4d':Math.abs(a)>15?'#ffb224':`rgb(${tx[0]},${tx[1]},${tx[2]})`):mut;
+    g.textAlign='center';g.textBaseline='alphabetic';
+    g.font=`600 ${Math.round(W*0.105)}px ${font}`;g.fillStyle=okC(roll);g.fillText(S.ok?Math.abs(roll).toFixed(0)+'°':'--',W*0.25,W*0.905);
+    g.fillStyle=okC(pit*1.6);g.fillText(S.ok?Math.abs(pit).toFixed(0)+'°':'--',W*0.75,W*0.905);
+    g.font=`${Math.round(W*0.04)}px system-ui`;g.fillStyle=mut;
+    g.fillText(S.ok?(roll>0.5?'roulis tribord':roll<-0.5?'roulis bâbord':'roulis'):'en attente des données',W*0.25,W*0.955);
+    g.fillText(S.ok?(pit>0.5?'tangage étrave haute':pit<-0.5?'tangage étrave basse':'tangage'):'',W*0.75,W*0.955);
+    g.font=`${Math.round(W*0.032)}px system-ui`;g.textAlign='left';g.fillStyle=mut;g.fillText(V.n,W*0.03,W*0.05);
+  }
+  requestAnimationFrame(frame);
+  return()=>{const ok=fresh('roll')||fresh('pitch');S.ok=!!ok;S.tr=fresh('roll')?D.roll:0;S.tp=fresh('pitch')?D.pitch:0};
+}
+
 /* 5. Profondeur : valeur + profil des 10 dernières minutes */
 function mkDepth(root){
   root.innerHTML=SVG(' stale',`<text class="big dv" x="150" y="92" text-anchor="middle">--</text><text class="sm" x="150" y="118" text-anchor="middle">mètres sous la sonde</text>
@@ -876,7 +1005,8 @@ const DIALS={
   wind:{name:'Vent',mk:mkWind,legend:'<span><i style="background:var(--wind);clip-path:polygon(50% 100%,0 0,100% 0)"></i>vent apparent</span><span><i style="border:2px solid var(--tx);clip-path:polygon(50% 100%,0 0,100% 0)"></i>vent vrai</span>'},
   speed:{name:'Vitesse',mk:mkSpeed,legend:'<span><i style="background:var(--bad)"></i>vitesse max de la session</span>'},
   compass:{name:'Cap',mk:mkCompass,legend:'<span><i style="background:var(--wind)"></i>route fond</span>'},
-  attitude:{name:'Roulis et tangage',mk:mkAtt,legend:''},
+  attitude:{name:'Roulis et tangage',mk:mkAtt3D,legend:'<span>touche le bateau pour changer de vue</span>'},
+  horizon:{name:'Horizon artificiel',mk:mkAtt,legend:''},
   depth:{name:'Profondeur',mk:mkDepth,legend:''},
   engine:{name:'Moteur',mk:mkEngine,legend:''},
   energy:{name:'Énergie et réservoirs',mk:mkEnergy,legend:''}};
