@@ -90,6 +90,17 @@ th:first-child,td:first-child{text-align:left}
 canvas#map{width:100%;height:58vh;background:var(--map);border-radius:var(--r);border:1px solid var(--line);touch-action:none;display:block}
 .bar{height:8px;background:var(--acc);border-radius:4px}
 .hide{display:none!important}
+nav{transition:transform .28s ease,opacity .2s}
+body.navc nav{transform:translateX(-130%);opacity:0;pointer-events:none}
+.navhide{flex:0 0 30px;display:flex;align-items:center;justify-content:center;font:300 30px/1 system-ui;color:var(--mut);border-right:1px solid var(--line);margin-right:4px;cursor:pointer;border-radius:14px 0 0 14px}
+.navfab{position:fixed;left:10px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:7;height:46px;padding:0 14px;border-radius:23px;border:1px solid var(--line);background:var(--dock);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);color:var(--tx);font:600 16px system-ui;box-shadow:0 4px 14px #0003}
+.navfab[hidden]{display:none}
+body.navc{padding-bottom:84px!important}
+.mobbtn{position:relative;overflow:hidden;touch-action:manipulation;-webkit-user-select:none;user-select:none}
+.mobbtn i{position:absolute;left:0;top:0;bottom:0;width:0;background:#ffffff55;pointer-events:none}
+.mobbtn.hold i{width:100%;transition:width .9s linear}
+.mobbtn em{position:absolute;bottom:3px;left:0;right:0;text-align:center;font:11px system-ui;opacity:.85;font-style:normal}
+
 .mobbtn{width:100%;margin:10px 0 6px;padding:16px;border:0;border-radius:16px;background:linear-gradient(#e5322d,#b3130f);color:#fff;display:flex;align-items:center;justify-content:center;gap:12px;box-shadow:0 4px 14px #e5322d55}
 .mobbtn b{font-size:28px;letter-spacing:2px}.mobbtn span{font-size:15px;opacity:.95}.mobbtn.on{animation:mobp 1s infinite}
 @keyframes mobp{50%{filter:brightness(1.35)}}
@@ -275,7 +286,7 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
       <div class="dots" id="dialDots"></div>
       <div class="dname" id="dialName"></div>
       <div class="legend" id="dialLegend"></div>
-      <button class="mobbtn" id="mobBtn"><b>MOB</b><span>Homme à la mer</span></button>
+      <button class="mobbtn" id="mobBtn"><i></i><b>MOB</b><span>Homme à la mer</span><em>Maintenir 1 seconde</em></button>
       <button class="recbtn" id="btnRec">Démarrer un trajet</button>
       <div id="recInfo"></div>
     </div>
@@ -490,6 +501,7 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
 
 <div id="ackModal" class="hide"><div class="card"><b>Navigation responsable</b><p>Cette application est une aide à la navigation et au journal de bord. Elle ne remplace ni les cartes marines officielles à jour, ni la veille permanente, ni le respect du RIPAM. Le skipper reste seul responsable de son bateau.</p><div class="row" style="gap:8px"><button class="b" id="ackOk">J'ai compris</button><button class="b sec" id="ackMore">En savoir plus</button></div></div></div>
 <nav aria-label="Navigation">
+  <span id="navHide" class="navhide" role="button" tabindex="0" aria-label="Replier le menu">‹</span>
   <button data-v="live" class="on"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 12l3.5-5"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg>Direct</button>
   <button data-v="trips"><svg viewBox="0 0 24 24"><circle cx="5.5" cy="18.5" r="1.8"/><circle cx="18.5" cy="5.5" r="1.8"/><path d="M7 17.5c8 0 1-11 10-11"/></svg>Logbook</button>
   <button data-v="map"><svg viewBox="0 0 24 24"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg>Carte</button>
@@ -497,6 +509,7 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
   <button data-v="notes"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M9 12h7M9 16h5"/></svg>Notes</button>
   <button data-v="stats"><svg viewBox="0 0 24 24"><path d="M5 20V11M12 20V4M19 20v-6"/></svg>Stats</button>
 </nav>
+<button id="navShow" class="navfab" aria-label="Déployer le menu" hidden>☰ ›</button>
 
 <script>
 /* ====== Internationalisation (FR, NL, EN, DE, ES) ====== */
@@ -1015,7 +1028,10 @@ MOB : position indisponible|MOB: positie niet beschikbaar|MOB: position unavaila
 Anémomètre|Windmeter|Anemometer|Windmesser|Anemómetro
 vent vrai|ware wind|true wind|wahrer Wind|viento verdadero
 vent apparent|schijnbare wind|apparent wind|scheinbarer Wind|viento aparente
-Chenal préféré à tribord (bifurcation)|Voorkeursvaarwater aan stuurboord (splitsing)|Preferred channel to starboard (junction)|Vorzugstonne – Hauptfahrwasser an Steuerbord|Canal preferido a estribor (bifurcación)`;
+Chenal préféré à tribord (bifurcation)|Voorkeursvaarwater aan stuurboord (splitsing)|Preferred channel to starboard (junction)|Vorzugstonne – Hauptfahrwasser an Steuerbord|Canal preferido a estribor (bifurcación)
+Maintenir 1 seconde|1 seconde ingedrukt houden|Hold for 1 second|1 Sekunde gedrückt halten|Mantener 1 segundo
+Replier le menu|Menu inklappen|Collapse menu|Menü einklappen|Replegar el menú
+Déployer le menu|Menu uitklappen|Expand menu|Menü ausklappen|Desplegar el menú`;
   const EX=new Map(),PAT=[];
   RAW.split('\n').forEach(l=>{const a=l.split('|');if(a.length!==5)return;const fr=a[0],t=a.slice(1);
     if(/\{\d\}/.test(fr)){const parts=fr.split(/\{\d\}/).map(x=>x.replace(/[.*+?^$()|[\]\\{}]/g,'\\$&'));PAT.push([new RegExp('^'+parts.join('(.+?)')+'$'),t,fr.length])}
@@ -1119,7 +1135,7 @@ const tr=I18N.tr,LOC=()=>I18N.LOC();
 </div>
 <script>
 let simT=null;
-const APPV='v13',ERRLOG=[];
+const APPV='v14',ERRLOG=[];
 const logErr=m=>{ERRLOG.push(new Date().toLocaleTimeString(LOC())+' '+String(m).slice(0,220));if(ERRLOG.length>25)ERRLOG.shift()};
 window.addEventListener('error',e=>logErr((e.message||'erreur')+' @'+String(e.filename||'').split('/').pop()+':'+e.lineno));
 window.addEventListener('unhandledrejection',e=>logErr('promesse : '+((e.reason&&e.reason.message)||e.reason)));
@@ -4078,7 +4094,20 @@ function mobDraw(g,P){
   g.fillStyle='#fff';g.font='bold 9px system-ui';g.textAlign='center';g.textBaseline='middle';g.fillText('MOB',x,y+.5);
   g.restore();
 }
-$('#mobBtn').onclick=mobStart;
+{const B=$('#mobBtn');let ht=0;
+  const stop=()=>{clearTimeout(ht);ht=0;B.classList.remove('hold')};
+  B.addEventListener('pointerdown',e=>{if(MOB&&MOB.active){mobShow();return}stop();B.classList.add('hold');hap('light');ht=setTimeout(()=>{stop();mobStart()},900)});
+  ['pointerup','pointerleave','pointercancel'].forEach(ev=>B.addEventListener(ev,stop));
+  B.addEventListener('contextmenu',e=>e.preventDefault());
+  B.addEventListener('click',e=>{if(e.detail===0)(MOB&&MOB.active)?mobShow():mobStart()})}
+{const ST=()=>{const c=cfg.navC===true;document.body.classList.toggle('navc',c);$('#navShow').hidden=!c};
+  const set=c=>{cfg.navC=c;saveCfg();ST();hap('light')};
+  $('#navHide').onclick=()=>set(true);$('#navHide').onkeydown=e=>{if(e.key==='Enter'||e.key===' ')set(true)};
+  $('#navShow').onclick=()=>set(false);
+  let sx=null;const nv=document.querySelector('nav');
+  nv.addEventListener('pointerdown',e=>{sx=e.clientX});nv.addEventListener('pointerup',e=>{if(sx!=null&&e.clientX-sx<-70)set(true);sx=null});
+  const fb=$('#navShow');let fx=null;fb.addEventListener('pointerdown',e=>{fx=e.clientX});fb.addEventListener('pointerup',e=>{fx=null});
+  ST()}
 $('#mobPill').onclick=mobShow;
 $('#mobBarOpen').onclick=mobShow;
 $('#mobMin').onclick=mobHide;
