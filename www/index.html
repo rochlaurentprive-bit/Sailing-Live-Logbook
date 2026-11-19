@@ -333,6 +333,7 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
       <div id="offInfo" style="margin-top:6px;font-weight:600"></div><div id="offWarn" style="color:var(--bad);font-size:12px"></div>
       <div class="wbar" style="height:6px;margin:8px 0 4px"><u id="offProg" style="width:0;background:var(--acc)"></u></div><div class="mut" id="offMsg"></div>
       <div class="row" style="margin-top:8px"><button class="b" id="offGo" style="flex:1">Télécharger cette zone</button><button class="b sec hide" id="offStop">Arrêter</button></div>
+      <label class="ckrow" style="margin-top:8px"><input type="checkbox" id="offDepth" checked style="width:auto"> Inclure les profondeurs (routage et mesure au toucher)</label>
       <div id="offList" style="margin-top:8px"></div><button class="b sec hide" id="offDel" style="margin-top:6px">Supprimer les cartes hors ligne</button></div>
     <div id="fxMini" class="hide" style="position:absolute;left:8px;top:34px;z-index:3;padding:3px 8px;border-radius:12px;background:var(--card);border:1px solid var(--line);font-size:11px;pointer-events:none"></div>
   </div>
@@ -527,6 +528,7 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
       <label class="b sec" style="margin:0;color:var(--tx);display:inline-block;width:auto">Importer<input type="file" id="bImport" accept=".json" class="hide"></label>
     </div>
   </div></details>
+  <details class="sg" data-g="storage"><summary>Stockage et cartes hors ligne</summary><div class="sgb"><div class="mut" style="margin-bottom:6px">Cartes, profondeurs et fichiers GRIB enregistrés sur le téléphone. Purge-les ici pour libérer de la place.</div><div id="stoBox"></div></div></details>
   <details class="sg" data-g="diag"><summary>Diagnostic et log</summary><div class="sgb"><div class="mut" id="diag" style="white-space:pre-wrap;font-size:12px;margin-top:6px"></div>
     <div class="mut" style="margin-top:12px">Enregistre un journal technique (erreurs, connexions, données reçues, actions) pour m'aider à diagnostiquer un problème. Les clés Windy ne sont pas incluses. Lance l'enregistrement, reproduis le problème, arrête, puis partage le fichier.</div>
     <div class="row" style="margin-top:8px;gap:8px;flex-wrap:wrap"><button class="b" id="recGo">Enregistrer le log</button><button class="b sec hide" id="recShare">Partager / exporter le log</button><button class="b sec hide" id="recCopy">Copier le log</button><button class="b sec hide" id="recClear">Effacer le log</button></div>
@@ -1402,7 +1404,23 @@ tuiles|tegels|tiles|Kacheln|teselas
 Aucune couche de carte active.|Geen kaartlaag actief.|No chart layer active.|Keine Kartenebene aktiv.|Ninguna capa de mapa activa.
 Zone trop grande (4000 tuiles max) : zoome sur la zone voulue ou réduis le niveau de détail.|Gebied te groot (max. 4000 tegels): zoom in of verlaag het detailniveau.|Area too large (4000 tiles max): zoom in or lower the detail level.|Bereich zu groß (max. 4000 Kacheln): hineinzoomen oder Detailstufe senken.|Zona demasiado grande (máx. 4000 teselas): acerca o reduce el nivel de detalle.
 Stockage hors ligne indisponible sur cet appareil.|Offline opslag niet beschikbaar op dit toestel.|Offline storage unavailable on this device.|Offline-Speicher auf diesem Gerät nicht verfügbar.|Almacenamiento sin conexión no disponible en este dispositivo.
-Téléchargement impossible : hors ligne ou serveur de cartes bloqué.|Downloaden niet mogelijk: offline of kaartserver geblokkeerd.|Download impossible: offline or chart server blocked.|Download nicht möglich: offline oder Kartenserver gesperrt.|Descarga imposible: sin conexión o servidor de mapas bloqueado.`;
+Téléchargement impossible : hors ligne ou serveur de cartes bloqué.|Downloaden niet mogelijk: offline of kaartserver geblokkeerd.|Download impossible: offline or chart server blocked.|Download nicht möglich: offline oder Kartenserver gesperrt.|Descarga imposible: sin conexión o servidor de mapas bloqueado.
+Stockage et cartes hors ligne|Opslag en offline kaarten|Storage and offline charts|Speicher und Offline-Karten|Almacenamiento y mapas sin conexión
+Cartes, profondeurs et fichiers GRIB enregistrés sur le téléphone. Purge-les ici pour libérer de la place.|Kaarten, dieptes en GRIB-bestanden op de telefoon. Wis ze hier om ruimte vrij te maken.|Charts, depths and GRIB files stored on the phone. Purge them here to free up space.|Karten, Tiefen und GRIB-Dateien auf dem Telefon. Hier löschen, um Platz zu schaffen.|Mapas, profundidades y archivos GRIB guardados en el móvil. Purga aquí para liberar espacio.
+Cartes hors ligne|Offline kaarten|Offline charts|Offline-Karten|Mapas sin conexión
+Profondeurs hors ligne|Offline dieptes|Offline depths|Offline-Tiefen|Profundidades sin conexión
+Fichiers GRIB|GRIB-bestanden|GRIB files|GRIB-Dateien|Archivos GRIB
+zone(s)|gebied(en)|area(s)|Bereich(e)|zona(s)
+fichier(s)|bestand(en)|file(s)|Datei(en)|archivo(s)
+Purger|Wissen|Purge|Löschen|Purgar
+Espace utilisé par l'appli|Door de app gebruikte ruimte|Space used by the app|Von der App belegt|Espacio usado por la app
+Tout purger (cartes, profondeurs, GRIB)|Alles wissen (kaarten, dieptes, GRIB)|Purge everything (charts, depths, GRIB)|Alles löschen (Karten, Tiefen, GRIB)|Purgar todo (mapas, profundidades, GRIB)
+Supprimer les profondeurs hors ligne ?|Offline dieptes verwijderen?|Delete offline depths?|Offline-Tiefen löschen?|¿Borrar las profundidades sin conexión?
+Supprimer tous les fichiers GRIB ?|Alle GRIB-bestanden verwijderen?|Delete all GRIB files?|Alle GRIB-Dateien löschen?|¿Borrar todos los archivos GRIB?
+Tout supprimer : cartes hors ligne, profondeurs et fichiers GRIB ?|Alles verwijderen: offline kaarten, dieptes en GRIB-bestanden?|Delete everything: offline charts, depths and GRIB files?|Alles löschen: Offline-Karten, Tiefen und GRIB-Dateien?|¿Borrar todo: mapas sin conexión, profundidades y archivos GRIB?
+Inclure les profondeurs (routage et mesure au toucher)|Dieptes opnemen (routering en meting door aanraking)|Include depths (routing and tap-to-read)|Tiefen einschließen (Routing und Antippen)|Incluir profundidades (ruta y lectura al tocar)
+Profondeurs…|Dieptes…|Depths…|Tiefen…|Profundidades…
+Profondeurs indisponibles pour cette zone.|Dieptes niet beschikbaar voor dit gebied.|Depths unavailable for this area.|Tiefen für diesen Bereich nicht verfügbar.|Profundidades no disponibles para esta zona.`;
   const EX=new Map(),PAT=[];
   RAW.split('\n').forEach(l=>{const a=l.split('|');if(a.length!==5)return;const fr=a[0],t=a.slice(1);
     if(/\{\d\}/.test(fr)){const parts=fr.split(/\{\d\}/).map(x=>x.replace(/[.*+?^$()|[\]\\{}]/g,'\\$&'));PAT.push([new RegExp('^'+parts.join('(.+?)')+'$'),t,fr.length])}
@@ -1506,7 +1524,7 @@ const tr=I18N.tr,LOC=()=>I18N.LOC();
 </div>
 <script>
 let simT=null;
-const APPV='v31',ERRLOG=[];
+const APPV='v32',ERRLOG=[];
 const logErr=m=>{ERRLOG.push(new Date().toLocaleTimeString(LOC())+' '+String(m).slice(0,220));if(ERRLOG.length>25)ERRLOG.shift()};
 window.addEventListener('error',e=>logErr((e.message||'erreur')+' @'+String(e.filename||'').split('/').pop()+':'+e.lineno));
 window.addEventListener('unhandledrejection',e=>logErr('promesse : '+((e.reason&&e.reason.message)||e.reason)));
@@ -3763,9 +3781,9 @@ async function depthTap(g){
     const r=await fetch(`https://rest.emodnet-bathymetry.eu/depth_sample?geom=POINT(${g.lon.toFixed(5)}%20${g.lat.toFixed(5)})`);
     if(!r.ok)throw new Error('HTTP '+r.status);const j=await r.json(),v=j&&j.avg!=null?j.avg:null;
     $('#mapInfo').textContent=v==null?'Pas de données de profondeur ici (hors zone EMODnet).':v>0?`Terre ferme (altitude ≈ ${v.toFixed(0)} m) · ${g.lat.toFixed(4)}, ${g.lon.toFixed(4)}`:`Profondeur ≈ ${(-v).toFixed(1)} m (min ${(-j.max).toFixed(1)} · max ${(-j.min).toFixed(1)}) · EMODnet · ${g.lat.toFixed(4)}, ${g.lon.toFixed(4)}`;
-  }catch(e){$('#mapInfo').textContent='Profondeur indisponible : '+e.message}
+  }catch(e){const d=await odPoint(g);$('#mapInfo').textContent=d!=null?(d>0?`Terre ferme (hors ligne) · ${g.lat.toFixed(4)}, ${g.lon.toFixed(4)}`:`Profondeur ≈ ${(-d).toFixed(1)} m (hors ligne, mesure approchée) · ${g.lat.toFixed(4)}, ${g.lon.toFixed(4)}`):'Profondeur indisponible : '+e.message}
 }
-async function loadDepthGrid(bb,prog){
+async function loadDepthGridNet(bb,prog){
   const spLat=Math.max(0.02,bb.n-bb.s),spLon=Math.max(0.02,bb.e-bb.w);
   let step=Math.max(0.01,Math.max(spLat,spLon)/90);
   const chunkDeg=1.2;
@@ -4363,7 +4381,8 @@ const VIS=[
    <path d="M60 142l12 12m0-12l-12 12" stroke="var(--bad)" stroke-width="3" opacity="0"/><text x="12" y="150" font-size="14" fill="var(--mut)">✈︎ 📵</text>`),
   [['Place la carte sur la zone à emporter (fonds, balises, profondeurs : seules les couches actives sont enregistrées), puis touche 💾.','Zet de kaart op het mee te nemen gebied (alleen actieve lagen worden bewaard), tik dan op 💾.','Frame the area to take along (only active layers are saved), then tap 💾.','Bereich einstellen (nur aktive Ebenen werden gespeichert), dann 💾 antippen.','Encuadra la zona (solo se guardan las capas activas) y toca 💾.'],
    ['Choisis le niveau de détail : l\'appli annonce le nombre de tuiles et la taille (4000 tuiles maximum) ; touche « Télécharger cette zone ».','Kies het detailniveau: de app toont aantal tegels en grootte (max. 4000); tik op « Dit gebied downloaden ».','Pick the detail level: the app shows tile count and size (4000 max); tap « Download this area ».','Detailstufe wählen: die App zeigt Kachelzahl und Größe (max. 4000); « Diesen Bereich laden » antippen.','Elige el nivel de detalle: la app indica teselas y tamaño (máx. 4000); toca « Descargar esta zona ».'],
-   ['La barre se remplit. Sans connexion, les cartes enregistrées s\'affichent automatiquement. Télécharge au port, avec le Wi-Fi.','De balk vult zich. Zonder verbinding verschijnen de bewaarde kaarten automatisch. Download in de haven met wifi.','The bar fills up. Without a connection the saved charts show automatically. Download in port, on Wi-Fi.','Der Balken füllt sich. Ohne Verbindung erscheinen die gespeicherten Karten automatisch. Im Hafen per WLAN laden.','La barra se llena. Sin conexión se muestran solas las cartas guardadas. Descarga en puerto, con wifi.']]],
+   ['La barre se remplit. Sans connexion, les cartes enregistrées s\'affichent automatiquement. Télécharge au port, avec le Wi-Fi.','De balk vult zich. Zonder verbinding verschijnen de bewaarde kaarten automatisch. Download in de haven met wifi.','The bar fills up. Without a connection the saved charts show automatically. Download in port, on Wi-Fi.','Der Balken füllt sich. Ohne Verbindung erscheinen die gespeicherten Karten automatisch. Im Hafen per WLAN laden.','La barra se llena. Sin conexión se muestran solas las cartas guardadas. Descarga en puerto, con wifi.'],
+   ['Les profondeurs (routage évitant terres et hauts-fonds, mesure au toucher) sont enregistrées avec la zone si la case est cochée. Pour libérer de la place : Réglages › Stockage et cartes hors ligne › Purger (cartes, profondeurs, GRIB).','De dieptes (routering rond land en ondiepten, meting door aanraking) worden mee bewaard als het vakje aanstaat. Ruimte vrijmaken: Instellingen › Opslag en offline kaarten › Wissen.','Depths (routing that avoids land and shoals, tap-to-read) are saved with the area when the box is ticked. To free space: Settings › Storage and offline charts › Purge (charts, depths, GRIB).','Die Tiefen (Routing um Land und Untiefen, Antippen) werden mit gespeichert, wenn das Kästchen aktiv ist. Platz schaffen: Einstellungen › Speicher und Offline-Karten › Löschen.','Las profundidades (ruta que evita tierra y bajos, lectura al tocar) se guardan con la zona si la casilla está marcada. Para liberar espacio: Ajustes › Almacenamiento y mapas sin conexión › Purgar.']]],
  [['AIS : lire les cibles','AIS: doelen lezen','AIS: reading targets','AIS: Ziele lesen','AIS: leer los objetivos'],
   hv(`<rect x="6" y="6" width="288" height="158" rx="10" fill="var(--map)" stroke="var(--line)"/>
    ${hvBoat(70,128,35)}<path d="M70 128L150 60" stroke="var(--acc)" stroke-width="2" stroke-dasharray="6 5" fill="none"/>
@@ -5676,13 +5695,14 @@ async function offGo(){
       upd();await new Promise(r=>setTimeout(r,40));
     }};
   await Promise.all([worker(),worker(),worker(),worker()]);
+  if(!OFF.stop&&$('#offDepth').checked){try{$('#offMsg').textContent=tr('Profondeurs…');const G=await loadDepthGridNet(p.bb,m=>{$('#offMsg').textContent=m});if(G){await odStore(G);bytes+=0}else $('#offWarn').textContent=tr('Profondeurs indisponibles pour cette zone.')}catch(e){$('#offWarn').textContent=tr('Profondeurs indisponibles pour cette zone.')}}
   if(done){OFFA.push({id:uid(),t:Date.now(),lat:(p.bb.n+p.bb.s)/2,lon:(p.bb.w+p.bb.e)/2,n:done,bytes});localStorage.setItem('offAreas',JSON.stringify(OFFA))}
   $('#offMsg').textContent=(OFF.stop&&!done?'':'✅ ')+$('#offMsg').textContent;
   OFF.busy=false;$('#offStop').classList.add('hide');offUi();
 }
 $('#offGo').onclick=offGo;$('#offStop').onclick=()=>{OFF.stop=true};
 $('#offZ').onchange=offUi;
-$('#offDel').onclick=async()=>{if(!confirm(tr('Supprimer toutes les cartes hors ligne ?')))return;try{await caches.delete('tiles-v1')}catch(e){}OFFA.length=0;localStorage.removeItem('offAreas');$('#offMsg').textContent='';$('#offProg').style.width='0';offUi()};
+$('#offDel').onclick=async()=>{if(!confirm(tr('Supprimer toutes les cartes hors ligne ?')))return;await offPurgeTiles();$('#offMsg').textContent='';$('#offProg').style.width='0';offUi()};
 $('#mOff').onclick=()=>{['#fxCard','#selCard'].forEach(q=>$(q).classList.add('hide'));$('#offCard').classList.toggle('hide');offUi();fxMiniUp();mapNameUp();scheduleDraw()};
 ['#mWx','#mSel'].forEach(q=>$(q).addEventListener('click',()=>$('#offCard').classList.add('hide')));
 ['mapBase','mapSea','mapDepth','mapIso'].forEach(id=>$('#'+id).addEventListener('change',offUi));
@@ -5690,6 +5710,46 @@ function offDrawUnused(g,P){
   if($('#offCard').classList.contains('hide'))return;
   const v=viewBBox(),a=P({lat:v.n,lon:v.w}),b=P({lat:v.s,lon:v.e});g.save();g.strokeStyle='#ffd23f';g.setLineDash([8,6]);g.lineWidth=2;g.strokeRect(a[0]+3,a[1]+3,b[0]-a[0]-6,b[1]-a[1]-6);g.restore();
 }
+
+/* ---------- Profondeurs hors ligne + menu Stockage ---------- */
+const ODEP=(()=>{try{return JSON.parse(localStorage.getItem('offDepth'))||[]}catch(e){return[]}})(),ODEP_MEM={};
+const odSave=()=>localStorage.setItem('offDepth',JSON.stringify(ODEP));
+async function odStore(G){
+  const id=uid(),body=JSON.stringify({bb:G.bb,rows:G.rows,cols:G.cols,dLa:G.dLa,dLo:G.dLo,cellNM:G.cellNM,v:Array.from(G.v,x=>isNaN(x)?null:Math.round(x*10)/10)});
+  const c=await caches.open('depth-v1');await c.put('https://offline.local/depth/'+id,new Response(body,{headers:{'content-type':'application/json'}}));
+  ODEP.push({id,bb:G.bb,t:Date.now(),bytes:body.length});odSave();ODEP_MEM[id]=G;
+}
+async function odGet(m){
+  if(ODEP_MEM[m.id])return ODEP_MEM[m.id];
+  try{const c=await caches.open('depth-v1'),r=await c.match('https://offline.local/depth/'+m.id);if(!r)return null;const j=await r.json();j.v=Float32Array.from(j.v,x=>x==null?NaN:x);return ODEP_MEM[m.id]=j}catch(e){return null}
+}
+async function odCover(bb,pad){   // grille enregistrée qui couvre la zone demandée
+  const q=pad||0;for(const m of ODEP.slice().reverse()){if(m.bb.s<=bb.s+q&&m.bb.n>=bb.n-q&&m.bb.w<=bb.w+q&&m.bb.e>=bb.e-q){const G=await odGet(m);if(G)return G}}return null;
+}
+async function loadDepthGrid(bb,prog){
+  if(window.caches&&ODEP.length){const G=await odCover(bb,0.005);if(G){prog&&prog('Profondeurs : données hors ligne');return G}}
+  const G=await loadDepthGridNet(bb,prog);return G;
+}
+async function odPoint(g){const G=window.caches&&ODEP.length?await odCover({s:g.lat,n:g.lat,w:g.lon,e:g.lon},0):null;if(!G)return null;const d=depthAt(G,g.lat,g.lon);return isNaN(d)?null:d}
+/* -- menu Stockage -- */
+async function stoTiles(){try{if(!window.caches)return{n:0,mb:0};const c=await caches.open('tiles-v1'),n=(await c.keys()).length,tb=OFFA.reduce((s,a)=>s+a.bytes,0),tn=OFFA.reduce((s,a)=>s+a.n,0),avg=tn?tb/tn:14000;return{n,mb:n*avg/1048576}}catch(e){return{n:0,mb:0}}}
+async function stoRender(){
+  const el=$('#stoBox');if(!el)return;
+  const t=await stoTiles(),dm=ODEP.reduce((s,a)=>s+a.bytes,0)/1048576;let gr=[];try{gr=await db.all('grib')}catch(e){}
+  const gm=gr.reduce((s,r)=>s+(r.buf?r.buf.byteLength:0),0)/1048576;let est='';
+  try{if(navigator.storage&&navigator.storage.estimate){const e=await navigator.storage.estimate();est=`<div class="mut" style="margin-top:8px">${tr('Espace utilisé par l\'appli')} : ${(e.usage/1048576).toFixed(1)} Mo${e.quota?' / '+Math.round(e.quota/1048576)+' Mo':''}</div>`}}catch(e){}
+  const row=(ic,l,d,id,dis)=>`<div class="ckit" style="align-items:center"><div class="ckt" style="cursor:default"><span>${ic} ${tr(l)}</span><small class="mut">${d}</small></div><button class="b sec" id="${id}" ${dis?'disabled':''}>${tr('Purger')}</button></div>`;
+  el.innerHTML=row('🗺','Cartes hors ligne',`${t.n} ${tr('tuiles')} · ≈ ${t.mb.toFixed(1)} Mo`,'stoT',!t.n)+row('🌊','Profondeurs hors ligne',`${ODEP.length} ${tr('zone(s)')} · ≈ ${dm.toFixed(1)} Mo`,'stoD',!ODEP.length)+row('🌬','Fichiers GRIB',`${gr.length} ${tr('fichier(s)')} · ≈ ${gm.toFixed(1)} Mo`,'stoG',!gr.length)+est
+   +`<button class="b red" id="stoAll" style="margin-top:8px;width:100%">${tr('Tout purger (cartes, profondeurs, GRIB)')}</button>`;
+  $('#stoT').onclick=async()=>{if(confirm(tr('Supprimer toutes les cartes hors ligne ?'))){await offPurgeTiles();stoRender()}};
+  $('#stoD').onclick=async()=>{if(confirm(tr('Supprimer les profondeurs hors ligne ?'))){await odPurge();stoRender()}};
+  $('#stoG').onclick=async()=>{if(confirm(tr('Supprimer tous les fichiers GRIB ?'))){await grPurge();stoRender()}};
+  $('#stoAll').onclick=async()=>{if(!confirm(tr('Tout supprimer : cartes hors ligne, profondeurs et fichiers GRIB ?')))return;await offPurgeTiles();await odPurge();await grPurge();stoRender()};
+}
+async function offPurgeTiles(){try{await caches.delete('tiles-v1')}catch(e){}OFFA.length=0;localStorage.removeItem('offAreas');for(const k in tileCache)if(!tileCache[k].ok)delete tileCache[k];try{offUi()}catch(e){}}
+async function odPurge(){try{await caches.delete('depth-v1')}catch(e){}ODEP.length=0;localStorage.removeItem('offDepth');for(const k in ODEP_MEM)delete ODEP_MEM[k];try{offUi()}catch(e){}}
+async function grPurge(){try{for(const r of await db.all('grib'))await db.del('grib',r.id);GRIBS.set([]);gribUI()}catch(e){logErr('Purge GRIB : '+e.message)}}
+document.querySelector('details[data-g="storage"]').addEventListener('toggle',e=>{if(e.target.open)stoRender()});
 
 I18N.start();
 </script>
