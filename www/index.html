@@ -318,6 +318,7 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
     <div style="position:absolute;right:8px;top:8px;display:flex;flex-direction:column;gap:6px;z-index:3">
       <button class="b sec" id="mZin" style="width:40px;padding:6px">+</button><button class="b sec" id="mZout" style="width:40px;padding:6px">−</button><button class="b sec" id="mFit" style="width:40px;padding:6px" title="Recentrer">⌖</button><button class="b sec" id="mAis" style="width:40px;padding:6px;font-weight:700;font-size:12px" aria-pressed="true" title="AIS">AIS</button><button class="b sec" id="m3d" style="width:40px;padding:6px;font-weight:700" aria-pressed="false" title="Vue 3D">3D</button>
     </div>
+    <div style="position:absolute;left:6px;right:54px;bottom:6px;z-index:3;max-height:62%;overflow:auto;display:flex;flex-direction:column;gap:5px;pointer-events:none"><div id="aisInfo" hidden style="pointer-events:auto"></div><div id="aisFavs" hidden style="display:flex;flex-direction:column;gap:5px;pointer-events:auto"></div></div>
   </div>
   <div class="card hide" id="wpPanel" style="margin-top:8px">
     <div class="row" style="justify-content:space-between"><b>Ma route</b><span class="mut" id="wpTot"></span></div>
@@ -335,8 +336,7 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
     <input type="range" id="fxT" min="0" max="48" value="0" style="margin-top:8px;padding:0">
     <div class="mut" id="fxLbl" style="margin-top:4px"></div>
   </div>
-  <div id="aisInfo" hidden style="white-space:pre-line;margin-top:6px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;font-size:13px;line-height:1.45"></div>
-  <div class="mut" id="mapInfo" style="margin-top:6px"></div>
+    <div class="mut" id="mapInfo" style="margin-top:6px"></div>
 </section>
 
 <section id="v-route">
@@ -1203,7 +1203,9 @@ Pas de rapprochement|Geen nadering|Not closing|Keine Annäherung|Sin aproximaci�
 reçu il y a|ontvangen |received |empfangen vor |recibido hace 
 Cibles AIS (bateaux reçus par l'AIS raccordé au réseau NMEA 2000) · touche une cible pour le détail|AIS-doelen (schepen ontvangen via de AIS op het NMEA 2000-netwerk) · tik op een doel voor details|AIS targets (vessels received by the AIS on the NMEA 2000 network) · tap a target for details|AIS-Ziele (über das AIS im NMEA-2000-Netz empfangene Schiffe) · Ziel antippen für Details|Objetivos AIS (barcos recibidos por el AIS de la red NMEA 2000) · toca un objetivo para ver el detalle
 Alerte collision : distance de passage (CPA) inférieure à (NM)|Aanvaringswaarschuwing: passeerafstand (CPA) kleiner dan (NM)|Collision alert: closest point of approach (CPA) below (NM)|Kollisionswarnung: Passierabstand (CPA) kleiner als (sm)|Alerta de colisión: distancia de paso (CPA) inferior a (NM)
-Masquer les cibles muettes depuis (minutes)|Stille doelen verbergen na (minuten)|Hide silent targets after (minutes)|Stumme Ziele ausblenden nach (Minuten)|Ocultar objetivos sin señal desde (minutos)`;
+Masquer les cibles muettes depuis (minutes)|Stille doelen verbergen na (minuten)|Hide silent targets after (minutes)|Stumme Ziele ausblenden nach (Minuten)|Ocultar objetivos sin señal desde (minutos)
+10 favoris au maximum : retire-en un d'abord.|Maximaal 10 favorieten: verwijder er eerst één.|10 favourites maximum: remove one first.|Maximal 10 Favoriten: zuerst einen entfernen.|10 favoritos como máximo: quita uno antes.
+Favori|Favoriet|Favourite|Favorit|Favorito`;
   const EX=new Map(),PAT=[];
   RAW.split('\n').forEach(l=>{const a=l.split('|');if(a.length!==5)return;const fr=a[0],t=a.slice(1);
     if(/\{\d\}/.test(fr)){const parts=fr.split(/\{\d\}/).map(x=>x.replace(/[.*+?^$()|[\]\\{}]/g,'\\$&'));PAT.push([new RegExp('^'+parts.join('(.+?)')+'$'),t,fr.length])}
@@ -1307,7 +1309,7 @@ const tr=I18N.tr,LOC=()=>I18N.LOC();
 </div>
 <script>
 let simT=null;
-const APPV='v24',ERRLOG=[];
+const APPV='v25',ERRLOG=[];
 const logErr=m=>{ERRLOG.push(new Date().toLocaleTimeString(LOC())+' '+String(m).slice(0,220));if(ERRLOG.length>25)ERRLOG.shift()};
 window.addEventListener('error',e=>logErr((e.message||'erreur')+' @'+String(e.filename||'').split('/').pop()+':'+e.lineno));
 window.addEventListener('unhandledrejection',e=>logErr('promesse : '+((e.reason&&e.reason.message)||e.reason)));
@@ -4875,8 +4877,13 @@ function buildPdf(t){
 const AIS={t:{},sel:null};
 ['129038','129039','129794','129809','129810'].forEach(p=>N2K_FAST.add(+p));
 const aisOn=()=>cfg.aisOn!==false;
+const aisFav=()=>cfg.aisFav||(cfg.aisFav=[]);
+const aisIsFav=m=>aisFav().includes(m);
+function aisSaveFav(){try{const o={};aisFav().forEach(m=>{const a=AIS.t[m];if(a)o[m]={mmsi:a.mmsi,cls:a.cls,name:a.name,type:a.type,len:a.len,lat:a.lat,lon:a.lon,cog:a.cog,sog:a.sog,hdg:a.hdg,nav:a.nav,seen:a.seen}});localStorage.setItem('aisFavD',JSON.stringify(o))}catch(e){}}
+try{const o=JSON.parse(localStorage.getItem('aisFavD')||'{}');Object.values(o).forEach(a=>{AIS.t[a.mmsi]=a})}catch(e){}
 const aisStr=(b,o,n)=>{let s='';for(let i=o;i<o+n&&i<b.length;i++){const c=b[i];if(c===0||c===0xFF||c===0x40)break;s+=String.fromCharCode(c)}return s.trim()};
 function aisUpd(mmsi,o){if(!mmsi)return;const a=AIS.t[mmsi]||(AIS.t[mmsi]={mmsi,cls:'B'});Object.keys(o).forEach(k=>{if(o[k]!=null)a[k]=o[k]});a.seen=NOW();
+  if(aisIsFav(mmsi)&&NOW()-(aisUpd.sv||0)>20000){aisUpd.sv=NOW();aisSaveFav()}
   try{if(aisOn()&&$('#v-map').classList.contains('on'))scheduleDraw()}catch(e){}}
 const AISP={
   129038:b=>{const m=nU32(b,1),lo=sc(nS32(b,5),1e-7),la=sc(nS32(b,9),1e-7);if(lo==null||la==null||Math.abs(la)>90||Math.abs(lo)>180)return;
@@ -4899,7 +4906,7 @@ function aisCalc(a){   // distance, relèvement, CPA / TCPA par rapport à notre
   const danger=tcpa!=null&&tcpa<=(cfg.aisTcpa||20)&&cpa<(cfg.aisCpa??0.5)&&dist<8;
   return{dist,brg,cpa,tcpa,danger};
 }
-const aisList=()=>{const lim=NOW()-(cfg.aisMin||10)*60000;return Object.values(AIS.t).filter(a=>a.lat!=null&&a.seen>=lim)};
+const aisList=()=>{const lim=NOW()-(cfg.aisMin||10)*60000;return Object.values(AIS.t).filter(a=>a.lat!=null&&(a.seen>=lim||aisIsFav(a.mmsi)))};
 function aisDraw(g,P,W,H){
   if(!aisOn())return;const L=aisList(),z=MV.z;if(!L.length)return;
   const blink=Math.floor(Date.now()/450)%2;let nd=0;
@@ -4916,12 +4923,19 @@ function aisDraw(g,P,W,H){
     if(mv){g.rotate(((a.hdg!=null?a.hdg:a.cog)||0)*D2R);g.beginPath();g.moveTo(0,-11);g.lineTo(7,8);g.lineTo(0,4);g.lineTo(-7,8);g.closePath()}
     else{g.beginPath();g.moveTo(0,-8);g.lineTo(8,0);g.lineTo(0,8);g.lineTo(-8,0);g.closePath()}
     g.fill();g.stroke();g.restore();
-    if(dg&&blink){g.strokeStyle='#ff3b30';g.lineWidth=2.5;g.beginPath();g.arc(x,y,17,0,6.2832);g.stroke()}
-    if(z>=10||dg||AIS.sel===a.mmsi){
-      const t=(a.name||String(a.mmsi))+(dg?' · CPA '+c.cpa.toFixed(2)+' NM / '+Math.round(c.tcpa)+' min':'');
-      g.font=(dg?'bold ':'')+'11px system-ui';const tw=g.measureText(t).width,lx=x+12+tw>W-48?x-12:x+12;g.textAlign=lx<x?'right':'left';g.lineWidth=2.5;g.lineJoin='round';g.strokeStyle='rgba(0,0,0,.7)';g.strokeText(t,lx,y-12);g.fillStyle=dg?'#ff8a80':'#fff';g.fillText(t,lx,y-12)}
+    if(dg){   // trajectoire de collision : positions de chaque bateau au moment du rapprochement maximal
+      const th=c.tcpa/60,pt=(la,lo,sg,cg)=>{const r=sg*th/60,q=cg*D2R;return P({lat:la+r*Math.cos(q)/1,lon:lo+r*Math.sin(q)/Math.cos(la*D2R)})};
+      const o=pt(D.lat,D.lon,fresh('sog')?D.sog:0,fresh('cog')?D.cog:0),q=pt(a.lat,a.lon,a.sog||0,a.cog||0);
+      g.save();g.globalAlpha=1;g.strokeStyle='#ff3b30';g.lineWidth=2;g.setLineDash([]);g.beginPath();g.moveTo(o[0],o[1]);g.lineTo(q[0],q[1]);g.stroke();
+      g.fillStyle='#ff3b30';[o,q].forEach(u=>{g.beginPath();g.arc(u[0],u[1],4,0,6.2832);g.fill()});g.restore();
+      if(blink){g.strokeStyle='#ff3b30';g.lineWidth=2.5;g.beginPath();g.arc(x,y,17,0,6.2832);g.stroke()}}
+    if(aisIsFav(a.mmsi)){g.strokeStyle='#ffd23f';g.lineWidth=2;g.beginPath();g.arc(x,y,14,0,6.2832);g.stroke()}
+    const fv=aisIsFav(a.mmsi),t=dg?'CPA '+c.cpa.toFixed(2)+' NM / '+Math.round(c.tcpa)+' min':'';
+    const lab=fv?[(a.name||a.mmsi)+(old?' ⌛':''),num(a.sog)+' '+tr('nds')+(a.cog!=null?' '+num(a.cog,0)+'°':''),c?c.dist.toFixed(1)+' NM':'',t].filter(Boolean):t?[t]:[];
+    if(lab.length){g.font=(dg?'bold ':'')+'11px system-ui';const tw=Math.max(...lab.map(l=>g.measureText(l).width)),lx=x+14+tw>W-48?x-14:x+14;g.textAlign=lx<x?'right':'left';g.lineWidth=2.5;g.lineJoin='round';
+      lab.forEach((l,k)=>{g.strokeStyle='rgba(0,0,0,.7)';g.strokeText(l,lx,y-8+k*13);g.fillStyle=dg&&k===lab.length-1?'#ff8a80':fv&&k===0?'#ffd23f':'#fff';g.fillText(l,lx,y-8+k*13)})}
   });
-  g.restore();if(AIS.sel)aisPanel();
+  g.restore();if((aisDraw.pn=(aisDraw.pn||0)+1)%20===1)aisPanel();
   if(nd&&!aisDraw.warned){hap('strong')}aisDraw.warned=nd>0;
 }
 function aisTap(x,y){
@@ -4930,17 +4944,46 @@ function aisTap(x,y){
   if(!best){if(AIS.sel){AIS.sel=null;aisPanel();scheduleDraw()}return false}
   AIS.sel=best.mmsi;aisPanel();scheduleDraw();return true;
 }
-function aisPanel(){
-  const el=$('#aisInfo'),a=AIS.t[AIS.sel];if(!a||!aisOn()){el.hidden=true;return}
-  const c=aisCalc(a),p=[];el.hidden=false;
-  p.push('⛴ '+(a.name||tr('Sans nom'))+' · MMSI '+a.mmsi+' · '+tr('classe')+' '+a.cls);
+function aisLines(a){
+  const c=aisCalc(a),p=[];
+  p.push((a.name||tr('Sans nom'))+' · MMSI '+a.mmsi+' · '+tr('classe')+' '+a.cls);
   const ty=aisType(a.type);if(ty||a.len)p.push([ty,a.len?Math.round(a.len)+' m':''].filter(Boolean).join(' · '));
   if(a.nav!=null&&AISNAV()[a.nav])p.push(AISNAV()[a.nav]);
   p.push(num(a.sog)+' '+tr('nds')+(a.cog!=null?' · '+tr('cap')+' '+num(a.cog,0)+'°':''));
   if(c){p.push(c.dist.toFixed(2)+' NM · '+tr('relèvement')+' '+num(c.brg,0)+'°');
     p.push(c.tcpa!=null?'CPA '+c.cpa.toFixed(2)+' NM '+tr('dans')+' '+Math.round(c.tcpa)+' min':tr('Pas de rapprochement'))}
-  p.push(tr('reçu il y a')+' '+Math.round((NOW()-a.seen)/1000)+' s');
-  el.textContent=p.join('\n');el.style.borderColor=c&&c.danger?'#ff3b30':'var(--line)';
+  p.push(tr('reçu il y a')+' '+fmtDur2(NOW()-a.seen));
+  return{p,c};
+}
+const fmtDur2=ms=>ms<90000?Math.round(ms/1000)+' s':ms<5400000?Math.round(ms/60000)+' min':Math.round(ms/3600000)+' h';
+function aisFavToggle(m){
+  const f=aisFav(),i=f.indexOf(m);
+  if(i>=0)f.splice(i,1);else if(f.length>=10){alert(tr('10 favoris au maximum : retire-en un d\'abord.'));return}else f.push(m);
+  saveCfg();aisSaveFav();aisPanel();scheduleDraw();
+}
+function aisCard(a,sel){
+  const {p,c}=aisLines(a),d=document.createElement('div'),fv=aisIsFav(a.mmsi);
+  d.style.cssText='position:relative;white-space:pre-line;margin:0;padding:6px 40px 6px 9px;border:1.5px solid '+(c&&c.danger?'#ff3b30':fv?'#ffd23f':'var(--line)')+';border-radius:10px;font-size:12px;line-height:1.35;background:var(--card);box-shadow:0 2px 8px rgba(0,0,0,.35)';
+  d.textContent=p.join('\n');
+  const b=document.createElement('button');b.type='button';b.textContent=fv?'★':'☆';b.setAttribute('aria-label',tr('Favori'));
+  b.style.cssText='position:absolute;right:4px;top:4px;width:38px;height:38px;font-size:22px;background:transparent;border:0;color:'+(fv?'#ffd23f':'var(--mut)');
+  b.onclick=e=>{e.stopPropagation();aisFavToggle(a.mmsi)};d.appendChild(b);
+  if(sel)d.onclick=()=>{AIS.sel=null;aisPanel();scheduleDraw()};   // toucher la fiche la referme
+  return d;
+}
+function aisPanel(){
+  const el=$('#aisInfo'),fl=$('#aisFavs'),a=AIS.t[AIS.sel];
+  el.innerHTML='';fl.innerHTML='';
+  if(!aisOn()){el.hidden=true;fl.hidden=true;return}
+  el.hidden=!a;if(a)el.appendChild(aisCard(a,true));
+  const fv=aisFav().filter(m=>m!==AIS.sel&&AIS.t[m]&&AIS.t[m].lat!=null);fl.hidden=!fv.length;
+  fv.forEach(m=>fl.appendChild(aisCard(AIS.t[m],false)));
+}
+function aisTap(x,y){
+  if(!aisOn())return false;let best=null,bd=26;
+  aisList().forEach(a=>{const[px,py]=[wx(a.lon,VT.z)-VT.ox,wy(a.lat,VT.z)-VT.oy],d=Math.hypot(px-x,py-y);if(d<bd){bd=d;best=a}});
+  if(!best){if(AIS.sel){AIS.sel=null;aisPanel();scheduleDraw()}return false}
+  AIS.sel=best.mmsi;aisPanel();scheduleDraw();return true;
 }
 /* cibles de démonstration (une en route de collision) */
 const AISD={init:false,list:[]};
