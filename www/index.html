@@ -408,6 +408,9 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
     <select id="nType"><option>Événement</option><option>Météo</option><option>Équipage</option><option>Moteur / entretien</option><option>Mouillage / port</option><option>Autre</option></select>
     <label>Note</label>
     <textarea id="nText" rows="3" placeholder="Ex : Ris pris à 14h, vent 22 nœuds…"></textarea>
+    <div class="phs" id="nPend"></div>
+    <div class="row" style="margin-top:8px"><label class="b sec" style="margin:0;color:var(--tx);cursor:pointer;display:inline-block;width:auto;border:1px solid var(--line);border-radius:12px;padding:10px 14px">📷 Prendre une photo<input type="file" id="nCam" accept="image/*" capture="environment" class="hide"></label>
+      <label class="b sec" style="margin:0;color:var(--tx);cursor:pointer;display:inline-block;width:auto;border:1px solid var(--line);border-radius:12px;padding:10px 14px">🖼 Galerie<input type="file" id="nGal" accept="image/*" multiple class="hide"></label></div>
     <div class="row" style="margin-top:8px"><button class="b" id="nAdd">Ajouter (position + heure auto)</button></div>
   </div>
   <div id="noteList"></div></div>
@@ -836,6 +839,19 @@ Date de départ invalide.|Ongeldige vertrekdatum.|Invalid departure date.|Ungül
 Vitesse de croisière invalide.|Ongeldige kruissnelheid.|Invalid cruising speed.|Ungültige Reisegeschwindigkeit.|Velocidad de crucero no válida.
 Vitesse de croisière (nœuds)|Kruissnelheid (knopen)|Cruising speed (knots)|Reisegeschwindigkeit (Knoten)|Velocidad de crucero (nudos)
 Vitesse de croisière du bateau (nœuds)|Kruissnelheid van de boot (knopen)|Boat cruising speed (knots)|Reisegeschwindigkeit des Bootes (Knoten)|Velocidad de crucero del barco (nudos)
+Modifier la note|Notitie wijzigen|Edit note|Notiz bearbeiten|Editar nota
+Supprimer la note|Notitie verwijderen|Delete note|Notiz löschen|Eliminar nota
+Supprimer cette note et ses photos ?|Deze notitie en foto's verwijderen?|Delete this note and its photos?|Diese Notiz und ihre Fotos löschen?|¿Eliminar esta nota y sus fotos?
+La note est vide.|De notitie is leeg.|The note is empty.|Die Notiz ist leer.|La nota está vacía.
+Écris d’abord ta note.|Schrijf eerst je notitie.|Write your note first.|Schreibe zuerst deine Notiz.|Escribe primero tu nota.
+Retirer la photo|Foto verwijderen|Remove photo|Foto entfernen|Quitar foto
+Supprimer la photo|Foto verwijderen|Delete photo|Foto löschen|Eliminar foto
+Supprimer cette photo ?|Deze foto verwijderen?|Delete this photo?|Dieses Foto löschen?|¿Eliminar esta foto?
+📷 Prendre une photo|📷 Foto nemen|📷 Take a photo|📷 Foto aufnehmen|📷 Hacer una foto
+🖼 Galerie|🖼 Galerij|🖼 Gallery|🖼 Galerie|🖼 Galería
+Aucune photo.|Geen foto's.|No photos.|Keine Fotos.|Sin fotos.
+modifiée|gewijzigd|edited|bearbeitet|editada
+Modifier|Wijzigen|Edit|Bearbeiten|Editar
 Seuil d'alerte de gîte (°)|Waarschuwingsdrempel helling (°)|Heel alert threshold (°)|Krängungs-Warnschwelle (°)|Umbral de alerta de escora (°)
 Routage « Confort » : vent max (nœuds) / vagues max (m)|«Comfort»-routering: max. wind (knopen) / max. golven (m)|«Comfort» routing: max wind (knots) / max waves (m)|«Komfort»-Routing: max. Wind (Knoten) / max. Wellen (m)|Ruta «Confort»: viento máx. (nudos) / olas máx. (m)
 Lancer le routage|Routering starten|Run routing|Routing starten|Calcular ruta
@@ -3161,15 +3177,77 @@ async function fillMapSel(){
 }
 
 /* ---------- Notes ---------- */
-async function renderNotes(){
-  const notes=(await db.all('notes')).sort((a,b)=>b.t-a.t);
-  $('#noteList').innerHTML=notes.length?notes.map(n=>`<div class="card"><div class="mut">${fmtDT(n.t)} · ${esc(n.type)}${n.lat!=null?' · '+fmtPos(n.lat,n.lon):''}</div><div style="margin-top:4px">${esc(n.text)}</div>
-   <div class="row" style="margin-top:6px"><button class="b sec" data-del="${n.id}" style="padding:4px 10px">Supprimer</button></div></div>`).join(''):'<div class="mut">Aucune note.</div>';
-  $$('[data-del]').forEach(b=>b.onclick=async()=>{await db.del('notes',b.dataset.del);renderNotes()});
+const NOTE_TYPES=['Événement','Météo','Équipage','Moteur / entretien','Mouillage / port','Autre'];
+const noteTrip=n=>({id:null,name:'Note',_note:true,_n:n});
+async function addNotePhotos(n,files){
+  const done=[];
+  for(const f of files){
+    try{const r=await shrinkImage(f),rec={id:uid(),trip:null,entry:n.id,note:true,t:Date.now(),name:f.name||'photo.jpg',w:r.w,h:r.h,blob:r.blob,thumb:r.thumb};await db.put('photos',rec);done.push(rec)}
+    catch(err){alert('Photo non ajoutée : '+(err.message||err))}
+  }
+  return done;
 }
+const notePhotos=async id=>(await db.all('photos')).filter(p=>p.entry===id).sort((a,b)=>a.t-b.t);
+async function renderNotes(){
+  const notes=(await db.all('notes')).sort((a,b)=>b.t-a.t),phs=await db.all('photos');
+  $('#noteList').innerHTML=notes.length?notes.map(n=>{
+    const ph=phs.filter(p=>p.entry===n.id).sort((a,b)=>a.t-b.t);
+    return`<div class="card" data-note="${n.id}" style="cursor:pointer"><div class="mut">${fmtDT(n.t)} · ${esc(n.type)}${n.edited?' · modifiée':''}${n.lat!=null?' · '+fmtPos(n.lat,n.lon):''}</div><div style="margin-top:4px;white-space:pre-wrap">${esc(n.text)}</div>
+   ${ph.length?`<div class="phs">${ph.slice(0,4).map(p=>`<img class="ph" src="${p.thumb}" alt="Photo">`).join('')}${ph.length>4?`<span class="mut" style="align-self:center">+${ph.length-4}</span>`:''}</div>`:''}
+   <div class="row" style="margin-top:8px"><button class="b sec" data-nedit="${n.id}" style="padding:6px 14px">Modifier</button><button class="b red" data-del="${n.id}" style="padding:6px 14px">Supprimer</button></div></div>`}).join(''):'<div class="mut">Aucune note.</div>';
+  $$('[data-note]').forEach(c=>c.onclick=ev=>{if(ev.target.closest('button'))return;openNoteEdit(c.dataset.note)});
+  $$('[data-nedit]').forEach(b=>b.onclick=()=>openNoteEdit(b.dataset.nedit));
+  $$('[data-del]').forEach(b=>b.onclick=()=>deleteNote(b.dataset.del));
+}
+async function deleteNote(id,after){
+  if(!confirm('Supprimer cette note et ses photos ?'))return false;
+  for(const p of await notePhotos(id))await db.del('photos',p.id);
+  await db.del('notes',id);renderNotes();if(openTrip)try{showTrip(openTrip)}catch(_){}after&&after();return true;
+}
+async function openNoteEdit(id){
+  const n=(await db.all('notes')).find(q=>q.id===id);if(!n)return;
+  const m=document.createElement('div');m.className='modal';
+  const types=NOTE_TYPES.includes(n.type)?NOTE_TYPES:[n.type,...NOTE_TYPES];
+  m.innerHTML=`<div role="dialog" aria-label="Modifier la note"><div class="row" style="justify-content:space-between"><b style="font:600 20px var(--num)">Modifier la note</b><button class="b sec" id="nnX">Fermer</button></div>
+   <label>Date et heure</label><input type="datetime-local" id="nnT" value="${toLocalInput(n.t)}">
+   <label>Type</label><select id="nnY">${types.map(x=>`<option${x===n.type?' selected':''}>${esc(x)}</option>`).join('')}</select>
+   <label>Note</label><textarea id="nnN" rows="5">${esc(n.text)}</textarea>
+   ${n.lat!=null?`<div class="mut" style="margin-top:6px">${fmtPos(n.lat,n.lon)}</div>`:''}
+   <label>Photos</label><div class="phs" id="nnPh"></div>
+   <div class="row"><label class="b sec" style="margin:0;color:var(--tx);cursor:pointer;display:inline-block;width:auto;border:1px solid var(--line);border-radius:12px;padding:10px 14px">📷 Prendre une photo<input type="file" id="nnCam" accept="image/*" capture="environment" class="hide"></label>
+     <label class="b sec" style="margin:0;color:var(--tx);cursor:pointer;display:inline-block;width:auto;border:1px solid var(--line);border-radius:12px;padding:10px 14px">🖼 Galerie<input type="file" id="nnGal" accept="image/*" multiple class="hide"></label></div>
+   <div class="row" style="margin-top:16px"><button class="b" id="nnS" style="flex:1">Enregistrer</button><button class="b red" id="nnD">Supprimer la note</button></div></div>`;
+  document.body.appendChild(m);
+  const close=()=>m.remove(),T=noteTrip(n);
+  const draw=async()=>{
+    const ph=await notePhotos(id);
+    $('#nnPh').innerHTML=ph.length?ph.map(p=>`<div class="phw"><img class="ph" data-v="${p.id}" src="${p.thumb}" alt="Photo"><button data-x="${p.id}" aria-label="Supprimer la photo">✕</button></div>`).join(''):'<span class="mut">Aucune photo.</span>';
+    m.querySelectorAll('[data-v]').forEach(im=>im.onclick=()=>{const ids=ph.map(p=>p.id);viewPhotos(ids,ids.indexOf(im.dataset.v),T,n,()=>{draw();renderNotes()})});
+    m.querySelectorAll('[data-x]').forEach(b=>b.onclick=async()=>{if(!confirm('Supprimer cette photo ?'))return;await db.del('photos',b.dataset.x);draw();renderNotes()});
+  };
+  draw();
+  const onF=async ev=>{const fs=[...ev.target.files];ev.target.value='';if(!fs.length)return;await addNotePhotos(n,fs);draw();renderNotes()};
+  $('#nnCam').onchange=onF;$('#nnGal').onchange=onF;
+  m.onclick=ev=>{if(ev.target===m)close()};$('#nnX').onclick=close;
+  $('#nnS').onclick=async()=>{
+    const text=$('#nnN').value.trim();if(!text){alert('La note est vide.');return}
+    const tm=new Date($('#nnT').value).getTime();if(!isNaN(tm))n.t=tm;n.type=$('#nnY').value;n.text=text;n.edited=true;
+    await db.put('notes',n);close();renderNotes();if(openTrip)try{showTrip(openTrip)}catch(_){}
+  };
+  $('#nnD').onclick=()=>deleteNote(id,close);
+}
+let NPEND=[];
+function drawNPend(){
+  const el=$('#nPend');el.innerHTML=NPEND.map((f,i)=>`<div class="phw"><img class="ph" src="${f.u}" alt="Photo"><button data-px="${i}" aria-label="Retirer la photo">✕</button></div>`).join('');
+  el.querySelectorAll('[data-px]').forEach(b=>b.onclick=()=>{URL.revokeObjectURL(NPEND[+b.dataset.px].u);NPEND.splice(+b.dataset.px,1);drawNPend()});
+}
+const nPick=ev=>{[...ev.target.files].forEach(f=>NPEND.push({f,u:URL.createObjectURL(f)}));ev.target.value='';drawNPend()};
+$('#nCam').onchange=nPick;$('#nGal').onchange=nPick;
 $('#nAdd').onclick=async()=>{
-  const text=$('#nText').value.trim();if(!text)return;
-  await db.put('notes',{id:uid(),t:NOW(),type:$('#nType').value,text,trip:cur?.id||null,lat:fresh('lat')?D.lat:null,lon:fresh('lon')?D.lon:null});
+  const text=$('#nText').value.trim();if(!text){alert('Écris d’abord ta note.');return}
+  const n={id:uid(),t:NOW(),type:$('#nType').value,text,trip:cur?.id||null,lat:fresh('lat')?D.lat:null,lon:fresh('lon')?D.lon:null};
+  await db.put('notes',n);
+  if(NPEND.length){await addNotePhotos(n,NPEND.map(x=>x.f));NPEND.forEach(x=>URL.revokeObjectURL(x.u));NPEND=[];drawNPend()}
   $('#nText').value='';renderNotes();
 };
 
@@ -3267,7 +3345,7 @@ async function addPhotos(t,e,files){
   return done;
 }
 async function removePhoto(t,e,p){
-  await db.del('photos',p.id);
+  await db.del('photos',p.id);if(t._note)return;
   await audit('photo_del',t,e,[{label:'Photo supprimée',from:p.name,to:null}]);
 }
 function viewPhotos(list,i,t,e,onChange){
@@ -3276,7 +3354,7 @@ function viewPhotos(list,i,t,e,onChange){
   const show=async()=>{
     if(url)URL.revokeObjectURL(url);const p=(await db.all('photos')).find(x=>x.id===list[i]);if(!p){v.remove();return}
     url=URL.createObjectURL(p.blob);
-    v.innerHTML=`<div style="display:flex;align-items:center;gap:10px;padding:calc(var(--sat) + 10px) 18px 10px;color:#fff"><span style="flex:1;font-size:14px">${esc(t.name)} · entrée de ${fmtT(e.t)} · ${i+1}/${list.length}</span><button class="b sec" id="pvX" style="color:#fff;border-color:#888;padding:12px 18px">Fermer</button></div>
+    v.innerHTML=`<div style="display:flex;align-items:center;gap:10px;padding:calc(var(--sat) + 10px) 18px 10px;color:#fff"><span style="flex:1;font-size:14px">${t._note?'Note · '+fmtDT(e.t):esc(t.name)+' · entrée de '+fmtT(e.t)} · ${i+1}/${list.length}</span><button class="b sec" id="pvX" style="color:#fff;border-color:#888;padding:12px 18px">Fermer</button></div>
      <div style="flex:1;min-height:0;display:grid;place-items:center"><img src="${url}" style="max-width:100%;max-height:100%;object-fit:contain" alt="Photo du carnet"></div>
      <div style="display:flex;gap:10px;padding:10px 18px calc(16px + env(safe-area-inset-bottom))"><button class="b sec" id="pvP" style="flex:1;color:#fff;border-color:#888">‹</button><button class="b red" id="pvD" style="flex:2">Supprimer</button><button class="b sec" id="pvN" style="flex:1;color:#fff;border-color:#888">›</button></div>`;
     $('#pvX').onclick=close;$('#pvP').onclick=()=>{i=(i-1+list.length)%list.length;show()};$('#pvN').onclick=()=>{i=(i+1)%list.length;show()};
