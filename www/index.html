@@ -316,9 +316,18 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
     <div id="mobBar" class="mobbar hide"><span id="mobBarTx">MOB</span><button id="mobBarOpen">Ouvrir</button></div>
     <div id="wpSheet" class="sheet hide"></div>
     <div style="position:absolute;right:8px;top:8px;display:flex;flex-direction:column;gap:6px;z-index:3">
-      <button class="b sec" id="mZin" style="width:40px;padding:6px">+</button><button class="b sec" id="mZout" style="width:40px;padding:6px">−</button><button class="b sec" id="mFit" style="width:40px;padding:6px" title="Recentrer">⌖</button><button class="b sec" id="mAis" style="width:40px;padding:6px;font-weight:700;font-size:12px" aria-pressed="true" title="AIS">AIS</button><button class="b sec" id="m3d" style="width:40px;padding:6px;font-weight:700" aria-pressed="false" title="Vue 3D">3D</button>
+      <button class="b sec" id="mZin" style="width:40px;padding:6px">+</button><button class="b sec" id="mZout" style="width:40px;padding:6px">−</button><button class="b sec" id="mFit" style="width:40px;padding:6px" title="Recentrer">⌖</button><button class="b sec" id="mWx" style="width:40px;padding:6px;font-size:18px" aria-pressed="false" title="Météo animée">💨</button><button class="b sec" id="mAis" style="width:40px;padding:6px;font-weight:700;font-size:12px" aria-pressed="true" title="AIS">AIS</button><button class="b sec" id="m3d" style="width:40px;padding:6px;font-weight:700" aria-pressed="false" title="Vue 3D">3D</button>
     </div>
     <div style="position:absolute;left:6px;right:54px;bottom:6px;z-index:3;max-height:62%;overflow:auto;display:flex;flex-direction:column;gap:5px;pointer-events:none"><div id="aisInfo" hidden style="pointer-events:auto"></div><div id="aisFavs" hidden style="display:flex;flex-direction:column;gap:5px;pointer-events:auto"></div></div>
+  <div class="card hide" id="fxCard" style="position:absolute;left:6px;right:54px;top:6px;z-index:4;margin:0;padding:10px;max-height:78%;overflow:auto;box-shadow:0 2px 10px rgba(0,0,0,.4)">
+    <label style="display:flex;gap:8px;align-items:center;margin:0 0 8px;color:var(--tx);font-size:14px"><input type="checkbox" id="fxZone" style="width:auto"> Météo de la zone affichée (sans routage)</label>
+    <div id="fxZoneRow" class="hide" style="margin-bottom:10px"><div class="row"><button class="b sec" id="fxReload">Charger cette zone</button></div><div class="mut" id="fxZst" style="margin-top:4px">Utilise les modèles choisis dans l'onglet Routage.</div></div>
+    <div class="row"><select id="fxLayer" style="flex:1"><option value="none">Météo animée : aucune</option><option value="wind">Vent (nœuds)</option><option value="waves">Vagues (m)</option><option value="swell">Houle (m)</option><option value="cur">Courants (nœuds)</option></select>
+    <button class="b sec" id="fxPlay" style="width:52px">▶︎</button></div>
+    <input type="range" id="fxT" min="0" max="48" value="0" style="margin-top:8px;padding:0">
+    <div class="mut" id="fxLbl" style="margin-top:4px"></div>
+  </div>
+    <div id="fxMini" class="hide" style="position:absolute;left:8px;top:8px;z-index:3;padding:3px 8px;border-radius:12px;background:var(--card);border:1px solid var(--line);font-size:11px;pointer-events:none"></div>
   </div>
   <div class="card hide" id="wpPanel" style="margin-top:8px">
     <div class="row" style="justify-content:space-between"><b>Ma route</b><span class="mut" id="wpTot"></span></div>
@@ -327,14 +336,6 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
     <div class="row" style="margin-top:8px"><button class="b sec" id="wpUndo">↶ Annuler</button><button class="b sec" id="wpClear">Tout effacer</button><button class="b sec" id="wpOpts">Départ, modèles…</button></div>
     <button class="b" id="wpGo" style="width:100%;margin-top:10px;padding:16px;font-size:17px">Lancer le routage</button>
     <div class="mut" id="wpStat" style="margin-top:6px"></div>
-  </div>
-  <div class="card" style="margin-top:8px">
-    <label style="display:flex;gap:8px;align-items:center;margin:0 0 10px;color:var(--tx);font-size:14px"><input type="checkbox" id="fxZone" style="width:auto"> Météo de la zone affichée (sans routage)</label>
-    <div id="fxZoneRow" class="hide" style="margin-bottom:10px"><div class="row"><button class="b sec" id="fxReload">Charger cette zone</button></div><div class="mut" id="fxZst" style="margin-top:4px">Utilise les modèles choisis dans l'onglet Routage.</div></div>
-    <div class="row"><select id="fxLayer" style="flex:1"><option value="none">Météo animée : aucune</option><option value="wind">Vent (nœuds)</option><option value="waves">Vagues (m)</option><option value="swell">Houle (m)</option><option value="cur">Courants (nœuds)</option></select>
-    <button class="b sec" id="fxPlay" style="width:52px">▶︎</button></div>
-    <input type="range" id="fxT" min="0" max="48" value="0" style="margin-top:8px;padding:0">
-    <div class="mut" id="fxLbl" style="margin-top:4px"></div>
   </div>
     <div class="mut" id="mapInfo" style="margin-top:6px"></div>
 </section>
@@ -1309,7 +1310,7 @@ const tr=I18N.tr,LOC=()=>I18N.LOC();
 </div>
 <script>
 let simT=null;
-const APPV='v25',ERRLOG=[];
+const APPV='v26',ERRLOG=[];
 const logErr=m=>{ERRLOG.push(new Date().toLocaleTimeString(LOC())+' '+String(m).slice(0,220));if(ERRLOG.length>25)ERRLOG.shift()};
 window.addEventListener('error',e=>logErr((e.message||'erreur')+' @'+String(e.filename||'').split('/').pop()+':'+e.lineno));
 window.addEventListener('unhandledrejection',e=>logErr('promesse : '+((e.reason&&e.reason.message)||e.reason)));
@@ -2881,6 +2882,10 @@ function fxLoop(){
   FX.raf=requestAnimationFrame(fxLoop);
 }
 function fxStart(){if(!FX.raf&&FX.layer!=='none')FX.raf=requestAnimationFrame(fxLoop)}
+function fxMiniUp(){const m=$('#fxMini'),on=FX.layer!=='none'&&LAST&&$('#fxCard').classList.contains('hide');m.classList.toggle('hide',!on);
+  if(on)m.textContent=({wind:'🌬',waves:'🌊',swell:'🌊',cur:'↗'}[FX.layer]||'')+' '+fmtDT(LAST.t0+FX.t*3600000).slice(0,16)+' (+'+FX.t+' h)';
+  const b=$('#mWx');b.style.outline=FX.layer!=='none'?'2px solid var(--acc)':'';b.setAttribute('aria-pressed',!$('#fxCard').classList.contains('hide'))}
+$('#mWx').onclick=()=>{$('#fxCard').classList.toggle('hide');fxMiniUp()};
 function updFxLbl(){
   const mx=fxMax();$('#fxT').max=mx;if(FX.t>mx){FX.t=mx;$('#fxT').value=mx}
   const e=$('#fxLbl');
@@ -2888,7 +2893,7 @@ function updFxLbl(){
   let m='';
   if((FX.layer==='waves'||FX.layer==='swell')&&!LAST.wave)m=' · pas de données de vagues/houle : choisis un modèle de vagues dans Routage';
   if(FX.layer==='cur'&&!LAST.cur)m=' · pas de données de courant : coche « Courants » dans Routage';
-  e.textContent=(FX.layer==='none'?'Choisis une couche. ':'')+fmtDT(LAST.t0+FX.t*3600000)+' (départ +'+FX.t+' h)'+m;
+  e.textContent=(FX.layer==='none'?'Choisis une couche. ':'')+fmtDT(LAST.t0+FX.t*3600000)+' (départ +'+FX.t+' h)'+m;fxMiniUp();
 }
 $('#fxLayer').onchange=e=>{FX.layer=e.target.value;FX.key='';FX.parts=[];updFxLbl();scheduleDraw();fxStart()};
 $('#fxT').oninput=e=>{FX.t=+e.target.value;FX.key='';updFxLbl();scheduleDraw()};
