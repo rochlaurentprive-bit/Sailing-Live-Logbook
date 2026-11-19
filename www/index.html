@@ -305,18 +305,16 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
 </section>
 
 <section id="v-map">
-  <div class="row" style="margin-bottom:8px">
-    <select id="mapSel" style="flex:1;min-width:0"></select>
-    <button class="b" id="wpToggle" style="padding:12px 14px">📍 Tracer une route</button>
-  </div>
   <div id="mapStage" style="position:relative;overflow:hidden;border-radius:12px">
     <div id="mapTilt" style="position:relative"><canvas id="map"></canvas>
     <canvas id="mapFx" style="position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;border-radius:12px"></canvas></div>
     <div id="map3dFog"></div><div id="map3dBoat"></div>
     <div id="mobBar" class="mobbar hide"><span id="mobBarTx">MOB</span><button id="mobBarOpen">Ouvrir</button></div>
     <div id="wpSheet" class="sheet hide"></div>
+    <div id="selCard" class="card hide" style="position:absolute;left:6px;right:54px;top:6px;z-index:5;margin:0;padding:8px;box-shadow:0 2px 10px rgba(0,0,0,.4)"><select id="mapSel" style="width:100%"></select></div>
+    <div id="mapName" style="position:absolute;left:8px;top:8px;z-index:3;max-width:calc(100% - 70px);padding:3px 9px;border-radius:12px;background:var(--card);border:1px solid var(--line);font-size:11px;pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
     <div style="position:absolute;right:8px;top:8px;display:flex;flex-direction:column;gap:6px;z-index:3">
-      <button class="b sec" id="mZin" style="width:40px;padding:6px">+</button><button class="b sec" id="mZout" style="width:40px;padding:6px">−</button><button class="b sec" id="mFit" style="width:40px;padding:6px" title="Recentrer">⌖</button><button class="b sec" id="mWx" style="width:40px;padding:6px;font-size:18px" aria-pressed="false" title="Météo animée">💨</button><button class="b sec" id="mAis" style="width:40px;padding:6px;font-weight:700;font-size:12px" aria-pressed="true" title="AIS">AIS</button><button class="b sec" id="m3d" style="width:40px;padding:6px;font-weight:700" aria-pressed="false" title="Vue 3D">3D</button>
+      <button class="b" id="wpToggle" style="width:40px;padding:6px;font-size:18px" title="Tracer une route">📍</button><button class="b sec" id="mSel" style="width:40px;padding:6px;font-size:18px" title="Trajet affiché">🗂</button><button class="b sec" id="mZin" style="width:40px;padding:6px">+</button><button class="b sec" id="mZout" style="width:40px;padding:6px">−</button><button class="b sec" id="mFit" style="width:40px;padding:6px" title="Recentrer">⌖</button><button class="b sec" id="mWx" style="width:40px;padding:6px;font-size:18px" aria-pressed="false" title="Météo animée">💨</button><button class="b sec" id="mAis" style="width:40px;padding:6px;font-weight:700;font-size:12px" aria-pressed="true" title="AIS">AIS</button><button class="b sec" id="m3d" style="width:40px;padding:6px;font-weight:700" aria-pressed="false" title="Vue 3D">3D</button>
     </div>
     <div style="position:absolute;left:6px;right:54px;bottom:6px;z-index:3;max-height:62%;overflow:auto;display:flex;flex-direction:column;gap:5px;pointer-events:none"><div id="aisInfo" hidden style="pointer-events:auto"></div><div id="aisFavs" hidden style="display:flex;flex-direction:column;gap:5px;pointer-events:auto"></div></div>
   <div class="card hide" id="fxCard" style="position:absolute;left:6px;right:54px;top:6px;z-index:4;margin:0;padding:10px;max-height:78%;overflow:auto;box-shadow:0 2px 10px rgba(0,0,0,.4)">
@@ -327,7 +325,7 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
     <input type="range" id="fxT" min="0" max="48" value="0" style="margin-top:8px;padding:0">
     <div class="mut" id="fxLbl" style="margin-top:4px"></div>
   </div>
-    <div id="fxMini" class="hide" style="position:absolute;left:8px;top:8px;z-index:3;padding:3px 8px;border-radius:12px;background:var(--card);border:1px solid var(--line);font-size:11px;pointer-events:none"></div>
+    <div id="fxMini" class="hide" style="position:absolute;left:8px;top:34px;z-index:3;padding:3px 8px;border-radius:12px;background:var(--card);border:1px solid var(--line);font-size:11px;pointer-events:none"></div>
   </div>
   <div class="card hide" id="wpPanel" style="margin-top:8px">
     <div class="row" style="justify-content:space-between"><b>Ma route</b><span class="mut" id="wpTot"></span></div>
@@ -1310,7 +1308,7 @@ const tr=I18N.tr,LOC=()=>I18N.LOC();
 </div>
 <script>
 let simT=null;
-const APPV='v26',ERRLOG=[];
+const APPV='v27',ERRLOG=[];
 const logErr=m=>{ERRLOG.push(new Date().toLocaleTimeString(LOC())+' '+String(m).slice(0,220));if(ERRLOG.length>25)ERRLOG.shift()};
 window.addEventListener('error',e=>logErr((e.message||'erreur')+' @'+String(e.filename||'').split('/').pop()+':'+e.lineno));
 window.addEventListener('unhandledrejection',e=>logErr('promesse : '+((e.reason&&e.reason.message)||e.reason)));
@@ -2668,7 +2666,11 @@ const unx=(x,z)=>x/(256*2**z)*360-180;
 const uny=(y,z)=>Math.atan(Math.sinh(Math.PI*(1-2*y/(256*2**z))))*R2D;
 let MV={lat:47,lon:-3,z:12,auto:true}, MD={pts:[],ov:null,alt:[]};
 const scheduleDraw=()=>{if(!drawQ)drawQ=requestAnimationFrame(()=>{drawQ=0;renderMap()})};
+function mapNameUp(){const o=$('#mapSel').selectedOptions[0],n=$('#mapName');n.textContent=o?o.textContent:'';n.classList.toggle('hide',!$('#selCard').classList.contains('hide'))}
+$('#mSel').onclick=()=>{$('#fxCard').classList.add('hide');$('#selCard').classList.toggle('hide');fxMiniUp();mapNameUp()};
+$('#mapSel').addEventListener('change',()=>{$('#selCard').classList.add('hide');mapNameUp()});
 async function drawMapSel(fit){
+  mapNameUp();
   const id=$('#mapSel').value;
   let pts=[],ov=null,alt=[];
   const pr=planRoute(),pl=pr?pr.map(p=>({lat:p.la,lon:p.lo})):null;
@@ -2885,7 +2887,7 @@ function fxStart(){if(!FX.raf&&FX.layer!=='none')FX.raf=requestAnimationFrame(fx
 function fxMiniUp(){const m=$('#fxMini'),on=FX.layer!=='none'&&LAST&&$('#fxCard').classList.contains('hide');m.classList.toggle('hide',!on);
   if(on)m.textContent=({wind:'🌬',waves:'🌊',swell:'🌊',cur:'↗'}[FX.layer]||'')+' '+fmtDT(LAST.t0+FX.t*3600000).slice(0,16)+' (+'+FX.t+' h)';
   const b=$('#mWx');b.style.outline=FX.layer!=='none'?'2px solid var(--acc)':'';b.setAttribute('aria-pressed',!$('#fxCard').classList.contains('hide'))}
-$('#mWx').onclick=()=>{$('#fxCard').classList.toggle('hide');fxMiniUp()};
+$('#mWx').onclick=()=>{$('#selCard').classList.add('hide');$('#fxCard').classList.toggle('hide');fxMiniUp();mapNameUp()};
 function updFxLbl(){
   const mx=fxMax();$('#fxT').max=mx;if(FX.t>mx){FX.t=mx;$('#fxT').value=mx}
   const e=$('#fxLbl');
@@ -3816,7 +3818,7 @@ function wpDraw(g,P){
   g.textAlign='left';g.textBaseline='alphabetic';
 }
 function wpRender(){
-  $('#wpToggle').classList.toggle('on',WPE.on);$('#wpToggle').textContent=WPE.on?'✓ Terminer le tracé':'📍 Tracer une route';
+  $('#wpToggle').classList.toggle('on',WPE.on);$('#wpToggle').textContent=WPE.on?'✓':'📍';
   $('#wpPanel').classList.toggle('hide',!WPE.on);
   if(!WPE.on)return;
   let tot=0;for(let i=1;i<WP.length;i++)tot+=hav(WP[i-1],WP[i]);
