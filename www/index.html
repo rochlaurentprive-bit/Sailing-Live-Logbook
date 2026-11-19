@@ -2193,7 +2193,7 @@ function mkAtt3D(root,opts){
     cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
   }
   if(root.closest&&root.closest('#dialStage')){
-    const sl=document.createElement('div');root.style.position='relative';sl.style.cssText='position:absolute;left:14px;right:14px;top:72%;display:none;align-items:center;gap:10px;font-size:12px;color:var(--mut)';
+    const sl=document.createElement('div');if(getComputedStyle(root).position==='static')root.style.position='relative';sl.style.cssText='position:absolute;left:14px;right:14px;top:72%;display:none;align-items:center;gap:10px;font-size:12px;color:var(--mut)';
     sl.innerHTML='<span id="seaOff" style="min-width:64px">maintenant</span><input type="range" min="0" max="16" step="1" value="0" style="flex:1" aria-label="Prévision de houle : décalage en heures">';
     const rg=sl.querySelector('input'),lb=sl.firstChild;
     rg.oninput=()=>{SEA.off=+rg.value*3;lb.textContent=SEA.off?'+'+SEA.off+' h':'maintenant';seaPick();wxPick()};
