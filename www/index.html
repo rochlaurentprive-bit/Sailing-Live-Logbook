@@ -250,6 +250,7 @@ nav{z-index:6}
 
 /* aide / pense-bête */
 ol.hl{list-style:none;padding:0;margin:8px 0 0}ol.hl li{display:flex;gap:8px;align-items:flex-start;margin:0 0 8px;font-size:13px;line-height:1.4}.nb{flex:none;display:inline-block;width:18px;height:18px;line-height:18px;border-radius:50%;background:var(--acc);color:#fff;text-align:center;font-size:11px;font-weight:700}
+#nSubs .hc{flex:none}.ckrow{display:flex;gap:8px;align-items:flex-start;color:var(--tx);font-size:14px}.ckit{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-top:1px solid var(--line)}.ckit input[type=checkbox]{width:24px;height:24px;flex:none;margin-top:1px}.ckt{flex:1;font-size:14px;line-height:1.35;cursor:pointer}.ckt small{display:block;font-size:12px;margin-top:2px}.ckdone{width:36px;padding:4px;flex:none}.ckm{cursor:pointer}
 #helpTabs,#helpSubs{display:flex;flex-wrap:wrap;gap:8px;padding:4px 0 8px}
 .hc{flex:none;margin:0;padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--tx);font:inherit;font-size:14px}
 .hc.on{background:var(--acc);color:var(--on-acc);border-color:var(--acc)}
@@ -393,14 +394,16 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
 </section>
 
 <section id="v-notes">
-  <div class="card">
+  <div id="nSubs" style="display:flex;flex-wrap:wrap;gap:8px;padding:0 0 8px"><button class="hc on" data-nt="notes">📝 <span>Notes</span></button><button class="hc" data-nt="chk">✅ <span>Check-lists</span></button><button class="hc" data-nt="mnt">🔧 <span>Entretien</span></button></div>
+  <div id="nTabNotes"><div class="card">
     <label>Type</label>
     <select id="nType"><option>Événement</option><option>Météo</option><option>Équipage</option><option>Moteur / entretien</option><option>Mouillage / port</option><option>Autre</option></select>
     <label>Note</label>
     <textarea id="nText" rows="3" placeholder="Ex : Ris pris à 14h, vent 22 nœuds…"></textarea>
     <div class="row" style="margin-top:8px"><button class="b" id="nAdd">Ajouter (position + heure auto)</button></div>
   </div>
-  <div id="noteList"></div>
+  <div id="noteList"></div></div>
+  <div id="nTabChk" class="hide"></div><div id="nTabMnt" class="hide"></div>
 </section>
 
 <section id="v-stats">
@@ -1206,7 +1209,86 @@ Alerte collision : distance de passage (CPA) inférieure à (NM)|Aanvaringswaars
 Masquer les cibles muettes depuis (minutes)|Stille doelen verbergen na (minuten)|Hide silent targets after (minutes)|Stumme Ziele ausblenden nach (Minuten)|Ocultar objetivos sin señal desde (minutos)
 10 favoris au maximum : retire-en un d'abord.|Maximaal 10 favorieten: verwijder er eerst één.|10 favourites maximum: remove one first.|Maximal 10 Favoriten: zuerst einen entfernen.|10 favoritos como máximo: quita uno antes.
 Favori|Favoriet|Favourite|Favorit|Favorito
-En détail|In detail|In detail|Im Detail|En detalle`;
+En détail|In detail|In detail|Im Detail|En detalle
+Ma liste|Mijn lijst|My list|Meine Liste|Mi lista
+Jamais fait|Nooit gedaan|Never done|Noch nie erledigt|Nunca hecho
+Toutes les|Elke|Every|Alle|Cada
+Tous les|Elke|Every|Alle|Cada
+tous les|elke|every|alle|cada
+En retard de|Achterstand van|Overdue by|Überfällig seit|Retraso de
+Dans|Over|In|In|En
+j|d|d|T|d
+Fait|Gedaan|Done|Erledigt|Hecho
+fait le|gedaan op|done on|erledigt am|hecho el
+Ajouter un point|Punt toevoegen|Add an item|Punkt hinzufügen|Añadir un punto
+Tout décocher|Alles uitvinken|Uncheck all|Alle abwählen|Desmarcar todo
+Nouvelle liste|Nieuwe lijst|New list|Neue Liste|Nueva lista
+Gréement|Want|Rigging|Rigg|Aparejo
+Voiles|Zeilen|Sails|Segel|Velas
+Coque|Romp|Hull|Rumpf|Casco
+Électricité|Elektriciteit|Electrics|Elektrik|Electricidad
+Sécurité|Veiligheid|Safety|Sicherheit|Seguridad
+Eau / plomberie|Water / leidingen|Water / plumbing|Wasser / Sanitär|Agua / fontanería
+Annexe|Dinghy|Tender|Beiboot|Auxiliar
+À|Op|At|Bei|A
+À venir|Binnenkort|Upcoming|Demnächst|Próximamente
+Tout|Alles|All|Alle|Todo
+Total|Totaal|Total|Gesamt|Total
+Date|Datum|Date|Datum|Fecha
+Catégorie|Categorie|Category|Kategorie|Categoría
+Intervention|Werkzaamheid|Job|Arbeit|Intervención
+Détails|Details|Details|Details|Detalles
+Coût|Kosten|Cost|Kosten|Coste
+Entretien|Onderhoud|Maintenance|Wartung|Mantenimiento
+points|punten|items|Punkte|puntos
+jours|dagen|days|Tage|días
+mois|maanden|months|Monate|meses
+heures moteur|draaiuren motor|engine hours|Motorstunden|horas de motor
+Check-lists|Checklists|Checklists|Checklisten|Listas de control
+Liste|Lijst|List|Liste|Lista
+Me rappeler les échéances et les check-lists (notifications)|Herinner me aan termijnen en checklists (meldingen)|Remind me of due dates and checklists (notifications)|Mich an Fälligkeiten und Checklisten erinnern (Benachrichtigungen)|Recordarme vencimientos y listas (notificaciones)
+Notifications refusées : autorise-les dans les réglages du téléphone.|Meldingen geweigerd: sta ze toe in de telefooninstellingen.|Notifications denied: allow them in the phone settings.|Benachrichtigungen abgelehnt: in den Telefoneinstellungen erlauben.|Notificaciones rechazadas: permítelas en los ajustes del teléfono.
+Actif : rappels des échéances, et invite à la check-list au départ et à l'arrivée.|Actief: herinneringen voor termijnen en uitnodiging voor de checklist bij vertrek en aankomst.|On: due-date reminders, and a prompt for the checklist on departure and arrival.|Aktiv: Erinnerungen an Fälligkeiten und Hinweis auf die Checkliste bei Abfahrt und Ankunft.|Activo: recordatorios de vencimientos y aviso de la lista al salir y al llegar.
+Remettre les listes par défaut|Standaardlijsten herstellen|Restore default lists|Standardlisten wiederherstellen|Restaurar las listas por defecto
+Remettre les listes par défaut ? Tes modifications seront perdues.|Standaardlijsten herstellen? Je wijzigingen gaan verloren.|Restore default lists? Your changes will be lost.|Standardlisten wiederherstellen? Deine Änderungen gehen verloren.|¿Restaurar las listas por defecto? Se perderán tus cambios.
+Modifier le point|Punt wijzigen|Edit item|Punkt bearbeiten|Editar punto
+Nouveau point|Nieuw punt|New item|Neuer Punkt|Nuevo punto
+Point à vérifier|Te controleren punt|Item to check|Zu prüfender Punkt|Punto a verificar
+Contrôle périodique (à refaire régulièrement)|Periodieke controle (regelmatig herhalen)|Periodic check (repeat regularly)|Regelmäßige Kontrolle (wiederholen)|Control periódico (repetir con regularidad)
+À refaire tous les|Herhalen elke|Repeat every|Wiederholen alle|Repetir cada
+Supprimer ce point ?|Dit punt verwijderen?|Delete this item?|Diesen Punkt löschen?|¿Eliminar este punto?
+Nom de la liste|Naam van de lijst|List name|Listenname|Nombre de la lista
+Supprimer cette liste et ses points ?|Deze lijst en haar punten verwijderen?|Delete this list and its items?|Diese Liste und ihre Punkte löschen?|¿Eliminar esta lista y sus puntos?
+Aucune échéance : indique « prochaine échéance » en enregistrant une intervention.|Geen termijnen: vul « volgende termijn » in bij het registreren van een werkzaamheid.|No due dates: set a « next due » when you record a job.|Keine Fälligkeiten: beim Eintragen « nächste Fälligkeit » angeben.|Sin vencimientos: indica « próximo vencimiento » al registrar una intervención.
+Nouvelle intervention|Nieuwe werkzaamheid|New job|Neue Arbeit|Nueva intervención
+Modifier l'intervention|Werkzaamheid wijzigen|Edit job|Arbeit bearbeiten|Editar intervención
+Aucune intervention enregistrée.|Nog geen werkzaamheden geregistreerd.|No jobs recorded yet.|Noch keine Arbeiten erfasst.|Ninguna intervención registrada.
+Ex : vidange moteur|Bv. olie verversen|E.g. engine oil change|z. B. Ölwechsel|Ej.: cambio de aceite
+Pièces, référence, fournisseur, remarques…|Onderdelen, referentie, leverancier, opmerkingen…|Parts, reference, supplier, notes…|Teile, Referenz, Lieferant, Bemerkungen…|Piezas, referencia, proveedor, notas…
+Prochaine échéance, dans|Volgende termijn, over|Next due, in|Nächste Fälligkeit in|Próximo vencimiento, en
+Prochaine échéance|Volgende termijn|Next due|Nächste Fälligkeit|Próximo vencimiento
+Supprimer cette intervention ?|Deze werkzaamheid verwijderen?|Delete this job?|Diese Arbeit löschen?|¿Eliminar esta intervención?
+Échéance : |Termijn: |Due: |Fällig: |Vence: 
+Entretien : |Onderhoud: |Maintenance: |Wartung: |Mantenimiento: 
+en retard|achterstallig|overdue|überfällig|atrasado
+échéance(s) à traiter|termijn(en) af te handelen|due item(s) to handle|Fälligkeit(en) zu erledigen|vencimiento(s) por atender
+Vidange moteur|Olie verversen|Engine oil change|Ölwechsel|Cambio de aceite motor
+Filtre à huile|Oliefilter|Oil filter|Ölfilter|Filtro de aceite
+Filtre à gazole|Dieselfilter|Fuel filter|Dieselfilter|Filtro de gasóleo
+Courroie|Riem|Belt|Riemen|Correa
+Turbine de pompe à eau de mer|Impeller koelwaterpomp|Raw-water pump impeller|Impeller der Seewasserpumpe|Turbina de la bomba de agua de mar
+Anodes|Anodes|Anodes|Anoden|Ánodos
+Hélice|Schroef|Propeller|Propeller|Hélice
+Antifouling|Antifouling|Antifouling|Antifouling|Antifouling
+Révision gréement|Rigging-inspectie|Rigging inspection|Rigg-Inspektion|Revisión del aparejo
+Révision des voiles|Zeilenonderhoud|Sail service|Segelservice|Revisión de velas
+Batteries|Accu's|Batteries|Batterien|Baterías
+Fusées de détresse|Noodfakkels|Flares|Notsignale|Bengalas
+Extincteurs|Blusmiddelen|Extinguishers|Feuerlöscher|Extintores
+Radeau de survie|Reddingsvlot|Liferaft|Rettungsinsel|Balsa salvavidas
+Gilets gonflables|Zwemvesten|Inflatable lifejackets|Rettungswesten|Chalecos hinchables
+Winchs : graissage|Lieren: smeren|Winches: greasing|Winschen: Fetten|Winches: engrase
+Moteur hors-bord|Buitenboordmotor|Outboard engine|Außenborder|Motor fueraborda`;
   const EX=new Map(),PAT=[];
   RAW.split('\n').forEach(l=>{const a=l.split('|');if(a.length!==5)return;const fr=a[0],t=a.slice(1);
     if(/\{\d\}/.test(fr)){const parts=fr.split(/\{\d\}/).map(x=>x.replace(/[.*+?^$()|[\]\\{}]/g,'\\$&'));PAT.push([new RegExp('^'+parts.join('(.+?)')+'$'),t,fr.length])}
@@ -1310,7 +1392,7 @@ const tr=I18N.tr,LOC=()=>I18N.LOC();
 </div>
 <script>
 let simT=null;
-const APPV='v28',ERRLOG=[];
+const APPV='v29',ERRLOG=[];
 const logErr=m=>{ERRLOG.push(new Date().toLocaleTimeString(LOC())+' '+String(m).slice(0,220));if(ERRLOG.length>25)ERRLOG.shift()};
 window.addEventListener('error',e=>logErr((e.message||'erreur')+' @'+String(e.filename||'').split('/').pop()+':'+e.lineno));
 window.addEventListener('unhandledrejection',e=>logErr('promesse : '+((e.reason&&e.reason.message)||e.reason)));
@@ -3110,11 +3192,11 @@ $('#sSave').onclick=()=>{
 };
 $('#bExport').onclick=async()=>{
   const photos=[];for(const p of await db.all('photos'))photos.push({...p,blob:await blobToData(p.blob)});
-  download('carnet-sauvegarde.json',JSON.stringify({v:2,trips:await db.all('trips'),notes:await db.all('notes'),photos,audit:await db.all('audit')}),'application/json');
+  download('carnet-sauvegarde.json',JSON.stringify({v:2,trips:await db.all('trips'),notes:await db.all('notes'),photos,audit:await db.all('audit'),chk:CHKS,maint:MNT}),'application/json');
 };
 $('#bImport').onchange=async e=>{
   const f=e.target.files[0];if(!f)return;
-  try{const j=JSON.parse(await f.text());for(const t of j.trips||[])await db.put('trips',t);for(const n of j.notes||[])await db.put('notes',n);for(const p of j.photos||[])await db.put('photos',{...p,blob:await dataToBlob(p.blob)});for(const a of j.audit||[])await db.put('audit',a);updAuditSummary();alert('Import terminé.');renderTrips();renderNotes();renderStats()}catch(err){alert('Fichier invalide.')}
+  try{const j=JSON.parse(await f.text());for(const t of j.trips||[])await db.put('trips',t);for(const n of j.notes||[])await db.put('notes',n);for(const p of j.photos||[])await db.put('photos',{...p,blob:await dataToBlob(p.blob)});for(const a of j.audit||[])await db.put('audit',a);if(j.chk&&j.chk.lists){CHKS=j.chk;ckSave()}if(Array.isArray(j.maint)){MNT=j.maint;mnSave()}updAuditSummary();alert('Import terminé.');renderTrips();renderNotes();renderStats()}catch(err){alert('Fichier invalide.')}
 };
 
 /* ---------- Routage météo : moteur de calcul (sans DOM) ---------- */
@@ -4079,7 +4161,7 @@ function go(v){
   if(v==='map'){fillMapSel().then(drawMapSel);updFxLbl();fxStart();wpRender()}
   if(v==='live')updDials();
   if(v==='route'){$('#rCruise').value=cfg.cruise;renderPlan();renderPolar()}
-  if(v==='notes')renderNotes();
+  if(v==='notes'){renderNotes();noteTab(NT)}
   if(v==='stats')renderStats();
   window.scrollTo(0,0);
 }
@@ -4208,6 +4290,17 @@ const VIS=[
   [['Télécharge un fichier GRIB (vent, vagues…) depuis un fournisseur, par exemple Great Circle (Genval), Windy, Saildocs ou NOAA.','Download een GRIB-bestand (wind, golven…) bij een aanbieder, bv. Great Circle (Genval), Windy, Saildocs of NOAA.','Download a GRIB file (wind, waves…) from a provider such as Great Circle (Genval), Windy, Saildocs or NOAA.','GRIB-Datei (Wind, Wellen…) bei einem Anbieter laden, z. B. Great Circle (Genval), Windy, Saildocs oder NOAA.','Descarga un archivo GRIB (viento, olas…) de un proveedor, p. ej. Great Circle (Genval), Windy, Saildocs o NOAA.'],
    ['Importe-le dans Réglages › Météo GRIB (GRIB 1 et 2). Il reste enregistré sur le téléphone.','Importeer het in Instellingen › GRIB-weer (GRIB 1 en 2). Het blijft op de telefoon bewaard.','Import it in Settings › GRIB weather (GRIB 1 and 2). It stays stored on the phone.','In Einstellungen › GRIB-Wetter importieren (GRIB 1 und 2). Bleibt auf dem Telefon gespeichert.','Impórtalo en Ajustes › Meteo GRIB (GRIB 1 y 2). Queda guardado en el móvil.'],
    ['Le routage et la météo animée l\'utilisent automatiquement, sans connexion ni clé Windy.','Routering en geanimeerd weer gebruiken het automatisch, zonder verbinding of Windy-sleutel.','Routing and animated weather use it automatically, with no connection or Windy key.','Routing und animiertes Wetter nutzen es automatisch, ohne Verbindung oder Windy-Schlüssel.','La ruta y la meteo animada lo usan automáticamente, sin conexión ni clave Windy.']]],
+ [['Check-lists et entretien','Checklists en onderhoud','Checklists and maintenance','Checklisten und Wartung','Listas de control y mantenimiento'],
+  hv(`<rect x="10" y="8" width="170" height="154" rx="10" fill="var(--card)" stroke="var(--line)"/>
+   ${[['#34d27b',1,'OK'],['#ffb224',0,''],['#ff5a4d',0,'']].map(([c,ck,t],i)=>`<rect x="20" y="${20+i*34}" width="22" height="22" rx="5" fill="${ck?'var(--acc)':'none'}" stroke="var(--tx)" stroke-width="1.5"/>${ck?`<path d="M25 ${31+i*34}l5 5 8-10" stroke="#fff" stroke-width="2.5" fill="none"/>`:''}<rect x="52" y="${22+i*34}" width="100" height="6" rx="3" fill="var(--mut)"/><circle cx="56" cy="${38+i*34}" r="4" fill="${c}"/><rect x="66" y="${35+i*34}" width="60" height="5" rx="2.5" fill="${c}" opacity=".7"/>`).join('')}
+   <rect x="20" y="124" width="60" height="26" rx="8" fill="var(--card)" stroke="var(--line)"/><text x="50" y="141" text-anchor="middle" font-size="12" fill="var(--tx)">＋</text>
+   <g transform="translate(205 30)"><path d="M30 6a22 22 0 0 1 22 22v18l8 12H0l8-12V28A22 22 0 0 1 30 6z" fill="var(--card)" stroke="var(--tx)" stroke-width="2.5"/><circle cx="30" cy="70" r="6" fill="var(--tx)"/></g>
+   <g transform="translate(214 108)"><text font-size="34">🔧</text></g>
+   ${nb(22,14,1)}${nb(166,68,2)}${nb(282,40,3)}${nb(286,128,4)}`),
+  [['Check-lists prêtes à l\'emploi : avant le départ, à l\'arrivée et contrôles réguliers (moteur, gréement, sécurité). Coche chaque point ; ＋ pour ajouter les tiens, touche un point pour le modifier ou le supprimer.','Kant-en-klare checklists: voor vertrek, bij aankomst en regelmatige controles (motor, want, veiligheid). Vink punten af; ＋ om er toe te voegen, tik op een punt om te wijzigen of te verwijderen.','Ready-made checklists: before departure, on arrival and regular checks (engine, rigging, safety). Tick each item; ＋ to add your own, tap an item to edit or delete it.','Fertige Checklisten: vor dem Auslaufen, bei der Ankunft und regelmäßige Kontrollen (Motor, Rigg, Sicherheit). Punkte abhaken; ＋ zum Ergänzen, Punkt antippen zum Ändern oder Löschen.','Listas listas para usar: antes de salir, a la llegada y controles periódicos (motor, aparejo, seguridad). Marca cada punto; ＋ para añadir los tuyos, toca un punto para editarlo o borrarlo.'],
+   ['Contrôle périodique : le point affiche « dans X jours / heures moteur » (vert), « bientôt » (orange) ou « en retard » (rouge). ✓ enregistre la date et les heures moteur.','Periodieke controle: het punt toont « over X dagen / draaiuren » (groen), « binnenkort » (oranje) of « achterstallig » (rood). ✓ bewaart datum en draaiuren.','Periodic check: the item shows « in X days / engine hours » (green), « soon » (orange) or « overdue » (red). ✓ records the date and engine hours.','Periodische Kontrolle: der Punkt zeigt « in X Tagen / Motorstunden » (grün), « bald » (orange) oder « überfällig » (rot). ✓ speichert Datum und Motorstunden.','Control periódico: el punto muestra « en X días / horas de motor » (verde), « pronto » (naranja) o « atrasado » (rojo). ✓ guarda la fecha y las horas.'],
+   ['Interrupteur 🔔 : rappels des échéances (notification le jour J) et invite à la check-list au départ et à l\'arrivée d\'un trajet. Désactivable à tout moment.','Schakelaar 🔔: herinneringen voor termijnen (melding op de dag) en uitnodiging voor de checklist bij vertrek en aankomst. Altijd uit te zetten.','🔔 switch: due-date reminders (notification on the day) and a checklist prompt at the start and end of a trip. Can be turned off any time.','Schalter 🔔: Erinnerungen an Fälligkeiten (Benachrichtigung am Tag) und Hinweis auf die Checkliste bei Abfahrt und Ankunft. Jederzeit abschaltbar.','Interruptor 🔔: recordatorios de vencimientos (notificación el día) y aviso de la lista al salir y llegar. Se puede desactivar en cualquier momento.'],
+   ['Onglet Entretien : enregistre chaque intervention (date, heures moteur, coût, pièces) et fixe la prochaine échéance en mois, jours ou heures moteur. Export Excel.','Tabblad Onderhoud: registreer elke werkzaamheid (datum, draaiuren, kosten, onderdelen) en stel de volgende termijn in maanden, dagen of draaiuren in. Excel-export.','Maintenance tab: log each job (date, engine hours, cost, parts) and set the next due in months, days or engine hours. Excel export.','Reiter Wartung: jede Arbeit erfassen (Datum, Motorstunden, Kosten, Teile) und die nächste Fälligkeit in Monaten, Tagen oder Motorstunden setzen. Excel-Export.','Pestaña Mantenimiento: registra cada intervención (fecha, horas, coste, piezas) y fija el próximo vencimiento en meses, días u horas de motor. Exporta a Excel.']]],
  [['Menu du bas et Réglages','Onderbalk en Instellingen','Bottom bar and Settings','Untere Leiste und Einstellungen','Barra inferior y Ajustes'],
   hv(`<rect x="10" y="12" width="280" height="38" rx="19" fill="var(--card)" stroke="var(--line)"/><text x="30" y="37" font-size="18" fill="var(--tx)">‹</text><path d="M48 18v26" stroke="var(--line)"/>${[0,1,2,3,4,5].map(i=>`<circle cx="${80+i*38}" cy="31" r="7" fill="none" stroke="var(--mut)" stroke-width="2"/>`).join('')}${nb(30,60,1)}
    <rect x="0" y="76" width="22" height="30" rx="8" fill="var(--card)" stroke="var(--line)"/><text x="11" y="97" text-anchor="middle" font-size="16" fill="var(--tx)">›</text>${nb(34,88,2)}
@@ -4899,6 +4992,10 @@ function buildXlsx(t){
   const tk=['lat','lon','sog','cog','tws','twa','aws','awa','depth','rpm'];
   const trr=[th,...t.points.map(p=>[{d:p.t},...tk.map(k=>p[k]==null?null:+(+p[k]).toFixed(5))])];
   const sheets=[[tr('Résumé'),xSheet(sum,[26,36],false)],[tr('Journal'),xSheet(jr,[17,22,40,...EDITF.map(()=>14)],true)],[tr('Trace'),xSheet(trr,[17,12,12,10,10,10,10,10,10,12,14],true)]];
+  return xlsxPack(sheets);
+}
+function xlsxPack(sheets){
+  const enc=new TextEncoder();
   const nm=sheets.map(x=>xe(x[0].replace(/[\\\/?*\[\]:]/g,' ').slice(0,31)));
   const H='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
   const files=[
@@ -5106,6 +5203,227 @@ function aisDemo(lat,lon,cog,dt){
   cb.onchange=()=>set(cb.checked);b.onclick=()=>set(!aisOn());sync();
   $('#aisCpa').value=cfg.aisCpa??0.5;$('#aisCpa').onchange=e=>{cfg.aisCpa=Math.max(0.1,+e.target.value||0.5);saveCfg()};
   $('#aisMin').value=cfg.aisMin||10;$('#aisMin').onchange=e=>{cfg.aisMin=Math.max(1,+e.target.value||10);saveCfg()}}
+
+/* ---------- Check-lists et carnet d'entretien ---------- */
+const CK_DEF={
+ d1:['Météo consultée, fenêtre de navigation validée','Weer bekeken, vaarvenster bevestigd','Weather checked, passage window confirmed','Wetter geprüft, Wetterfenster bestätigt','Meteo consultada, ventana de navegación validada'],
+ d2:['Route et heure d\'arrivée prévues communiquées à un proche','Route en aankomsttijd doorgegeven aan een naaste','Route and ETA shared with someone ashore','Route und Ankunftszeit an eine Kontaktperson gemeldet','Ruta y hora de llegada comunicadas a un allegado'],
+ d3:['Carburant et eau douce suffisants','Genoeg brandstof en drinkwater','Enough fuel and fresh water','Genug Kraftstoff und Frischwasser','Combustible y agua dulce suficientes'],
+ d4:['Moteur : niveaux d\'huile et de refroidissement, prise d\'eau ouverte, courroie','Motor: olie- en koelvloeistofpeil, koelwaterafsluiter open, riem','Engine: oil and coolant levels, seacock open, belt','Motor: Öl- und Kühlmittelstand, Seeventil offen, Riemen','Motor: niveles de aceite y refrigerante, toma de mar abierta, correa'],
+ d5:['Batteries chargées, tableau électrique et coupe-circuits OK','Accu\'s geladen, schakelpaneel en hoofdschakelaar OK','Batteries charged, panel and switches OK','Batterien geladen, Schaltpaneel und Hauptschalter OK','Baterías cargadas, cuadro eléctrico e interruptores OK'],
+ d6:['Feux, VHF, AIS, instruments et GPS testés','Lichten, marifoon, AIS, instrumenten en GPS getest','Lights, VHF, AIS, instruments and GPS tested','Lichter, UKW, AIS, Instrumente und GPS getestet','Luces, VHF, AIS, instrumentos y GPS probados'],
+ d7:['Gréement et voiles : drisses, écoutes, enrouleur, ris prêts','Want en zeilen: schoten, vallen, rolreef, reven klaar','Rig and sails: halyards, sheets, furler, reefs ready','Rigg und Segel: Fallen, Schoten, Rollreff, Reffs klar','Aparejo y velas: drizas, escotas, enrollador, rizos listos'],
+ d8:['Sécurité : gilets, harnais, fusées, extincteurs, trousse de secours','Veiligheid: vesten, lijnen, noodfakkels, blusmiddelen, EHBO','Safety: lifejackets, harnesses, flares, extinguishers, first aid','Sicherheit: Westen, Lifelines, Fackeln, Feuerlöscher, Erste Hilfe','Seguridad: chalecos, arneses, bengalas, extintores, botiquín'],
+ d9:['Équipage briefé : MOB, VHF, harnais, signaux de détresse','Bemanning gebriefd: MOB, marifoon, lijnen, noodsignalen','Crew briefed: MOB, VHF, harnesses, distress signals','Crew eingewiesen: MOB, UKW, Lifelines, Notsignale','Tripulación informada: MOB, VHF, arneses, señales de socorro'],
+ d10:['Tout est arrimé, annexe et pare-battage rangés, panneaux fermés','Alles vastgezet, dinghy en stootwillen opgeborgen, luiken dicht','Everything stowed, tender and fenders secured, hatches closed','Alles gesichert, Beiboot und Fender verstaut, Luken zu','Todo estibado, auxiliar y defensas recogidos, escotillas cerradas'],
+ a1:['Moteur coupé, heures moteur notées','Motor uit, draaiuren genoteerd','Engine off, engine hours noted','Motor aus, Betriebsstunden notiert','Motor parado, horas de motor anotadas'],
+ a2:['Amarres, pare-battage et branchement quai vérifiés','Landvasten, stootwillen en walstroom gecontroleerd','Lines, fenders and shore power checked','Leinen, Fender und Landstrom geprüft','Amarras, defensas y toma de tierra revisadas'],
+ a3:['Voiles ferlées et protégées, bôme arrimée','Zeilen opgerold en beschermd, giek vastgezet','Sails furled and covered, boom secured','Segel aufgetucht und geschützt, Baum gesichert','Velas aferradas y protegidas, botavara sujeta'],
+ a4:['Contrôle visuel du gréement, des voiles et des écoutes après la navigation','Visuele controle van want, zeilen en schoten na het zeilen','Visual check of rig, sails and sheets after sailing','Sichtkontrolle von Rigg, Segeln und Schoten nach dem Segeln','Revisión visual de aparejo, velas y escotas tras navegar'],
+ a5:['Cale sèche, aucune fuite ni presse-étoupe qui goutte','Bilge droog, geen lekkage of druppelende schroefasdoorvoer','Bilge dry, no leaks or dripping stern gland','Bilge trocken, keine Lecks, Stopfbuchse dicht','Sentina seca, sin fugas ni bocina goteando'],
+ a6:['Niveau de carburant noté, plein à faire si besoin','Brandstofpeil genoteerd, tanken indien nodig','Fuel level noted, refuel if needed','Tankstand notiert, bei Bedarf tanken','Nivel de combustible anotado, repostar si hace falta'],
+ a7:['Coupe-batterie, gaz et chargeur : bon état de fermeture ou de branchement','Hoofdschakelaar, gas en lader: correct gesloten of aangesloten','Battery switch, gas and charger set correctly','Batterieschalter, Gas und Ladegerät korrekt gesetzt','Cortacorriente, gas y cargador en la posición correcta'],
+ a8:['Journal complété, problèmes à traiter notés dans le carnet d\'entretien','Logboek aangevuld, te verhelpen problemen in het onderhoudsboek genoteerd','Log completed, issues to fix noted in the maintenance log','Logbuch ergänzt, zu behebende Mängel im Wartungsbuch notiert','Diario completado, problemas anotados en el cuaderno de mantenimiento'],
+ p1:['Moteur : niveau d\'huile et de liquide de refroidissement','Motor: olie- en koelvloeistofpeil','Engine: oil and coolant level','Motor: Öl- und Kühlmittelstand','Motor: nivel de aceite y refrigerante'],
+ p2:['Filtre à eau de mer (crépine) : nettoyer','Koelwaterfilter reinigen','Raw-water strainer: clean','Seewasserfilter reinigen','Filtro de agua de mar: limpiar'],
+ p3:['Purge du décanteur / filtre à gazole','Dieselfilter / waterafscheider aftappen','Fuel filter / water separator: drain','Dieselfilter / Wasserabscheider entleeren','Purga del decantador / filtro de gasóleo'],
+ p4:['Moteur : tension de la courroie, fuites','Motor: riemspanning, lekkages','Engine: belt tension, leaks','Motor: Riemenspannung, Lecks','Motor: tensión de correa, fugas'],
+ p5:['Presse-étoupe et ligne d\'arbre','Schroefasdoorvoer en as','Stern gland and shaft','Stopfbuchse und Welle','Bocina y línea de eje'],
+ p6:['Batteries : bornes, niveau, tension','Accu\'s: polen, niveau, spanning','Batteries: terminals, level, voltage','Batterien: Pole, Stand, Spannung','Baterías: bornes, nivel, tensión'],
+ p7:['Pompe de cale et alarme : test','Lenspomp en alarm testen','Bilge pump and alarm: test','Lenzpumpe und Alarm testen','Bomba de achique y alarma: prueba'],
+ p8:['Gréement courant : drisses, écoutes, usure','Lopend want: vallen, schoten, slijtage','Running rigging: halyards, sheets, wear','Laufendes Gut: Fallen, Schoten, Verschleiß','Jarcia de labor: drizas, escotas, desgaste'],
+ p9:['Gréement dormant : haubans, ridoirs, cadènes, tête de mât','Staand want: wanten, spanners, ogen, masttop','Standing rigging: shrouds, turnbuckles, chainplates, masthead','Stehendes Gut: Wanten, Spanner, Püttings, Masttop','Jarcia firme: obenques, tensores, cadenotes, tope del mástil'],
+ p10:['Voiles : coutures, lattes, UV','Zeilen: naden, lattenzakken, UV','Sails: stitching, battens, UV','Segel: Nähte, Latten, UV','Velas: costuras, sables, UV'],
+ p11:['Vannes de coque : manœuvrer et graisser','Doorvoerafsluiters bewegen en invetten','Seacocks: operate and grease','Seeventile betätigen und fetten','Pasacascos: accionar y engrasar'],
+ p12:['Feux de navigation et ampoules','Navigatieverlichting en lampen','Navigation lights and bulbs','Positionslichter und Lampen','Luces de navegación y bombillas'],
+ p13:['Extincteurs et trousse de secours : date et pression','Blusmiddelen en EHBO: datum en druk','Extinguishers and first aid: dates and pressure','Feuerlöscher und Erste Hilfe: Datum und Druck','Extintores y botiquín: fechas y presión'],
+ p14:['Gilets gonflables : cartouche et état','Zwemvesten: patroon en staat','Inflatable lifejackets: cartridge and condition','Rettungswesten: Patrone und Zustand','Chalecos hinchables: cápsula y estado'],
+ p15:['Fusées de détresse : date de péremption','Noodfakkels: vervaldatum','Flares: expiry date','Notsignale: Ablaufdatum','Bengalas: fecha de caducidad'],
+ p16:['Moteur : vidange (huile et filtre)','Motor: olie en filter verversen','Engine: oil and filter change','Motor: Öl- und Filterwechsel','Motor: cambio de aceite y filtro'],
+ p17:['Anodes (moteur, hélice, coque)','Anodes (motor, schroef, romp)','Anodes (engine, propeller, hull)','Anoden (Motor, Propeller, Rumpf)','Ánodos (motor, hélice, casco)'],
+ p18:['Radeau de survie : révision','Reddingsvlot: onderhoudsbeurt','Liferaft: service','Rettungsinsel: Wartung','Balsa salvavidas: revisión']
+};
+const CK_LISTS=[
+ ['dep',['Avant le départ','Voor vertrek','Before departure','Vor dem Auslaufen','Antes de salir'],[['d1'],['d2'],['d3'],['d4'],['d5'],['d6'],['d7'],['d8'],['d9'],['d10']]],
+ ['arr',['À l\'arrivée','Bij aankomst','On arrival','Bei der Ankunft','A la llegada'],[['a1'],['a2'],['a3'],['a4'],['a5'],['a6'],['a7'],['a8']]],
+ ['per',['Contrôles réguliers','Regelmatige controles','Regular checks','Regelmäßige Kontrollen','Controles periódicos'],[['p1',7,'d'],['p2',30,'d'],['p3',50,'h'],['p4',50,'h'],['p5',30,'d'],['p6',30,'d'],['p7',30,'d'],['p8',30,'d'],['p9',90,'d'],['p10',90,'d'],['p11',90,'d'],['p12',30,'d'],['p13',180,'d'],['p14',365,'d'],['p15',365,'d'],['p16',100,'h'],['p17',180,'d'],['p18',1095,'d']]]
+];
+function ckSeed(){return{notif:false,lists:CK_LISTS.map(([k,n,its])=>({id:k,k,items:its.map(([ik,nn,u])=>({id:uid()+ik,k:ik,done:false,every:nn?{n:nn,u}:null,last:null}))}))}}
+let CHKS;try{CHKS=JSON.parse(localStorage.getItem('chk'))}catch(e){}
+if(!CHKS||!CHKS.lists)CHKS=ckSeed();
+let MNT;try{MNT=JSON.parse(localStorage.getItem('maint'))}catch(e){}
+if(!Array.isArray(MNT))MNT=[];
+const ckSave=()=>{localStorage.setItem('chk',JSON.stringify(CHKS));ckSchedule()};
+const mnSave=()=>{localStorage.setItem('maint',JSON.stringify(MNT));ckSchedule()};
+const ckText=it=>it.t||(it.k&&CK_DEF[it.k]?X(CK_DEF[it.k]):'');
+const ckListName=l=>l.name||(CK_LISTS.find(x=>x[0]===l.k)?X(CK_LISTS.find(x=>x[0]===l.k)[1]):tr('Ma liste'));
+const engNow=()=>fresh('engHours')?D.engHours:null;
+const engLast=()=>{let h=engNow();if(h!=null)return h;const v=[];CHKS.lists.forEach(l=>l.items.forEach(i=>i.last&&i.last.h!=null&&v.push(i.last.h)));MNT.forEach(m=>m.h!=null&&v.push(m.h));return v.length?Math.max(...v):null};
+const DAY=864e5,fmtD=t=>new Date(t).toLocaleDateString(LOC(),{day:'2-digit',month:'2-digit',year:'numeric'});
+function addMonths(t,n){const d=new Date(t);d.setMonth(d.getMonth()+n);return d.getTime()}
+function dueState(every,last,now){   // -> {st:'ok'|'soon'|'late'|'never', txt, at}
+  if(!every)return null;
+  if(!last)return{st:'never',txt:tr('Jamais fait')};
+  if(every.u==='h'){const cur=engLast();if(last.h==null||cur==null)return{st:'ok',txt:tr('Toutes les')+' '+every.n+' h'};const left=last.h+every.n-cur;
+    return{st:left<=0?'late':left<=every.n*0.1?'soon':'ok',txt:left<=0?tr('En retard de')+' '+Math.round(-left)+' h':tr('Dans')+' '+Math.round(left)+' h'}}
+  const at=every.u==='m'?addMonths(last.t,every.n):last.t+every.n*DAY,d=(at-now)/DAY;
+  return{st:d<=0?'late':d<=Math.max(2,every.n*0.1)?'soon':'ok',txt:d<=0?tr('En retard de')+' '+Math.ceil(-d)+' '+tr('j'):tr('Dans')+' '+Math.ceil(d)+' '+tr('j'),at}
+}
+const ckCol={ok:'#34d27b',soon:'#ffb224',late:'#ff5a4d',never:'#8a9aa0'};
+const ckModal=(html,setup)=>{const m=document.createElement('div');m.className='modal';m.innerHTML='<div role="dialog">'+html+'</div>';document.body.appendChild(m);m.onclick=e=>{if(e.target===m)m.remove()};setup(m,()=>m.remove());return m};
+let NT='notes';
+function noteTab(v){NT=v;$('#nTabNotes').classList.toggle('hide',v!=='notes');$('#nTabChk').classList.toggle('hide',v!=='chk');$('#nTabMnt').classList.toggle('hide',v!=='mnt');
+  $$('#nSubs [data-nt]').forEach(b=>b.classList.toggle('on',b.dataset.nt===v));if(v==='chk')ckRender();if(v==='mnt')mnRender()}
+$$('#nSubs [data-nt]').forEach(b=>b.onclick=()=>noteTab(b.dataset.nt));
+/* -- Check-lists -- */
+function ckRender(){
+  const now=NOW(),el=$('#nTabChk');
+  let h=`<div class="card"><label class="ckrow"><input type="checkbox" id="ckNotif" ${CHKS.notif?'checked':''} style="width:auto"> <span>🔔 ${tr('Me rappeler les échéances et les check-lists (notifications)')}</span></label><div class="mut" id="ckNotifMsg" style="margin-top:4px"></div></div>`;
+  CHKS.lists.forEach(l=>{
+    const per=l.items.some(i=>i.every),tot=l.items.length,dn=l.items.filter(i=>!i.every&&i.done).length,nOne=l.items.filter(i=>!i.every).length;
+    h+=`<div class="card ckl" data-l="${l.id}"><div class="row" style="justify-content:space-between;align-items:center"><b style="font:600 18px var(--num)">${esc(ckListName(l))}</b><span class="mut">${nOne?dn+' / '+nOne:''}</span></div>`;
+    if(nOne){h+=`<div class="wbar" style="height:6px;margin:6px 0"><u style="width:${nOne?Math.round(dn/nOne*100):0}%;background:var(--acc)"></u></div>`}
+    l.items.forEach(i=>{
+      const ds=dueState(i.every,i.last,now);
+      h+=`<div class="ckit" data-i="${i.id}">`+(i.every
+        ?`<button class="b sec ckdone" data-done="${i.id}" aria-label="${tr('Fait')}">✓</button>`
+        :`<input type="checkbox" data-chk="${i.id}" ${i.done?'checked':''} aria-label="${tr('Fait')}">`)
+        +`<div class="ckt" data-edit="${i.id}"><span${i.done&&!i.every?' style="text-decoration:line-through;opacity:.6"':''}>${esc(ckText(i))}</span>`
+        +(ds?`<small style="color:${ckCol[ds.st]}">● ${ds.txt}${i.last?' · '+tr('fait le')+' '+fmtD(i.last.t)+(i.last.h!=null?' ('+Math.round(i.last.h)+' h)':''):''}</small>`:'')+`</div></div>`});
+    h+=`<div class="row" style="margin-top:8px"><button class="b sec" data-add="${l.id}">＋ ${tr('Ajouter un point')}</button>${nOne?`<button class="b sec" data-reset="${l.id}">${tr('Tout décocher')}</button>`:''}<button class="b sec" data-ren="${l.id}">✎</button></div></div>`;
+  });
+  h+=`<div class="row"><button class="b sec" id="ckNewList">＋ ${tr('Nouvelle liste')}</button><button class="b sec" id="ckRestore">${tr('Remettre les listes par défaut')}</button></div>`;
+  el.innerHTML=h;
+  $('#ckNotif').onchange=async e=>{const on=e.target.checked;if(on){const ok=await ckPerm();if(!ok){e.target.checked=false;$('#ckNotifMsg').textContent=tr('Notifications refusées : autorise-les dans les réglages du téléphone.');return}}CHKS.notif=on;ckSave();ckRender()};
+  $('#ckNotifMsg').textContent=CHKS.notif?tr('Actif : rappels des échéances, et invite à la check-list au départ et à l\'arrivée.'):'';
+  const find=id=>{for(const l of CHKS.lists){const i=l.items.find(x=>x.id===id);if(i)return[l,i]}return[]};
+  el.querySelectorAll('[data-chk]').forEach(c=>c.onchange=()=>{const[,i]=find(c.dataset.chk);i.done=c.checked;ckSave();ckRender()});
+  el.querySelectorAll('[data-done]').forEach(b=>b.onclick=()=>{const[,i]=find(b.dataset.done);i.last={t:NOW(),h:engNow()};ckSave();ckRender();hap('light')});
+  el.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>ckEditItem(b.dataset.edit));
+  el.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>ckEditItem(null,b.dataset.add));
+  el.querySelectorAll('[data-reset]').forEach(b=>b.onclick=()=>{const l=CHKS.lists.find(x=>x.id===b.dataset.reset);l.items.forEach(i=>{if(!i.every)i.done=false});ckSave();ckRender()});
+  el.querySelectorAll('[data-ren]').forEach(b=>b.onclick=()=>ckEditList(b.dataset.ren));
+  $('#ckNewList').onclick=()=>ckEditList(null);
+  $('#ckRestore').onclick=()=>{if(!confirm(tr('Remettre les listes par défaut ? Tes modifications seront perdues.')))return;const n=CHKS.notif;CHKS=ckSeed();CHKS.notif=n;ckSave();ckRender()};
+}
+function ckEditItem(id,lid){
+  let l,i;if(id){for(const x of CHKS.lists){const f=x.items.find(q=>q.id===id);if(f){l=x;i=f}}}else l=CHKS.lists.find(x=>x.id===lid);if(!l)return;
+  const ev=i&&i.every||null;
+  ckModal(`<div class="row" style="justify-content:space-between"><b style="font:600 20px var(--num)">${tr(i?'Modifier le point':'Nouveau point')}</b><button class="b sec" id="ckX">${tr('Fermer')}</button></div>
+   <label>${tr('Point à vérifier')}</label><textarea id="ckT" rows="2">${esc(i?ckText(i):'')}</textarea>
+   <label class="ckrow"><input type="checkbox" id="ckPer" ${ev?'checked':''} style="width:auto"> ${tr('Contrôle périodique (à refaire régulièrement)')}</label>
+   <div id="ckPerBox" class="${ev?'':'hide'}"><label>${tr('À refaire tous les')}</label><div class="row"><input id="ckN" type="number" min="1" value="${ev?ev.n:30}" style="flex:1"><select id="ckU" style="flex:1"><option value="d">${tr('jours')}</option><option value="m">${tr('mois')}</option><option value="h">${tr('heures moteur')}</option></select></div></div>
+   <div class="row" style="margin-top:16px"><button class="b" id="ckS" style="flex:1">${tr('Enregistrer')}</button>${i?`<button class="b red" id="ckD">${tr('Supprimer')}</button>`:''}</div>`,(m,close)=>{
+   m.querySelector('#ckU').value=ev?ev.u:'d';m.querySelector('#ckX').onclick=close;
+   m.querySelector('#ckPer').onchange=e=>m.querySelector('#ckPerBox').classList.toggle('hide',!e.target.checked);
+   m.querySelector('#ckS').onclick=()=>{const t=m.querySelector('#ckT').value.trim();if(!t)return;
+     const every=m.querySelector('#ckPer').checked?{n:Math.max(1,+m.querySelector('#ckN').value||1),u:m.querySelector('#ckU').value}:null;
+     if(i){if(t!==ckText(i))i.t=t;i.every=every;if(!every)i.last=null}else l.items.push({id:uid(),t,done:false,every,last:null});
+     ckSave();close();ckRender()};
+   const d=m.querySelector('#ckD');if(d)d.onclick=()=>{if(!confirm(tr('Supprimer ce point ?')))return;l.items=l.items.filter(x=>x!==i);ckSave();close();ckRender()};
+  });
+}
+function ckEditList(id){
+  const l=id?CHKS.lists.find(x=>x.id===id):null;
+  ckModal(`<div class="row" style="justify-content:space-between"><b style="font:600 20px var(--num)">${tr('Liste')}</b><button class="b sec" id="ckX">${tr('Fermer')}</button></div><label>${tr('Nom de la liste')}</label><input id="ckN" value="${esc(l?ckListName(l):'')}">
+   <div class="row" style="margin-top:16px"><button class="b" id="ckS" style="flex:1">${tr('Enregistrer')}</button>${l?`<button class="b red" id="ckD">${tr('Supprimer')}</button>`:''}</div>`,(m,close)=>{
+   m.querySelector('#ckX').onclick=close;
+   m.querySelector('#ckS').onclick=()=>{const n=m.querySelector('#ckN').value.trim();if(!n)return;if(l)l.name=n;else CHKS.lists.push({id:uid(),name:n,items:[]});ckSave();close();ckRender()};
+   const d=m.querySelector('#ckD');if(d)d.onclick=()=>{if(!confirm(tr('Supprimer cette liste et ses points ?')))return;CHKS.lists=CHKS.lists.filter(x=>x!==l);ckSave();close();ckRender()};
+  });
+}
+/* -- Carnet d'entretien -- */
+const MN_CAT=[['engine','⚙️','Moteur'],['rig','⛓','Gréement'],['sail','⛵','Voiles'],['hull','🛥','Coque'],['elec','🔋','Électricité'],['safety','🛟','Sécurité'],['plumb','🚰','Eau / plomberie'],['tender','🚣','Annexe'],['other','📝','Autre']];
+const MN_SUG=['Vidange moteur','Filtre à huile','Filtre à gazole','Courroie','Turbine de pompe à eau de mer','Anodes','Hélice','Antifouling','Révision gréement','Révision des voiles','Batteries','Fusées de détresse','Extincteurs','Radeau de survie','Gilets gonflables','Winchs : graissage','Moteur hors-bord'];
+let MNF='all';
+const mnDue=m=>{if(!m.next)return null;const n=m.next;
+  if(n.u==='h'){const cur=engLast();if(m.h==null)return{st:'ok',txt:tr('Tous les')+' '+n.n+' h'};if(cur==null)return{st:'ok',txt:tr('À')+' '+Math.round(m.h+n.n)+' h'};const left=m.h+n.n-cur;return{st:left<=0?'late':left<=n.n*0.1?'soon':'ok',txt:left<=0?tr('En retard de')+' '+Math.round(-left)+' h':tr('Dans')+' '+Math.round(left)+' h'}}
+  return dueState({n:n.n,u:n.u},{t:m.t},NOW())};
+function mnLatest(){const by={};MNT.slice().sort((a,b)=>a.t-b.t).forEach(m=>{by[(m.title||'').toLowerCase()+'|'+m.cat]=m});return Object.values(by).filter(m=>m.next)}
+function mnRender(){
+  const el=$('#nTabMnt'),up=mnLatest().map(m=>({m,d:mnDue(m)})).filter(x=>x.d).sort((a,b)=>({late:0,soon:1,ok:2,never:3}[a.d.st]-{late:0,soon:1,ok:2,never:3}[b.d.st])||(a.d.at||1e15)-(b.d.at||1e15));
+  const cat=k=>MN_CAT.find(c=>c[0]===k)||MN_CAT[8],eh=engLast();
+  let h=`<div class="card"><div class="row" style="justify-content:space-between;align-items:center"><b style="font:600 18px var(--num)">${tr('À venir')}</b>${eh!=null?`<span class="mut">⚙️ ${Math.round(eh)} h</span>`:''}</div>`
+   +(up.length?up.map(({m,d})=>`<div class="ckit"><div class="ckt" data-me="${m.id}"><span>${cat(m.cat)[1]} ${esc(m.title)}</span><small style="color:${ckCol[d.st]}">● ${d.txt}</small></div></div>`).join(''):`<div class="mut">${tr('Aucune échéance : indique « prochaine échéance » en enregistrant une intervention.')}</div>`)+`</div>`;
+  h+=`<div class="row"><button class="b" id="mnAdd" style="flex:1">＋ ${tr('Nouvelle intervention')}</button><button class="b sec" id="mnXls">Excel</button></div>`;
+  h+=`<div id="helpSubs" style="padding:8px 0"><button class="hc${MNF==='all'?' on':''}" data-mf="all">${tr('Tout')}</button>${MN_CAT.map(c=>`<button class="hc${MNF===c[0]?' on':''}" data-mf="${c[0]}">${c[1]}</button>`).join('')}</div>`;
+  const L=MNT.filter(m=>MNF==='all'||m.cat===MNF).sort((a,b)=>b.t-a.t),tot=L.reduce((s,m)=>s+(+m.cost||0),0);
+  h+=L.length?L.map(m=>`<div class="card ckm" data-me="${m.id}"><div class="row" style="justify-content:space-between"><b>${cat(m.cat)[1]} ${esc(m.title)}</b><span class="mut">${fmtD(m.t)}</span></div>${m.note?`<div style="margin-top:4px;white-space:pre-line">${esc(m.note)}</div>`:''}<div class="mut" style="margin-top:4px">${[m.h!=null?'⚙️ '+Math.round(m.h)+' h':'',m.cost?(+m.cost).toFixed(2)+' €':'',m.next?'⏰ '+tr('tous les')+' '+m.next.n+' '+({d:tr('j'),m:tr('mois'),h:'h'}[m.next.u]):''].filter(Boolean).join(' · ')}</div></div>`).join('')+`<div class="mut" style="margin:6px 4px">${tr('Total')} : ${tot.toFixed(2)} €</div>`:`<div class="card mut">${tr('Aucune intervention enregistrée.')}</div>`;
+  el.innerHTML=h;
+  el.querySelectorAll('[data-me]').forEach(b=>b.onclick=()=>mnEdit(b.dataset.me));
+  el.querySelectorAll('[data-mf]').forEach(b=>b.onclick=()=>{MNF=b.dataset.mf;mnRender()});
+  $('#mnAdd').onclick=()=>mnEdit(null);
+  $('#mnXls').onclick=()=>downloadBin('entretien.xlsx',buildMntXlsx(),'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+}
+const toDateInput=t=>{const d=new Date(t);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+function mnEdit(id){
+  const m=id?MNT.find(x=>x.id===id):null,eh=engLast();
+  ckModal(`<div class="row" style="justify-content:space-between"><b style="font:600 20px var(--num)">${tr(m?'Modifier l\'intervention':'Nouvelle intervention')}</b><button class="b sec" id="mnX">${tr('Fermer')}</button></div>
+   <label>${tr('Date')}</label><input type="date" id="mnD" value="${toDateInput(m?m.t:NOW())}">
+   <label>${tr('Catégorie')}</label><select id="mnC">${MN_CAT.map(c=>`<option value="${c[0]}">${c[1]} ${tr(c[2])}</option>`).join('')}</select>
+   <label>${tr('Intervention')}</label><input id="mnT" list="mnSug" value="${esc(m?m.title:'')}" placeholder="${tr('Ex : vidange moteur')}"><datalist id="mnSug">${MN_SUG.map(s=>`<option value="${esc(tr(s))}">`).join('')}</datalist>
+   <label>${tr('Détails')}</label><textarea id="mnN" rows="3" placeholder="${tr('Pièces, référence, fournisseur, remarques…')}">${esc(m?m.note||'':'')}</textarea>
+   <div class="row"><div style="flex:1"><label>${tr('Heures moteur')}</label><input id="mnH" inputmode="decimal" value="${m?(m.h==null?'':m.h):(eh!=null?Math.round(eh):'')}"></div><div style="flex:1"><label>${tr('Coût')} (€)</label><input id="mnK" inputmode="decimal" value="${m&&m.cost?m.cost:''}"></div></div>
+   <label>${tr('Prochaine échéance, dans')}</label><div class="row"><input id="mnNn" type="number" min="1" placeholder="—" value="${m&&m.next?m.next.n:''}" style="flex:1"><select id="mnU" style="flex:1"><option value="m">${tr('mois')}</option><option value="d">${tr('jours')}</option><option value="h">${tr('heures moteur')}</option></select></div>
+   <div class="row" style="margin-top:16px"><button class="b" id="mnS" style="flex:1">${tr('Enregistrer')}</button>${m?`<button class="b red" id="mnDel">${tr('Supprimer')}</button>`:''}</div>`,(w,close)=>{
+   w.querySelector('#mnC').value=m?m.cat:'engine';w.querySelector('#mnU').value=m&&m.next?m.next.u:'m';w.querySelector('#mnX').onclick=close;
+   w.querySelector('#mnS').onclick=()=>{const t=w.querySelector('#mnT').value.trim();if(!t){w.querySelector('#mnT').focus();return}
+     const [y,mo,d]=w.querySelector('#mnD').value.split('-').map(Number),num2=v=>{v=String(v).replace(',','.').trim();return v===''||isNaN(+v)?null:+v},nn=+w.querySelector('#mnNn').value;
+     const o={id:m?m.id:uid(),t:new Date(y,mo-1,d,12).getTime(),cat:w.querySelector('#mnC').value,title:t,note:w.querySelector('#mnN').value.trim(),h:num2(w.querySelector('#mnH').value),cost:num2(w.querySelector('#mnK').value),next:nn>0?{n:nn,u:w.querySelector('#mnU').value}:null};
+     if(m)Object.assign(m,o);else MNT.push(o);mnSave();close();mnRender()};
+   const dl=w.querySelector('#mnDel');if(dl)dl.onclick=()=>{if(!confirm(tr('Supprimer cette intervention ?')))return;MNT=MNT.filter(x=>x!==m);mnSave();close();mnRender()};
+  });
+}
+function buildMntXlsx(){
+  const cn=k=>tr((MN_CAT.find(c=>c[0]===k)||MN_CAT[8])[2]);
+  const rows=[[tr('Date'),tr('Catégorie'),tr('Intervention'),tr('Détails'),tr('Heures moteur'),tr('Coût')+' (€)',tr('Prochaine échéance')],...MNT.slice().sort((a,b)=>b.t-a.t).map(m=>[{d:m.t},cn(m.cat),m.title,m.note||'',m.h==null?null:+m.h,m.cost?+m.cost:null,m.next?m.next.n+' '+({d:tr('jours'),m:tr('mois'),h:tr('heures moteur')}[m.next.u]):''])];
+  return xlsxPack([[tr('Entretien'),xSheet(rows,[17,18,30,40,13,11,22],true)]]);
+}
+/* -- Notifications et invites -- */
+async function ckPerm(){
+  try{
+    if(NATIVE){const LN=plug('LocalNotifications');let p=await LN.checkPermissions();if(p.display!=='granted')p=await LN.requestPermissions();return p.display==='granted'}
+    if(!('Notification' in window))return false;if(Notification.permission==='granted')return true;return (await Notification.requestPermission())==='granted';
+  }catch(e){return false}
+}
+function ckDueList(){   // tout ce qui est en retard ou proche
+  const out=[],now=NOW();
+  CHKS.lists.forEach(l=>l.items.forEach(i=>{const d=dueState(i.every,i.last,now);if(d&&(d.st==='late'||d.st==='soon'))out.push({t:ckText(i),d,at:d.at})}));
+  mnLatest().forEach(m=>{const d=mnDue(m);if(d&&(d.st==='late'||d.st==='soon'))out.push({t:m.title,d,at:d.at})});
+  return out;
+}
+async function ckSchedule(){
+  if(!NATIVE||!CHKS.notif)return;
+  try{const LN=plug('LocalNotifications'),pend=await LN.getPending();if(pend.notifications&&pend.notifications.length)await LN.cancel({notifications:pend.notifications});
+    const list=[],now=Date.now();let id=100;
+    const add=(title,at)=>{if(!at)return;const d=new Date(at);d.setHours(9,0,0,0);let t=d.getTime();if(t<=now)t=now+3600e3;list.push({id:id++,title:tr('Carnet de bord'),body:title,schedule:{at:new Date(t),allowWhileIdle:true}})};
+    CHKS.lists.forEach(l=>l.items.forEach(i=>{if(i.every&&i.last&&i.every.u!=='h'){const d=dueState(i.every,i.last,now);if(d&&d.at)add(tr('Échéance : ')+ckText(i),d.at)}}));
+    mnLatest().forEach(m=>{if(m.next&&m.next.u!=='h'){const d=mnDue(m);if(d&&d.at)add(tr('Entretien : ')+m.title,d.at)}});
+    if(list.length)await LN.schedule({notifications:list.slice(0,60)});
+  }catch(e){}
+}
+function ckBanner(msg,act){
+  let b=$('#ckBan');if(!b){b=document.createElement('div');b.id='ckBan';b.style.cssText='position:fixed;left:10px;right:10px;top:max(10px,env(safe-area-inset-top));z-index:35;background:var(--card);border:1.5px solid var(--acc);border-radius:12px;padding:10px 12px;box-shadow:0 4px 16px rgba(0,0,0,.4);display:flex;gap:8px;align-items:center;font-size:14px';document.body.appendChild(b)}
+  b.innerHTML=`<span style="flex:1">${msg}</span><button class="b" id="ckBanGo">${tr('Ouvrir')}</button><button class="b sec" id="ckBanX" aria-label="${tr('Fermer')}">✕</button>`;
+  $('#ckBanX').onclick=()=>b.remove();$('#ckBanGo').onclick=()=>{b.remove();act()};clearTimeout(ckBanner.t);ckBanner.t=setTimeout(()=>b.remove(),20000);
+}
+function ckTrip(kind){   // invite au départ / à l'arrivée
+  if(!CHKS.notif)return;const l=CHKS.lists.find(x=>x.id===kind);if(!l||!l.items.length)return;
+  const n=l.items.filter(i=>!i.every).length;
+  ckBanner('✅ '+esc(ckListName(l))+' · '+n+' '+tr('points'),()=>{go('notes');noteTab('chk');setTimeout(()=>{const e=$(`.ckl[data-l="${l.id}"]`);e&&e.scrollIntoView({behavior:'smooth'})},50)});
+  if(kind==='arr'){const d=CHKS.lists.find(x=>x.id==='dep');if(d)d.items.forEach(i=>{if(!i.every)i.done=false});ckSave()}
+  if(kind==='dep'){const a=CHKS.lists.find(x=>x.id==='arr');if(a)a.items.forEach(i=>{if(!i.every)i.done=false});ckSave()}
+}
+{const so=startTrip;startTrip=function(){const was=!!cur,r=so.apply(this,arguments);if(!was&&cur)try{ckTrip('dep')}catch(e){}return r};
+ const eo=endTrip;endTrip=async function(){const was=!!cur,r=await eo.apply(this,arguments);if(was)try{ckTrip('arr')}catch(e){}return r}}
+function ckDaily(){   // à l'ouverture : résumé des retards, une fois par jour
+  if(!CHKS.notif)return;const day=new Date().toDateString();if(localStorage.getItem('ckDay')===day)return;
+  const L=ckDueList();if(!L.length)return;localStorage.setItem('ckDay',day);
+  const late=L.filter(x=>x.d.st==='late').length;
+  ckBanner('⏰ '+(late?late+' '+tr('en retard')+' · ':'')+L.length+' '+tr('échéance(s) à traiter'),()=>{go('notes');noteTab('chk')});
+  try{if(!NATIVE&&'Notification' in window&&Notification.permission==='granted')new Notification(tr('Carnet de bord'),{body:L.slice(0,4).map(x=>x.t).join('\n')})}catch(e){}
+}
+setTimeout(()=>{try{ckDaily();ckSchedule()}catch(e){}},4000);
 
 I18N.start();
 </script>
