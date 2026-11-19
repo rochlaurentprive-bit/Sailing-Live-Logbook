@@ -90,6 +90,8 @@ th:first-child,td:first-child{text-align:left}
 canvas#map{width:100%;height:58vh;background:var(--map);border-radius:var(--r);border:1px solid var(--line);touch-action:none;display:block}
 .bar{height:8px;background:var(--acc);border-radius:4px}
 .hide{display:none!important}
+.seg{display:flex;background:var(--line);border-radius:12px;padding:3px;margin-bottom:10px}.seg button{flex:1;border:0;background:none;color:var(--mut);padding:10px;border-radius:10px;font:600 15px system-ui}.seg button.on{background:var(--card);color:var(--tx);box-shadow:0 1px 4px #0002}
+.wt td,.wt th{white-space:nowrap}.wt td:last-child{white-space:normal;min-width:90px}.wt tr[data-wi]{cursor:pointer}.wt tr.wb{background:color-mix(in srgb,var(--acc) 14%,transparent)}.wbar{height:5px;background:var(--line);border-radius:3px;margin-bottom:3px;min-width:70px}.wbar u{display:block;height:100%;border-radius:3px}
 .gf{display:flex;gap:10px;justify-content:space-between;align-items:center;border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px}.gf .b{padding:8px 12px;flex:none}
 .sg{background:var(--card);border:1px solid var(--line);border-radius:14px;margin:0 0 10px;overflow:hidden}.sg>summary{list-style:none;cursor:pointer;padding:15px 16px;font-weight:600;font-size:16px;display:flex;align-items:center;gap:8px}.sg>summary::-webkit-details-marker{display:none}.sg>summary::after{content:"›";margin-left:auto;font-size:24px;line-height:1;color:var(--mut);transition:transform .2s}.sg[open]>summary::after{transform:rotate(90deg)}.sg[open]>summary{border-bottom:1px solid var(--line)}.sgb{padding:6px 16px 16px}
 nav{transition:transform .28s ease,opacity .2s}
@@ -340,6 +342,7 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
   <div class="card warn mut">⚠️ Aide à la décision uniquement. Le routage ne connaît ni la terre, ni les hauts-fonds, ni les dangers : vérifie toujours la route sur la carte et ajoute des points « Via » pour contourner les côtes.</div>
   <div class="card" id="polShort"><div class="mut" id="polLine"></div><button class="b sec" id="polGoSet" style="margin-top:8px">Polaire : importer, activer, visualiser (Réglages)</button></div>
   <div class="card">
+    <div class="seg" role="tablist"><button id="rModeS" class="on">Simple</button><button id="rModeA">Avancé</button></div>
     <button class="b" id="rRoutePick" style="width:100%;padding:14px">📍 Placer les points sur la carte</button>
     <label>Départ (lat, lon en degrés décimaux)</label>
     <div class="row"><input id="rA" placeholder="47.52, -3.05" style="flex:1"><button class="b sec" id="rHere">Ma position</button></div>
@@ -356,6 +359,17 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
     <div class="row"><input id="rMaxW" type="number" step="1" value="22" style="flex:1"><input id="rMaxH" type="number" step="0.5" value="2" style="flex:1"></div>
     <div class="row" style="margin-top:12px"><button class="b" id="rGo">Calculer 3 routages</button><button class="b sec" id="rUpd">Mettre à jour (ma position, maintenant)</button></div>
     <div class="mut" id="rStat" style="margin-top:8px"></div>
+    <div id="rAdv" class="hide" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line)">
+      <b>Planificateur de départ</b>
+      <div class="mut" style="margin:4px 0 8px">Compare plusieurs heures de départ à partir de la date ci-dessus, avec tes limites de vent et de vagues, et te conseille la meilleure fenêtre.</div>
+      <div class="row"><div style="flex:1"><label>Chercher sur</label><select id="wRange"><option value="12">12 heures</option><option value="24" selected>24 heures</option><option value="48">48 heures</option><option value="72">72 heures</option></select></div>
+        <div style="flex:1"><label>Un départ toutes les</label><select id="wStep"><option value="1">1 heure</option><option value="3" selected>3 heures</option><option value="6">6 heures</option></select></div></div>
+      <div class="row"><div style="flex:1"><label>Je privilégie</label><select id="wGoal"><option value="balanced" selected>Équilibré</option><option value="fast">Le plus rapide</option><option value="comfort">Le plus confortable</option><option value="night">Éviter la nuit</option></select></div>
+        <div style="flex:1"><label>Marge de sécurité</label><select id="wMargin"><option value="0">Aucune</option><option value="10" selected>Vent et vagues +10 %</option><option value="20">Vent et vagues +20 %</option></select></div></div>
+      <button class="b" id="wGo" style="width:100%;margin-top:12px;padding:14px">🔎 Comparer les départs</button>
+      <div class="mut" id="wStat" style="margin-top:6px"></div>
+      <div id="wRes"></div>
+    </div>
   </div>
   <div id="rRes"></div>
   <div class="card">
@@ -1101,7 +1115,38 @@ Enregistrement automatique|Automatische registratie|Automatic recording|Automati
 Diagnostic et log|Diagnose en log|Diagnostics and log|Diagnose und Protokoll|Diagnóstico y registro
 Enregistrer|Opslaan|Save|Speichern|Guardar
 vitesse surface|snelheid door het water|speed through water|Fahrt durchs Wasser|velocidad en la superficie
-courant|stroom|current|Strom|corriente`;
+courant|stroom|current|Strom|corriente
+Simple|Eenvoudig|Simple|Einfach|Simple
+Avancé|Geavanceerd|Advanced|Erweitert|Avanzado
+Planificateur de départ|Vertrekplanner|Departure planner|Abfahrtsplaner|Planificador de salida
+Compare plusieurs heures de départ à partir de la date ci-dessus, avec tes limites de vent et de vagues, et te conseille la meilleure fenêtre.|Vergelijkt meerdere vertrektijden vanaf de datum hierboven, met je limieten voor wind en golven, en adviseert het beste venster.|Compares several departure times starting from the date above, using your wind and wave limits, and recommends the best window.|Vergleicht mehrere Abfahrtszeiten ab dem obigen Datum mit deinen Wind- und Wellengrenzen und empfiehlt das beste Zeitfenster.|Compara varias horas de salida a partir de la fecha de arriba, con tus límites de viento y olas, y te aconseja la mejor ventana.
+Chercher sur|Zoeken over|Search over|Suchen über|Buscar durante
+12 heures|12 uur|12 hours|12 Stunden|12 horas
+24 heures|24 uur|24 hours|24 Stunden|24 horas
+48 heures|48 uur|48 hours|48 Stunden|48 horas
+72 heures|72 uur|72 hours|72 Stunden|72 horas
+Un départ toutes les|Een vertrek elke|One departure every|Eine Abfahrt alle|Una salida cada
+1 heure|1 uur|1 hour|1 Stunde|1 hora
+3 heures|3 uur|3 hours|3 Stunden|3 horas
+6 heures|6 uur|6 hours|6 Stunden|6 horas
+Je privilégie|Mijn voorkeur|I prefer|Ich bevorzuge|Prefiero
+Équilibré|Evenwichtig|Balanced|Ausgewogen|Equilibrado
+Le plus rapide|Snelste|Fastest|Am schnellsten|El más rápido
+Le plus confortable|Meest comfortabel|Most comfortable|Am komfortabelsten|El más cómodo
+Éviter la nuit|Nacht vermijden|Avoid night|Nacht vermeiden|Evitar la noche
+Marge de sécurité|Veiligheidsmarge|Safety margin|Sicherheitsmarge|Margen de seguridad
+Aucune|Geen|None|Keine|Ninguno
+Vent et vagues +10 %|Wind en golven +10 %|Wind and waves +10 %|Wind und Wellen +10 %|Viento y olas +10 %
+Vent et vagues +20 %|Wind en golven +20 %|Wind and waves +20 %|Wind und Wellen +20 %|Viento y olas +20 %
+🔎 Comparer les départs|🔎 Vertrektijden vergelijken|🔎 Compare departures|🔎 Abfahrten vergleichen|🔎 Comparar salidas
+Calculer le routage avec ce départ|Routering berekenen met dit vertrek|Compute the route with this departure|Route mit dieser Abfahrt berechnen|Calcular la ruta con esta salida
+Départ|Vertrek|Departure|Abfahrt|Salida
+Durée|Duur|Duration|Dauer|Duración
+Nuit|Nacht|Night|Nacht|Noche
+meilleur compromis durée / confort|beste balans duur / comfort|best trade-off between duration and comfort|bester Kompromiss aus Dauer und Komfort|mejor equilibrio duración / confort
+le plus rapide|snelste|fastest|am schnellsten|el más rápido
+le plus confortable|meest comfortabel|most comfortable|am komfortabelsten|el más cómodo
+le moins de nuit|minste nacht|least night|am wenigsten Nacht|menos noche`;
   const EX=new Map(),PAT=[];
   RAW.split('\n').forEach(l=>{const a=l.split('|');if(a.length!==5)return;const fr=a[0],t=a.slice(1);
     if(/\{\d\}/.test(fr)){const parts=fr.split(/\{\d\}/).map(x=>x.replace(/[.*+?^$()|[\]\\{}]/g,'\\$&'));PAT.push([new RegExp('^'+parts.join('(.+?)')+'$'),t,fr.length])}
@@ -1205,7 +1250,7 @@ const tr=I18N.tr,LOC=()=>I18N.LOC();
 </div>
 <script>
 let simT=null;
-const APPV='v22',ERRLOG=[];
+const APPV='v23',ERRLOG=[];
 const logErr=m=>{ERRLOG.push(new Date().toLocaleTimeString(LOC())+' '+String(m).slice(0,220));if(ERRLOG.length>25)ERRLOG.shift()};
 window.addEventListener('error',e=>logErr((e.message||'erreur')+' @'+String(e.filename||'').split('/').pop()+':'+e.lineno));
 window.addEventListener('unhandledrejection',e=>logErr('promesse : '+((e.reason&&e.reason.message)||e.reason)));
@@ -4542,6 +4587,89 @@ function gribUI(){
   $('#gribList').addEventListener('click',async e=>{const b=e.target.closest('[data-gdel]');if(!b)return;const i=+b.dataset.gdel,p=GRIBS.files()[i];
     if(!p||!confirm(tr('Supprimer ce fichier GRIB ?')))return;await db.del('grib',p.id);GRIBS.remove(i);gribUI()});
 }
+
+/* ====== Routage : mode Simple / Avancé, planificateur de départ ====== */
+let WIN=null;
+function rModeSet(m){
+  cfg.rMode=m;saveCfg();
+  $('#rAdv').classList.toggle('hide',m!=='adv');
+  $('#rModeS').classList.toggle('on',m!=='adv');$('#rModeA').classList.toggle('on',m==='adv');
+}
+function nightHours(path){
+  let h=0;for(let i=1;i<path.length;i++){const a=path[i-1],b=path[i];const sp=sunPos(b.lat,b.lon,(a.t+b.t)/2);if(sp.el<-6)h+=(b.t-a.t)/3600000}
+  return h;
+}
+async function computeWindow(){
+  const st=$('#wStat'),A=parseLL($('#rA').value),B=parseLL($('#rB').value);
+  if(!A||!B){st.textContent='Renseigne départ et arrivée en degrés décimaux (ex : 47.52, -3.05).';return}
+  const vias=$('#rV').value.split('\n').map(s=>s.trim()).filter(Boolean).map(parseLL);
+  if(vias.includes(null)){st.textContent='Un point « Via » est invalide.';return}
+  const tStart=new Date($('#rT').value).getTime();if(isNaN(tStart)){st.textContent='Date de départ invalide.';return}
+  const V=+$('#rCruise').value;if(!(V>0)){st.textContent='Vitesse de croisière invalide.';return}
+  const wxM=$('#rWx').value,wave=$('#rWave').value,cur2=$('#rCur').checked,motor=+$('#rMotor').value||0,maxW=+$('#rMaxW').value||22,maxH=+$('#rMaxH').value||2;
+  const range=+$('#wRange').value,step=+$('#wStep').value,marge=+$('#wMargin').value/100,goal=$('#wGoal').value;
+  const pts=[A,...vias,B];$('#wGo').disabled=true;$('#wRes').innerHTML='';
+  try{
+    let smp,horizon=Infinity;const notes=[];
+    if(wxM==='demo'){smp=demoSampler;notes.push('Météo de démonstration (données fictives) : ne pas utiliser pour naviguer.')}
+    else{
+      if(!cfg.kPoint&&!GRIBS.on())throw new Error('clé Windy Point Forecast manquante (⚙️ Réglages)');
+      const bb=bboxOf(pts),key=[wxM,wave,cur2,bb.s,bb.n,bb.w,bb.e].join('|');let L=gridCache[key];
+      if(!L||NOW()-L.at>3600000){L=await loadAll(bb,wxM,wave,cur2,m=>{st.textContent=m});L.at=NOW();gridCache[key]=L}
+      smp=makeSampler(L);horizon=L.horizon;notes.push(...L.warns);
+    }
+    const base=smp;if(marge>0)smp=(la,lo,t)=>{const o=base(la,lo,t);if(o&&o.tws!=null)o.tws*=1+marge;if(o&&o.hs!=null)o.hs*=1+marge;return o};
+    let blocked=null;const avoid=cfg.avoidLand!==false,minD=Math.max(0,+cfg.minDepth||0);
+    if(avoid||minD>0){
+      const bb2=bboxOf(pts),dk='dg|'+[bb2.s,bb2.n,bb2.w,bb2.e].map(x=>x.toFixed(3)).join('|');
+      let G=gridCache[dk];if(!G){st.textContent='Profondeurs EMODnet…';G=await loadDepthGrid(bb2,m=>{st.textContent=m});if(G)gridCache[dk]=G}
+      if(G)blocked=makeBlocker(G,pts,avoid,minD)
+    }
+    const rows=[],n=Math.floor(range/step)+1;
+    for(let i=0;i<n;i++){
+      const t0=tStart+i*step*3600000;
+      st.textContent=`Départ ${i+1}/${n}…`;await new Promise(r=>setTimeout(r,20));
+      if(t0>horizon){rows.push({t0,out:true});continue}
+      const res=routeAll(pts,t0,V,smp,{motorBelow:motor,maxTws:maxW,maxHs:maxH,blocked});
+      if(res.error){rows.push({t0,err:res.error});continue}
+      const end=res.path[res.path.length-1].t,night=nightHours(res.path),c=Math.max(res.maxW/maxW,res.maxHs/maxH);
+      rows.push({t0,end,hours:res.hours,maxW:res.maxW,maxHs:res.maxHs,motorH:res.motorH,night,relaxed:!!res.relaxed,beyond:end>horizon,c});
+    }
+    const ok=rows.filter(r=>r.hours!=null);
+    if(!ok.length){st.textContent=(rows.find(r=>r.err)||{}).err||'Aucun départ calculable (hors de l\'horizon des prévisions).';return}
+    const pool=ok.some(r=>!r.relaxed)?ok.filter(r=>!r.relaxed):ok;
+    const score=r=>goal==='fast'?r.hours:goal==='comfort'?r.c*100+r.hours*0.01:goal==='night'?r.night*100+r.hours:r.hours*(1+0.8*Math.max(0,r.c-0.6))+0.25*r.night;
+    const best=pool.reduce((a,b)=>score(b)<score(a)?b:a),fast=pool.reduce((a,b)=>b.hours<a.hours?b:a);
+    WIN={rows,best,fast,goal,maxW,maxH,marge,at:NOW()};
+    st.textContent=`${ok.length} départ${ok.length>1?'s':''} comparé${ok.length>1?'s':''}.`;
+    renderWindow(notes);
+  }catch(e){st.textContent='Erreur : '+e.message}
+  finally{$('#wGo').disabled=false}
+}
+function renderWindow(notes){
+  const W=WIN;if(!W){$('#wRes').innerHTML='';return}
+  const f=t=>new Date(t).toLocaleString(LOC(),{weekday:'short',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+  const ok=W.rows.filter(r=>r.hours!=null),hmax=Math.max(...ok.map(r=>r.hours)),hmin=Math.min(...ok.map(r=>r.hours));
+  const b=W.best;
+  const why={balanced:'meilleur compromis durée / confort',fast:'le plus rapide',comfort:'le plus confortable',night:'le moins de nuit'}[W.goal];
+  const tag=r=>[r===W.best?'⭐':'',r===W.fast&&r!==W.best?'⚡':''].join('');
+  $('#wRes').innerHTML=`
+  <div class="card" style="border:1.5px solid var(--acc);margin-top:10px"><b>⭐ Départ conseillé : ${f(b.t0)}</b>
+   <div style="margin-top:4px">Arrivée ${f(b.end)} · ${fmtDur(b.hours*3600)} · vent max ${num(b.maxW,0)} nds · vagues max ${num(b.maxHs)} m${b.night>0.2?' · '+fmtDur(b.night*3600)+' de nuit':''}</div>
+   <div class="mut" style="margin-top:4px">Critère : ${tr(why)}${W.marge>0?` · prévisions majorées de ${Math.round(W.marge*100)} %`:''}</div>
+   <button class="b" id="wUse" style="margin-top:8px;width:100%">Calculer le routage avec ce départ</button></div>
+  <div class="scroll" style="margin-top:10px"><table class="wt"><tr><th>Départ</th><th>Durée</th><th>Vent</th><th>Vagues</th><th>Nuit</th><th></th></tr>
+   ${W.rows.map((r,i)=>r.hours==null?`<tr class="mut"><td>${f(r.t0)}</td><td colspan="5">${r.out?'au-delà des prévisions':'non atteignable'}</td></tr>`
+     :`<tr data-wi="${i}" class="${r===W.best?'wb':''}"><td>${f(r.t0)}</td><td><div class="wbar"><u style="width:${(30+70*(1-(r.hours-hmin)/Math.max(0.01,hmax-hmin))).toFixed(0)}%;background:${r.relaxed?'var(--bad)':r.c>0.8?'var(--acc)':'var(--ok)'}"></u></div>${fmtDur(r.hours*3600)}</td><td>${num(r.maxW,0)}</td><td>${num(r.maxHs)}</td><td>${r.night>0.2?fmtDur(r.night*3600):'–'}</td><td>${tag(r)}${r.relaxed?'⚠️':''}${r.beyond?'…':''}</td></tr>`).join('')}</table></div>
+  <div class="mut" style="margin-top:6px">⭐ conseillé · ⚡ le plus rapide · ⚠️ dépasse tes limites (${W.maxW} nds / ${W.maxH} m) · … arrive après l'horizon des prévisions. Touche une ligne pour calculer ce départ.</div>
+  ${(notes||[]).map(w=>`<div class="mut">⚠️ ${esc(w)}</div>`).join('')}`;
+  const use=t=>{$('#rT').value=toLocalInput(t);computePlan(false)};
+  $('#wUse').onclick=()=>use(b.t0);
+  $$('#wRes [data-wi]').forEach(tr2=>tr2.onclick=()=>use(W.rows[+tr2.dataset.wi].t0));
+}
+$('#rModeS').onclick=()=>rModeSet('simple');$('#rModeA').onclick=()=>rModeSet('adv');
+$('#wGo').onclick=computeWindow;
+rModeSet(cfg.rMode==='adv'?'adv':'simple');
 
 I18N.start();
 </script>
