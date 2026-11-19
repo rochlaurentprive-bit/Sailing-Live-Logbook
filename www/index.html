@@ -2080,7 +2080,7 @@ function wxPick(){
   WX.cloud=cloud;WX.rain=rain;WX.sunEl=sp.el;WX.sunAz=sp.az;
 }
 async function wxUpdate(){
-  if((cfg.b3wx===false&&cfg.b3wind===false)||WXS.busy)return;
+  return; /* météo, flux de vent, cap et anémomètre retirés du cadran 3D : seule la houle est gardée */
   if(cfg.src==='demo'){wxPick();return}
   if(!cfg.kPoint||!fresh('lat'))return;
   const moved=Math.abs(D.lat-WXS.lat)>0.25||Math.abs(D.lon-WXS.lon)>0.25;
@@ -2211,7 +2211,7 @@ function mkAtt3D(root,opts){
     const mk=(key,lab)=>{const b=document.createElement('button');b.type='button';b.textContent=lab;b.setAttribute('aria-pressed','false');
       const paint=()=>{const on=cfg[key]!==false;b.setAttribute('aria-pressed',on);b.style.cssText='font:600 10.5px system-ui;padding:3px 9px;border-radius:99px;border:1px solid '+(on?'var(--acc)':'var(--line,#8886)')+';background:'+(on?'var(--acc)':'transparent')+';color:'+(on?'#fff':'var(--mut)')+';min-height:26px'};
       paint();b.onclick=()=>{cfg[key]=cfg[key]===false;saveCfg();paint();wxUpdate()};tg.appendChild(b)};
-    mk('b3wx','Météo');mk('b3wind','Flux de vent');mk('b3hdg','Cap');mk('b3awa','Anémomètre');root.appendChild(tg);
+    
     [['‹',-1,'left'],['›',1,'right']].forEach(([ch,dir,side])=>{const b=document.createElement('button');b.type='button';b.textContent=ch;b.setAttribute('aria-label',dir<0?'Cadran précédent':'Cadran suivant');
       b.style.cssText='position:absolute;'+side+':0;top:42%;width:30px;height:64px;border:0;background:transparent;color:var(--mut);font:300 34px/1 system-ui;opacity:.75';
       b.onclick=ev=>{ev.stopPropagation();const n=DS.ids.length;DS.idx=(DS.idx+dir+n)%n;layoutStage(dir<0?1:-1)};
@@ -2241,7 +2241,7 @@ function mkAtt3D(root,opts){
     // mouvement du bateau (valeurs mesurées) + léger mouvement sur l'eau
     const sea=!MO&&SEA.trains.length>0,hdg0=(typeof hdgNow==='function'&&hdgNow())||0,e0=sea?seaEta(0,0,t,hdg0):0,hv=sea?0:0.07*Math.sin(t*1.7)+0.04*Math.sin(t*2.9),cr=Math.cos(S.roll*D2R),sr=Math.sin(S.roll*D2R),cp=Math.cos(S.pitch*D2R),sp=Math.sin(S.pitch*D2R),SC=0.9;
     const xf=p=>{let x=p[0]*SC,y=p[1]*SC,z=p[2]*SC;const x1=x*cr+y*sr,y1=-x*sr+y*cr;const y2=y1*cp+z*sp,z2=-y1*sp+z*cp;return[x1,y2+hv,z2]};
-    const wxOn=!MO&&cfg.b3wx!==false,wnOn=!MO&&cfg.b3wind!==false;
+    const wxOn=false,wnOn=false;
     const srel=(WX.sunAz-hdg0)*D2R,sce=WX.sunEl*D2R,sunDir=[Math.sin(srel)*Math.cos(sce),Math.sin(sce),Math.cos(srel)*Math.cos(sce)];
     const Ld=(wxOn&&WX.sunEl>3)?sunDir.slice():[-0.45,0.8,-0.35],Ll=Math.hypot(...Ld);
     const COL={top:[236,244,250,.6],stripe:[acc[0],acc[1],acc[2],.78],bot:[28,66,116,.55],deck:[205,210,205,.62],cabin:[228,235,240,.6],glass:[16,34,52,.78],cockpit:[58,68,80,.62],keel:[46,108,172,.55],sail:[wnd[0],wnd[1],wnd[2],.30]};
@@ -2343,7 +2343,7 @@ function mkAtt3D(root,opts){
     }
     // rose des caps 3D et anémomètre 3D (activables séparément)
     if(!MO&&inStage){
-      const hOn=cfg.b3hdg!==false,aOn=cfg.b3awa!==false;
+      const hOn=false,aOn=false;
       const P3=(r,deg)=>proj([r*Math.sin(deg*D2R),0,r*Math.cos(deg*D2R)]);
       const txt=(str,q,sz,col,bold,ln)=>{const fs=Math.max(9,Math.round(sz*F/q[2]));g.font=`${bold?700:600} ${fs}px system-ui`;g.fillStyle=col;g.textAlign='center';g.textBaseline='middle';const tx2=Math.max(fs,Math.min(W-fs,q[0])),ty2=q[1]+(ln||0)*fs*1.15;g.lineJoin='round';g.lineWidth=Math.max(2,fs*0.12);g.strokeStyle=(col===txc)?'rgba(255,255,255,.8)':'rgba(0,0,0,.9)';g.strokeText(str,tx2,ty2);g.fillStyle=col;g.fillText(str,tx2,ty2)};
       const txc=`rgba(${tx[0]},${tx[1]},${tx[2]},.85)`;
@@ -2406,8 +2406,8 @@ function mkAtt3D(root,opts){
     g.font=`${Math.round(W*0.04)}px system-ui`;g.fillStyle=mut;
     g.fillText(S.ok?(roll>0.5?'roulis tribord':roll<-0.5?'roulis bâbord':'roulis'):'en attente des données',W*0.25,W*0.955);
     g.fillText(S.ok?(pit>0.5?'tangage étrave haute':pit<-0.5?'tangage étrave basse':'tangage'):'',W*0.75,W*0.955);
-    g.font=`${Math.round(W*0.032)}px system-ui`;g.textAlign='left';g.fillStyle=mut;g.fillText(S.vn,W*0.03,W*0.15);
-    g.textAlign='right';let yy=W*0.15;
+    g.font=`${Math.round(W*0.032)}px system-ui`;g.textAlign='left';g.fillStyle=mut;g.fillText(S.vn,W*0.03,W*0.06);
+    g.textAlign='right';let yy=W*0.06;
     if(SEA.trains.length){for(const w of SEA.trains){g.fillText(`${w.n} ${w.h.toFixed(1)} m · ${w.T.toFixed(0)} s · ${card(w.dir)}`,W*0.97,yy);yy+=W*0.045}if(SEA.lbl)g.fillText(SEA.lbl+(SEA.src==='windy'?' · Windy':''),W*0.97,yy)}
     else g.fillText(SEA.err||(SEA.busy?'état de mer…':'mer calme'),W*0.97,yy);
     yy+=W*0.045;
