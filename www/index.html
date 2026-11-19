@@ -2027,33 +2027,6 @@ function mkCompass(root){
   };
 }
 
-/* 4. Roulis & tangage : horizon artificiel */
-function mkAtt(root){
-  const id='cp'+(++dialUid);let t='';
-  [-45,-30,-20,-10,0,10,20,30,45].forEach(a=>{const[x0,y0]=polar(104,a),[x1,y1]=polar(a%30===0?118:112,a);t+=`<line class="tick${a%30===0?' m':''}" x1="${x0.toFixed(1)}" y1="${y0.toFixed(1)}" x2="${x1.toFixed(1)}" y2="${y1.toFixed(1)}"/>`});
-  let lad='';[-20,-10,10,20].forEach(p=>{const y=150+p*4,w=Math.abs(p)===10?44:64;lad+=`<line x1="${150-w/2}" y1="${y}" x2="${150+w/2}" y2="${y}" stroke="#fff" stroke-width="2" opacity=".8"/><text x="${150+w/2+6}" y="${y+4}" style="fill:#fff;font-size:12px">${Math.abs(p)}</text>`});
-  root.innerHTML=SVG(' stale',`${FACE(140)}<defs><clipPath id="${id}"><circle cx="150" cy="150" r="98"/></clipPath><linearGradient id="${id}s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--wind)" stop-opacity=".15"/><stop offset="1" style="stop-color:var(--wind)" stop-opacity=".7"/></linearGradient><linearGradient id="${id}g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--line)"/><stop offset="1" style="stop-color:var(--bg)"/></linearGradient></defs>
-    <g clip-path="url(#${id})"><g class="hz" style="transform-origin:150px 150px;transition:transform .5s">
-      <rect x="-300" y="-300" width="900" height="450" fill="url(#${id}s)"/><rect x="-300" y="150" width="900" height="450" fill="url(#${id}g)"/>
-      <line x1="-300" y1="150" x2="600" y2="150" stroke="#fff" stroke-width="3"/>${lad}</g></g>
-    <circle cx="150" cy="150" r="98" fill="none" stroke="var(--mut)" stroke-width="2"/>${t}
-    <g class="ptr" style="transform-origin:150px 150px;transition:transform .5s"><path d="M150 52 l-7 -12 h14z" fill="var(--acc)"/></g>
-    <path d="M80 150 h52 l8 10 M220 150 h-52 l-8 10" fill="none" stroke="var(--acc)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="150" cy="150" r="5" fill="var(--acc)"/>
-    <text class="big rv" x="82" y="282" text-anchor="middle" style="font-size:34px">--</text><text class="sm rl" x="82" y="302" text-anchor="middle" style="font-size:12px">roulis</text>
-    <text class="big pv" x="218" y="282" text-anchor="middle" style="font-size:34px">--</text><text class="sm pl" x="218" y="302" text-anchor="middle" style="font-size:12px">tangage</text>`);
-  const q=s=>root.querySelector(s);
-  return()=>{
-    const okR=fresh('roll'),okP=fresh('pitch'),r=okR?D.roll:0,p=okP?D.pitch:0;
-    q('svg').classList.toggle('stale',!okR&&!okP);
-    q('.hz').style.transform=`rotate(${-r}deg) translateY(${Math.max(-90,Math.min(90,p*4))}px)`;
-    q('.ptr').style.transform=`rotate(${-r}deg)`;
-    q('.rv').textContent=okR?Math.abs(r).toFixed(0)+'°':'--';
-    q('.pv').textContent=okP?Math.abs(p).toFixed(0)+'°':'--';
-    q('.rl').textContent=okR?`roulis ${r>0.5?'tribord':r<-0.5?'bâbord':''} · max ${SESS.maxRoll.toFixed(0)}°`:'roulis';
-    q('.pl').textContent=okP?`tangage ${p>0.5?'étrave haute':p<-0.5?'étrave basse':''}`:'tangage';
-  };
-}
-
 /* 4bis. Roulis et tangage : bateau en 3D qui flotte sur l'eau (projection maison, sans bibliothèque) */
 let BOAT3D=null;
 /* Météo 3D : soleil, nuages, pluie (Windy GFS ou démo) + flux de vent */
@@ -2486,7 +2459,6 @@ const DIALS={
   speed:{name:'Vitesse',mk:mkSpeed,legend:'<span><i style="background:var(--bad)"></i>vitesse max de la session</span>'},
   compass:{name:'Cap',mk:mkCompass,legend:'<span><i style="background:var(--wind)"></i>route fond</span>'},
   attitude:{name:'Roulis et tangage',mk:mkAtt3D,legend:'<span>glisse : tourner · pince : zoom · touche : vue</span>'},
-  horizon:{name:'Horizon artificiel',mk:mkAtt,legend:''},
   depth:{name:'Profondeur',mk:mkDepth,legend:''},
   engine:{name:'Moteur',mk:mkEngine,legend:''},
   energy:{name:'Énergie et réservoirs',mk:mkEnergy,legend:''}};
