@@ -316,7 +316,7 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
     <div id="mobBar" class="mobbar hide"><span id="mobBarTx">MOB</span><button id="mobBarOpen">Ouvrir</button></div>
     <div id="wpSheet" class="sheet hide"></div>
     <div style="position:absolute;right:8px;top:8px;display:flex;flex-direction:column;gap:6px;z-index:3">
-      <button class="b sec" id="mZin" style="width:40px;padding:6px">+</button><button class="b sec" id="mZout" style="width:40px;padding:6px">−</button><button class="b sec" id="mFit" style="width:40px;padding:6px" title="Recentrer">⌖</button><button class="b sec" id="m3d" style="width:40px;padding:6px;font-weight:700" aria-pressed="false" title="Vue 3D">3D</button>
+      <button class="b sec" id="mZin" style="width:40px;padding:6px">+</button><button class="b sec" id="mZout" style="width:40px;padding:6px">−</button><button class="b sec" id="mFit" style="width:40px;padding:6px" title="Recentrer">⌖</button><button class="b sec" id="mAis" style="width:40px;padding:6px;font-weight:700;font-size:12px" aria-pressed="true" title="AIS">AIS</button><button class="b sec" id="m3d" style="width:40px;padding:6px;font-weight:700" aria-pressed="false" title="Vue 3D">3D</button>
     </div>
   </div>
   <div class="card hide" id="wpPanel" style="margin-top:8px">
@@ -335,6 +335,7 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
     <input type="range" id="fxT" min="0" max="48" value="0" style="margin-top:8px;padding:0">
     <div class="mut" id="fxLbl" style="margin-top:4px"></div>
   </div>
+  <div id="aisInfo" hidden style="white-space:pre-line;margin-top:6px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;font-size:13px;line-height:1.45"></div>
   <div class="mut" id="mapInfo" style="margin-top:6px"></div>
 </section>
 
@@ -435,6 +436,9 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
     <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="mapSea" checked style="width:auto"> Balises et feux marins (OpenSeaMap)</label>
     <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="mapDepth" style="width:auto"> Profondeurs d'eau en couleur (EMODnet) · touche la carte pour lire la profondeur</label>
     <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="mapIso" style="width:auto"> Lignes isobathes (courbes de profondeur EMODnet, généralisées : 50 m et plus profond)</label>
+    <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="aisOn" style="width:auto"> Cibles AIS (bateaux reçus par l'AIS raccordé au réseau NMEA 2000) · touche une cible pour le détail</label>
+    <label>Alerte collision : distance de passage (CPA) inférieure à (NM)</label><input id="aisCpa" type="number" min="0.1" step="0.1">
+    <label>Masquer les cibles muettes depuis (minutes)</label><input id="aisMin" type="number" min="1" step="1">
     <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="map3dCb" style="width:auto"> Vue 3D inclinée (suit le bateau, cap en haut, bateau 3D)</label>
     <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="lnHdg" style="width:auto"> Ligne de cap (là où pointe le bateau)</label>
     <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="lnCog" style="width:auto"> Ligne de fond (route réelle, tient compte de la dérive)</label>
@@ -1146,7 +1150,60 @@ Nuit|Nacht|Night|Nacht|Noche
 meilleur compromis durée / confort|beste balans duur / comfort|best trade-off between duration and comfort|bester Kompromiss aus Dauer und Komfort|mejor equilibrio duración / confort
 le plus rapide|snelste|fastest|am schnellsten|el más rápido
 le plus confortable|meest comfortabel|most comfortable|am komfortabelsten|el más cómodo
-le moins de nuit|minste nacht|least night|am wenigsten Nacht|menos noche`;
+le moins de nuit|minste nacht|least night|am wenigsten Nacht|menos noche
+Trajet|Traject|Trip|Törn|Travesía
+Distance (NM)|Afstand (NM)|Distance (NM)|Strecke (sm)|Distancia (NM)
+Vitesse moyenne (nds)|Gemiddelde snelheid (kn)|Average speed (kn)|Durchschnittsgeschw. (kn)|Velocidad media (nudos)
+Vitesse max (nds)|Max. snelheid (kn)|Max speed (kn)|Max. Geschw. (kn)|Velocidad máx. (nudos)
+Vent max (nds)|Max. wind (kn)|Max wind (kn)|Max. Wind (kn)|Viento máx. (nudos)
+Au moteur|Onder motor|Under engine|Unter Motor|A motor
+Entrées du journal|Logboekregels|Log entries|Logbucheinträge|Entradas del diario
+Points de trace|Trackpunten|Track points|Trackpunkte|Puntos de traza
+Date et heure|Datum en tijd|Date and time|Datum und Zeit|Fecha y hora
+Remarque|Opmerking|Remark|Bemerkung|Observación
+Résumé|Samenvatting|Summary|Zusammenfassung|Resumen
+Journal|Logboek|Log|Logbuch|Diario
+Trace|Track|Track|Track|Traza
+Régime|Toerental|RPM|Drehzahl|Régimen
+Air|Lucht|Air|Luft|Aire
+moy.|gem.|avg.|Ø|media
+Aucune entrée dans le journal.|Geen regels in het logboek.|No entries in the log.|Keine Einträge im Logbuch.|Sin entradas en el diario.
+Imprimer|Afdrukken|Print|Drucken|Imprimir
+Excel|Excel|Excel|Excel|Excel
+PDF|PDF|PDF|PDF|PDF
+Latitude|Breedtegraad|Latitude|Breite|Latitud
+Longitude|Lengtegraad|Longitude|Länge|Longitud
+Tangage|Stampen|Pitch|Stampfen|Cabeceo
+Huile|Olie|Oil|Öl|Aceite
+Conso|Verbruik|Fuel rate|Verbrauch|Consumo
+Pêche|Visserij|Fishing|Fischerei|Pesca
+Voilier|Zeilboot|Sailing vessel|Segelboot|Velero
+Plaisance|Pleziervaart|Pleasure craft|Sportboot|Recreo
+Pilote|Loods|Pilot|Lotse|Práctico
+Secours|Reddingsvaartuig|Rescue|Rettung|Salvamento
+Remorqueur|Sleepboot|Tug|Schlepper|Remolcador
+Militaire|Militair|Military|Militär|Militar
+Passagers|Passagiersschip|Passenger|Passagierschiff|Pasajeros
+Cargo|Vrachtschip|Cargo|Frachter|Carguero
+Pétrolier|Tanker|Tanker|Tanker|Petrolero
+En route au moteur|Varend onder motor|Under way using engine|Fahrt unter Motor|En marcha a motor
+Au mouillage|Voor anker|At anchor|Vor Anker|Fondeado
+Non maître de sa manœuvre|Manoeuvreerongeschikt|Not under command|Manövrierunfähig|Sin gobierno
+Manœuvre restreinte|Beperkt manoeuvreerbaar|Restricted manoeuvrability|Manövrierbehindert|Maniobra restringida
+Contraint par son tirant d'eau|Beperkt door diepgang|Constrained by draught|Tiefgangbehindert|Condicionado por calado
+Amarré|Afgemeerd|Moored|Festgemacht|Amarrado
+Échoué|Aan de grond|Aground|Aufgelaufen|Varado
+En route à la voile|Varend onder zeil|Under way sailing|Fahrt unter Segel|En marcha a vela
+Sans nom|Naamloos|Unnamed|Ohne Namen|Sin nombre
+classe|klasse|class|Klasse|clase
+cap|koers|course|Kurs|rumbo
+relèvement|peiling|bearing|Peilung|demora
+dans|over|in|in|en
+Pas de rapprochement|Geen nadering|Not closing|Keine Annäherung|Sin aproximación
+reçu il y a|ontvangen |received |empfangen vor |recibido hace 
+Cibles AIS (bateaux reçus par l'AIS raccordé au réseau NMEA 2000) · touche une cible pour le détail|AIS-doelen (schepen ontvangen via de AIS op het NMEA 2000-netwerk) · tik op een doel voor details|AIS targets (vessels received by the AIS on the NMEA 2000 network) · tap a target for details|AIS-Ziele (über das AIS im NMEA-2000-Netz empfangene Schiffe) · Ziel antippen für Details|Objetivos AIS (barcos recibidos por el AIS de la red NMEA 2000) · toca un objetivo para ver el detalle
+Alerte collision : distance de passage (CPA) inférieure à (NM)|Aanvaringswaarschuwing: passeerafstand (CPA) kleiner dan (NM)|Collision alert: closest point of approach (CPA) below (NM)|Kollisionswarnung: Passierabstand (CPA) kleiner als (sm)|Alerta de colisión: distancia de paso (CPA) inferior a (NM)
+Masquer les cibles muettes depuis (minutes)|Stille doelen verbergen na (minuten)|Hide silent targets after (minutes)|Stumme Ziele ausblenden nach (Minuten)|Ocultar objetivos sin señal desde (minutos)`;
   const EX=new Map(),PAT=[];
   RAW.split('\n').forEach(l=>{const a=l.split('|');if(a.length!==5)return;const fr=a[0],t=a.slice(1);
     if(/\{\d\}/.test(fr)){const parts=fr.split(/\{\d\}/).map(x=>x.replace(/[.*+?^$()|[\]\\{}]/g,'\\$&'));PAT.push([new RegExp('^'+parts.join('(.+?)')+'$'),t,fr.length])}
@@ -1250,7 +1307,7 @@ const tr=I18N.tr,LOC=()=>I18N.LOC();
 </div>
 <script>
 let simT=null;
-const APPV='v23',ERRLOG=[];
+const APPV='v24',ERRLOG=[];
 const logErr=m=>{ERRLOG.push(new Date().toLocaleTimeString(LOC())+' '+String(m).slice(0,220));if(ERRLOG.length>25)ERRLOG.shift()};
 window.addEventListener('error',e=>logErr((e.message||'erreur')+' @'+String(e.filename||'').split('/').pop()+':'+e.lineno));
 window.addEventListener('unhandledrejection',e=>logErr('promesse : '+((e.reason&&e.reason.message)||e.reason)));
@@ -1451,6 +1508,7 @@ const nS32=(b,o)=>{if(o+4>b.length)return null;const v=b[o]|(b[o+1]<<8)|(b[o+2]<
 const nU32=(b,o)=>{if(o+4>b.length)return null;const v=b[o]+(b[o+1]<<8)+(b[o+2]<<16)+b[o+3]*16777216;return v===0xFFFFFFFF?null:v};
 const sc=(v,k)=>v==null?null:v*k;
 function n2kPgn(pgn,b){
+  if(AISP[pgn]){if(aisOn())AISP[pgn](b);return}
   const sk=(p,v)=>{if(v!=null&&!(typeof v==='number'&&isNaN(v)))skValue(p,v)};   // réutilise le même traitement que Signal K (unités SI)
   switch(pgn){
     case 129025:{const la=sc(nS32(b,0),1e-7),lo=sc(nS32(b,4),1e-7);if(la!=null&&lo!=null)sk('navigation.position',{latitude:la,longitude:lo});break}
@@ -2422,7 +2480,7 @@ async function showTrip(id){
   ${notes.length?`<div class="card"><b>Notes</b>${notes.map(n=>`<div style="margin-top:6px"><span class="mut">${fmtT(n.t)} · ${esc(n.type)}</span><br>${esc(n.text)}</div>`).join('')}</div>`:''}
   <details class="card"><summary>Relevé horaire détaillé (tableau)</summary><div class="scroll"><table><tr><th>Heure</th><th>Position</th><th>Cap</th><th>SOG</th><th>Vent</th><th>Prof.</th></tr>
   ${(()=>{const rows=[];let next=t.start;t.points.forEach(p=>{if(p.t>=next){rows.push(p);next=p.t+3600000}});return rows.map(p=>`<tr><td>${fmtT(p.t)}</td><td>${fmtPos(p.lat,p.lon)}</td><td>${num(p.cog,0)}°</td><td>${num(p.sog)}</td><td>${p.tws!=null?num(p.tws,0)+' nds':'--'}</td><td>${p.depth!=null?num(p.depth):'--'}</td></tr>`).join('')})()}</table></div></details>
-  <div class="row noprint"><button class="b sec" id="tGpx">GPX</button><button class="b sec" id="tCsv">CSV trace</button><button class="b sec" id="tLog">CSV journal</button><button class="b sec" id="tPrint">Imprimer / PDF</button><button class="b red" id="tDel">Supprimer</button></div>`;
+  <div class="row noprint"><button class="b sec" id="tGpx">GPX</button><button class="b sec" id="tCsv">CSV trace</button><button class="b sec" id="tLog">CSV journal</button><button class="b sec" id="tXlsx">Excel</button><button class="b sec" id="tPdf">PDF</button><button class="b sec" id="tPrint">Imprimer</button><button class="b red" id="tDel">Supprimer</button></div>`;
   $('#tBack').onclick=()=>{openTrip=null;$('#tripDetail').classList.add('hide');$('#tripList').classList.remove('hide');renderTrips()};
   $('#tName').onchange=async e=>{const o=t.name;t.name=e.target.value;await db.put('trips',t);if(o!==t.name)audit('trip_edit',t,null,[{label:'Nom du trajet',from:o,to:t.name,text:true}])};
   $('#tCrew').onchange=async e=>{const o=t.crew||'';t.crew=e.target.value;await db.put('trips',t);if(o!==t.crew)audit('trip_edit',t,null,[{label:'Équipage / remarques',from:o||null,to:t.crew||null,text:true}])};
@@ -2431,6 +2489,8 @@ async function showTrip(id){
   $('#tGpx').onclick=()=>download(t.name+'.gpx',toGPX(t),'application/gpx+xml');
   $('#tCsv').onclick=()=>download(t.name+'.csv',toCSV(t),'text/csv');
   $('#tLog').onclick=()=>download(t.name+'-journal.csv',toLogCSV(t),'text/csv');
+  $('#tXlsx').onclick=()=>downloadBin(t.name+'.xlsx',buildXlsx(t),'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  $('#tPdf').onclick=()=>downloadBin(t.name+'.pdf',buildPdf(t),'application/pdf');
   $('#tPrint').onclick=()=>print();
   $('#tAdd').onclick=()=>addManualEntry(t);
   $$('[data-edit]').forEach(b=>b.onclick=()=>openLogEdit(t,b.dataset.edit));
@@ -2659,6 +2719,7 @@ function renderMap(){
   fxBase(g,W,H,ox,oy,z);
   wpDraw(g,P);
   try{mobDraw(g,P)}catch(e){}
+  try{aisDraw(g,P,W,H)}catch(e){}
   mapNav(g,P,W,H);
   // position du bateau
   if(fresh('lat')){const[x,y]=P({lat:D.lat,lon:D.lon});g.save();g.translate(x,y);g.rotate((fresh('cog')?D.cog:0)*D2R);
@@ -2716,6 +2777,7 @@ function renderMap(){
     const[x,y]=rel(e),ok=e.type==='pointerup',d=WPE.drag;
     if(d&&d.id===e.pointerId){WPE.drag=null;if(d.moved){WPE.sel=-1;wpChanged()}else if(ok)wpTap(x,y);ptrs.delete(e.pointerId);tap=null;last=0;return}
     if(WPE.on&&ok&&tap&&!tap.moved&&ptrs.size===1&&NOW()-tap.t<700)wpTap(x,y);
+    else if(!WPE.on&&ok&&tap&&!tap.moved&&ptrs.size===1&&aisTap(x,y)){}
     else if(!WPE.on&&ok&&tap&&!tap.moved&&ptrs.size===1&&$('#mapDepth').checked)depthTap(toGeo(x,y));
     tap=null;ptrs.delete(e.pointerId);last=0;
   };
@@ -3847,6 +3909,7 @@ function demoStep(dt){
   S('electrical.batteries.Servitude.voltage',12.9+(s.soc-50)*0.006+(run?0.9:0));S('electrical.batteries.Servitude.capacity.stateOfCharge',s.soc/100);
   S('electrical.batteries.Démarrage.voltage',run?13.9:12.7);
   S('tanks.fuel.0.currentLevel',s.fuel/120);S('tanks.freshWater.0.currentLevel',s.water/150);
+  try{aisDemo(s.lat,s.lon,cog,dt)}catch(e){}
 }
 function startSim(){
   closeSrc();demoInit();setClock(cfg.demoSpeed||1,true);
@@ -4670,6 +4733,234 @@ function renderWindow(notes){
 $('#rModeS').onclick=()=>rModeSet('simple');$('#rModeA').onclick=()=>rModeSet('adv');
 $('#wGo').onclick=computeWindow;
 rModeSet(cfg.rMode==='adv'?'adv':'simple');
+
+/* ---------- Export du journal : Excel (.xlsx) et PDF, sans photos ---------- */
+async function downloadBin(name,u8,type){
+  const fn=name.replace(/[\\/:*?"<>|]/g,'_');
+  if(NATIVE){
+    try{FS=FS||plug('Filesystem');SH=SH||plug('Share');
+      let s='';for(let i=0;i<u8.length;i+=0x8000)s+=String.fromCharCode.apply(null,u8.subarray(i,i+0x8000));
+      const r=await FS.writeFile({path:fn,data:btoa(s),directory:'CACHE'});await SH.share({title:fn,url:r.uri})}
+    catch(e){alert('Export impossible : '+(e.message||e))}
+    return;
+  }
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([u8],{type}));a.download=fn;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+}
+const CRCT=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+const crc32=b=>{let c=0xFFFFFFFF;for(let i=0;i<b.length;i++)c=CRCT[(c^b[i])&255]^(c>>>8);return(c^0xFFFFFFFF)>>>0};
+function zipStore(files){   // files : [[nom, Uint8Array]]
+  const enc=new TextEncoder(),parts=[],cd=[];let off=0;
+  const d=new Date(),dt=((d.getFullYear()-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate(),tm=(d.getHours()<<11)|(d.getMinutes()<<5)|(d.getSeconds()>>1);
+  for(const[n,data]of files){
+    const nb=enc.encode(n),crc=crc32(data),h=new DataView(new ArrayBuffer(30));
+    h.setUint32(0,0x04034b50,true);h.setUint16(4,20,true);h.setUint16(6,0x0800,true);h.setUint16(8,0,true);h.setUint16(10,tm,true);h.setUint16(12,dt,true);
+    h.setUint32(14,crc,true);h.setUint32(18,data.length,true);h.setUint32(22,data.length,true);h.setUint16(26,nb.length,true);h.setUint16(28,0,true);
+    parts.push(new Uint8Array(h.buffer),nb,data);
+    const c=new DataView(new ArrayBuffer(46));
+    c.setUint32(0,0x02014b50,true);c.setUint16(4,20,true);c.setUint16(6,20,true);c.setUint16(8,0x0800,true);c.setUint16(10,0,true);c.setUint16(12,tm,true);c.setUint16(14,dt,true);
+    c.setUint32(16,crc,true);c.setUint32(20,data.length,true);c.setUint32(24,data.length,true);c.setUint16(28,nb.length,true);c.setUint32(42,off,true);
+    cd.push(new Uint8Array(c.buffer),nb);
+    off+=30+nb.length+data.length;
+  }
+  const cds=cd.reduce((s,x)=>s+x.length,0),e=new DataView(new ArrayBuffer(22));
+  e.setUint32(0,0x06054b50,true);e.setUint16(8,files.length,true);e.setUint16(10,files.length,true);e.setUint32(12,cds,true);e.setUint32(16,off,true);
+  const all=[...parts,...cd,new Uint8Array(e.buffer)],out=new Uint8Array(off+cds+22);let p=0;for(const x of all){out.set(x,p);p+=x.length}return out;
+}
+const xe=s=>String(s).replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g,'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const colL=i=>{let s='';i++;while(i>0){const m=(i-1)%26;s=String.fromCharCode(65+m)+s;i=Math.floor((i-1)/26)}return s};
+const xSerial=t=>(t-new Date(t).getTimezoneOffset()*60000)/86400000+25569;
+function xSheet(rows,widths,freeze){   // cellule : nombre | texte | {d:date ms} | null
+  let x='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">';
+  x+='<sheetViews><sheetView workbookViewId="0">'+(freeze?'<pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/>':'')+'</sheetView></sheetViews>';
+  if(widths)x+='<cols>'+widths.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join('')+'</cols>';
+  x+='<sheetData>';
+  rows.forEach((r,ri)=>{x+=`<row r="${ri+1}">`;
+    r.forEach((v,ci)=>{if(v==null||v==='')return;const ref=colL(ci)+(ri+1),hd=freeze&&ri===0;
+      if(typeof v==='number'&&isFinite(v))x+=`<c r="${ref}"><v>${v}</v></c>`;
+      else if(v&&v.d!=null)x+=`<c r="${ref}" s="2"><v>${xSerial(v.d)}</v></c>`;
+      else if(v&&v.b!=null)x+=`<c r="${ref}" s="1" t="inlineStr"><is><t xml:space="preserve">${xe(v.b)}</t></is></c>`;
+      else x+=`<c r="${ref}"${hd?' s="1"':' s="3"'} t="inlineStr"><is><t xml:space="preserve">${xe(v)}</t></is></c>`});
+    x+='</row>'});
+  return x+'</sheetData></worksheet>';
+}
+function buildXlsx(t){
+  const enc=new TextEncoder(),s=tripStats(t),log=(t.log||[]).slice().sort((a,b)=>a.t-b.t);
+  const kn=k=>tr(String(KIND[k]||k).replace(/^[^\wÀ-ÿ]+/u,'').trim());
+  const sum=[[{b:tr('Trajet')},t.name],[{b:tr('Départ')},{d:t.start}],[{b:tr('Arrivée')},t.end?{d:t.end}:tr('en cours')],[{b:tr('Distance (NM)')},+s.dist.toFixed(2)],
+    [{b:tr('Durée')},fmtDur(s.dur)],[{b:tr('Vitesse moyenne (nds)')},+s.avg.toFixed(2)],[{b:tr('Vitesse max (nds)')},+s.maxS.toFixed(2)],[{b:tr('Vent max (nds)')},+s.maxW.toFixed(1)],
+    [{b:tr('Au moteur')},fmtDur(s.eng)],[{b:tr('Équipage / remarques')},t.crew||''],[{b:tr('Entrées du journal')},log.length],[{b:tr('Points de trace')},t.points.length]];
+  const jh=[tr('Date et heure'),tr('Type'),tr('Remarque'),...EDITF.map(f=>tr(f[1])+(f[2]?' ('+f[2]+')':''))];
+  const jr=[jh,...log.map(e=>[{d:e.t},kn(e.kind),e.note||'',...EDITF.map(f=>{const v=e.d?.[f[0]];return v==null?null:+(+v).toFixed(5)})])];
+  const th=[tr('Date et heure'),'Lat','Lon','SOG (nds)','COG (°)','TWS (nds)','TWA (°)','AWS (nds)','AWA (°)',tr('Profondeur')+' (m)',tr('Régime')+' (tr/min)'];
+  const tk=['lat','lon','sog','cog','tws','twa','aws','awa','depth','rpm'];
+  const trr=[th,...t.points.map(p=>[{d:p.t},...tk.map(k=>p[k]==null?null:+(+p[k]).toFixed(5))])];
+  const sheets=[[tr('Résumé'),xSheet(sum,[26,36],false)],[tr('Journal'),xSheet(jr,[17,22,40,...EDITF.map(()=>14)],true)],[tr('Trace'),xSheet(trr,[17,12,12,10,10,10,10,10,10,12,14],true)]];
+  const nm=sheets.map(x=>xe(x[0].replace(/[\\\/?*\[\]:]/g,' ').slice(0,31)));
+  const H='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
+  const files=[
+   ['[Content_Types].xml',H+'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'+sheets.map((_,i)=>`<Override PartName="/xl/worksheets/sheet${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('')+'</Types>'],
+   ['_rels/.rels',H+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'],
+   ['xl/workbook.xml',H+'<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>'+nm.map((n,i)=>`<sheet name="${n}" sheetId="${i+1}" r:id="rId${i+1}"/>`).join('')+'</sheets></workbook>'],
+   ['xl/_rels/workbook.xml.rels',H+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+sheets.map((_,i)=>`<Relationship Id="rId${i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i+1}.xml"/>`).join('')+`<Relationship Id="rId${sheets.length+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`],
+   ['xl/styles.xml',H+'<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><numFmts count="1"><numFmt numFmtId="164" formatCode="dd/mm/yyyy\\ hh:mm"/></numFmts><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFDCE8F5"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="4"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>'],
+   ...sheets.map((x,i)=>[`xl/worksheets/sheet${i+1}.xml`,x[1]])
+  ].map(([n,c])=>[n,enc.encode(c)]);
+  return zipStore(files);
+}
+/* --- PDF écrit à la main (Helvetica, WinAnsi) --- */
+const HW=[278,278,355,556,556,889,667,191,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,278,278,584,584,584,556,1015,667,667,722,722,667,611,778,722,278,500,667,556,833,722,778,667,778,722,667,611,722,667,944,667,667,611,278,278,278,469,556,333,556,556,500,556,556,278,556,556,222,222,500,222,833,556,556,556,556,333,500,278,556,500,722,500,500,500,334,260,334,584];
+const WIN1252={0x20AC:128,0x201A:130,0x0192:131,0x201E:132,0x2026:133,0x2020:134,0x2021:135,0x02C6:136,0x2030:137,0x0160:138,0x2039:139,0x0152:140,0x017D:142,0x2018:145,0x2019:146,0x201C:147,0x201D:148,0x2022:149,0x2013:150,0x2014:151,0x02DC:152,0x2122:153,0x0161:154,0x203A:155,0x0153:156,0x017E:158,0x0178:159};
+function pdfBytes(s){const o=[];for(const ch of String(s)){let c=ch.codePointAt(0);if(c>=32&&c<127||c>=160&&c<256)o.push(c);else if(WIN1252[c])o.push(WIN1252[c]);else if(c===0x2192)o.push(45,62);else if(c===9||c===10)o.push(32);else if(c<32)continue;else{const b=ch.normalize('NFD').charCodeAt(0);o.push(b<127&&b>=32?b:63)}}return o}
+const pdfW=(bytes,sz,bold)=>bytes.reduce((w,c)=>w+(c>=32&&c<127?HW[c-32]:c===176?400:c>=192&&c<256?(/[ÀÁÂÃÄÅ]/.test(String.fromCharCode(c))?667:/[ÈÉÊË]/.test(String.fromCharCode(c))?667:556):556),0)*sz/1000*(bold?1.06:1);
+function pdfWrap(txt,w,sz,bold){
+  const out=[];for(const para of String(txt==null?'':txt).split('\n')){
+    let line='';for(const word of para.split(/\s+/).filter(Boolean)){
+      const cand=line?line+' '+word:word;
+      if(pdfW(pdfBytes(cand),sz,bold)<=w)line=cand;
+      else{if(line)out.push(line);line=word;
+        while(pdfW(pdfBytes(line),sz,bold)>w&&line.length>1){let k=line.length-1;while(k>1&&pdfW(pdfBytes(line.slice(0,k)),sz,bold)>w)k--;out.push(line.slice(0,k));line=line.slice(k)}}}
+    out.push(line)}
+  return out;
+}
+function buildPdf(t){
+  const s=tripStats(t),log=(t.log||[]).slice().sort((a,b)=>a.t-b.t),PW=842,PH=595,M=30,TOP=PH-M,BOT=M+16;
+  const kn=k=>tr(String(KIND[k]||k).replace(/^[^\wÀ-ÿ]+/u,'').trim());
+  const dm2=(v,p,n)=>{if(v==null)return '';const a=Math.abs(v),d=Math.floor(a);return d+'°'+((a-d)*60).toFixed(2)+"'"+(v>=0?p:n)};
+  const f1=(v,d=1)=>v==null?'':(+v).toFixed(d),f0=v=>v==null?'':Math.round(v)+'';
+  const cols=[
+   {h:tr('Date et heure'),w:78,f:e=>fmtDT(e.t)},{h:tr('Type'),w:80,f:e=>kn(e.kind)},{h:tr('Position'),w:112,f:e=>e.d?.lat!=null?dm2(e.d.lat,'N','S')+' '+dm2(e.d.lon,'E','W'):''},
+   {h:tr('Cap fond')+' °',w:42,f:e=>f0(e.d?.cog)},{h:'SOG',w:32,f:e=>f1(e.d?.sog)},{h:tr('Vent vrai'),w:50,f:e=>e.d?.tws!=null?f0(e.d.tws)+' / '+f0(e.d.twa)+'°':''},
+   {h:tr('Vent apparent'),w:62,f:e=>e.d?.aws!=null?f0(e.d.aws)+' / '+f0(e.d.awa)+'°':''},{h:tr('Prof.')+' m',w:38,f:e=>f1(e.d?.depth)},{h:tr('Eau')+' °C',w:30,f:e=>f1(e.d?.wTemp)},
+   {h:tr('Air')+' °C',w:30,f:e=>f1(e.d?.airT)},{h:'hPa',w:34,f:e=>f0(e.d?.baro)},{h:tr('Régime'),w:34,f:e=>f0(e.d?.rpm)}
+  ].filter(c=>log.some(e=>c.f(e)!==''));
+  const used=cols.reduce((a,c)=>a+c.w,0);cols.push({h:tr('Remarque'),w:PW-2*M-used,f:e=>e.note||''});
+  const pages=[];let cs,y;
+  const newPage=()=>{cs=[];pages.push(cs);y=TOP};
+  const text=(x,yy,str,sz,bold,col)=>{const b=pdfBytes(str).map(c=>c===40||c===41||c===92?'\\'+String.fromCharCode(c):c<128?String.fromCharCode(c):'\\'+c.toString(8).padStart(3,'0')).join('');
+    cs.push(`BT ${col||'0 g'} /${bold?'F2':'F1'} ${sz} Tf ${x.toFixed(1)} ${yy.toFixed(1)} Td (${b}) Tj ET`)};
+  const rect=(x,yy,w,h,col)=>cs.push(`${col} rg ${x.toFixed(1)} ${yy.toFixed(1)} ${w.toFixed(1)} ${h.toFixed(1)} re f 0 g`);
+  const line=(x1,y1,x2,y2)=>cs.push(`0.8 G 0.4 w ${x1} ${y1} m ${x2} ${y2} l S`);
+  newPage();
+  text(M,y-16,t.name,18,true);y-=26;
+  const info=[tr('Départ')+' '+fmtDT(t.start)+(t.end?'   '+tr('Arrivée')+' '+fmtDT(t.end):'   ('+tr('en cours')+')'),
+    num(s.dist)+' NM   ·   '+fmtDur(s.dur)+'   ·   '+tr('moy.')+' '+num(s.avg)+' / max '+num(s.maxS)+' '+tr('nds')+(s.maxW?'   ·   '+tr('Vent max (nds)')+' '+num(s.maxW,0):'')+(s.eng>0?'   ·   '+tr('Au moteur')+' '+fmtDur(s.eng):'')];
+  if(t.crew)info.push(tr('Équipage / remarques')+' : '+t.crew);
+  info.forEach(l=>{text(M,y-9,l,9,false,'0.3 g');y-=13});y-=8;
+  const head=()=>{rect(M,y-13,PW-2*M,14,'0.86 0.91 0.96');let x=M;cols.forEach(c=>{text(x+3,y-9.5,c.h,7.5,true);x+=c.w});y-=14};
+  head();
+  log.forEach(e=>{
+    const cells=cols.map(c=>pdfWrap(c.f(e),c.w-6,7.5,false)),n=Math.max(1,...cells.map(c=>c.length)),h=n*9.5+4;
+    if(y-h<BOT){newPage();head()}
+    if(e.kind==='mob')rect(M,y-h,PW-2*M,h,'1 0.88 0.88');
+    let x=M;cells.forEach((c,i)=>{c.forEach((l,k)=>text(x+3,y-8.5-k*9.5,l,7.5,e.kind==='mob'));x+=cols[i].w});
+    y-=h;line(M,y,PW-M,y);
+  });
+  if(!log.length)text(M,y-12,tr('Aucune entrée dans le journal.'),9);
+  const objs=[];const add=s=>{objs.push(s);return objs.length};
+  add('<< /Type /Catalog /Pages 2 0 R >>');add(null);
+  const f1o=add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>'),f2o=add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');
+  const kids=[];
+  pages.forEach((c,i)=>{
+    c.push(`BT 0.5 g /F1 7.5 Tf ${M} ${M-4} Td (${(t.name+'').replace(/[()\\]/g,'').replace(/[^\x20-\x7E]/g,'')}) Tj ET`);
+    c.push(`BT 0.5 g /F1 7.5 Tf ${PW-M-40} ${M-4} Td (${i+1} / ${pages.length}) Tj ET`);
+    const body=c.join('\n'),cid=add(`<< /Length ${body.length} >>\nstream\n${body}\nendstream`),pid=add(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PW} ${PH}] /Resources << /Font << /F1 ${f1o} 0 R /F2 ${f2o} 0 R >> >> /Contents ${cid} 0 R >>`);kids.push(pid+' 0 R')});
+  objs[1]=`<< /Type /Pages /Kids [${kids.join(' ')}] /Count ${kids.length} >>`;
+  // le contenu est en ASCII + octaux, donc 1 caractère = 1 octet
+  let out='%PDF-1.4\n';const offs=[];objs.forEach((o,i)=>{offs.push(out.length);out+=`${i+1} 0 obj\n${o}\nendobj\n`});
+  const xr=out.length;out+=`xref\n0 ${objs.length+1}\n0000000000 65535 f \n`+offs.map(o=>String(o).padStart(10,'0')+' 00000 n \n').join('')+`trailer\n<< /Size ${objs.length+1} /Root 1 0 R >>\nstartxref\n${xr}\n%%EOF`;
+  const u=new Uint8Array(out.length);for(let i=0;i<out.length;i++)u[i]=out.charCodeAt(i)&255;return u;
+}
+
+/* ---------- AIS : cibles reçues via le réseau NMEA 2000 ---------- */
+const AIS={t:{},sel:null};
+['129038','129039','129794','129809','129810'].forEach(p=>N2K_FAST.add(+p));
+const aisOn=()=>cfg.aisOn!==false;
+const aisStr=(b,o,n)=>{let s='';for(let i=o;i<o+n&&i<b.length;i++){const c=b[i];if(c===0||c===0xFF||c===0x40)break;s+=String.fromCharCode(c)}return s.trim()};
+function aisUpd(mmsi,o){if(!mmsi)return;const a=AIS.t[mmsi]||(AIS.t[mmsi]={mmsi,cls:'B'});Object.keys(o).forEach(k=>{if(o[k]!=null)a[k]=o[k]});a.seen=NOW();
+  try{if(aisOn()&&$('#v-map').classList.contains('on'))scheduleDraw()}catch(e){}}
+const AISP={
+  129038:b=>{const m=nU32(b,1),lo=sc(nS32(b,5),1e-7),la=sc(nS32(b,9),1e-7);if(lo==null||la==null||Math.abs(la)>90||Math.abs(lo)>180)return;
+    aisUpd(m,{cls:'A',lon:lo,lat:la,cog:sc(nU16(b,14),1e-4*R2D),sog:sc(nU16(b,16),0.01*MS2KN),hdg:sc(nU16(b,21),1e-4*R2D),nav:b.length>25?b[25]&15:null})},
+  129039:b=>{const m=nU32(b,1),lo=sc(nS32(b,5),1e-7),la=sc(nS32(b,9),1e-7);if(lo==null||la==null||Math.abs(la)>90||Math.abs(lo)>180)return;
+    aisUpd(m,{cls:'B',lon:lo,lat:la,cog:sc(nU16(b,14),1e-4*R2D),sog:sc(nU16(b,16),0.01*MS2KN),hdg:sc(nU16(b,21),1e-4*R2D)})},
+  129794:b=>{const m=nU32(b,1);aisUpd(m,{cls:'A',name:aisStr(b,16,20),call:aisStr(b,9,7),type:b[36]!=null&&b[36]!==0xFF?b[36]:null,len:sc(nU16(b,37),0.1),beam:sc(nU16(b,39),0.1)})},
+  129809:b=>{const m=nU32(b,1);aisUpd(m,{name:aisStr(b,5,20)})},
+  129810:b=>{const m=nU32(b,1);aisUpd(m,{type:b[5]!==0xFF?b[5]:null,call:aisStr(b,13,7),len:sc(nU16(b,20),0.1),beam:sc(nU16(b,22),0.1)})}
+};
+const aisType=c=>c==null?'':c===30?tr('Pêche'):c===36?tr('Voilier'):c===37?tr('Plaisance'):c===50?tr('Pilote'):c===51?tr('Secours'):c===52||c===31||c===32?tr('Remorqueur'):c===35?tr('Militaire'):c>=60&&c<70?tr('Passagers'):c>=70&&c<80?tr('Cargo'):c>=80&&c<90?tr('Pétrolier'):'';
+const AISNAV=()=>[tr('En route au moteur'),tr('Au mouillage'),tr('Non maître de sa manœuvre'),tr('Manœuvre restreinte'),tr('Contraint par son tirant d\'eau'),tr('Amarré'),tr('Échoué'),tr('Pêche'),tr('En route à la voile')];
+function aisCalc(a){   // distance, relèvement, CPA / TCPA par rapport à notre bateau
+  if(!fresh('lat')||!fresh('lon'))return null;
+  const dy=(a.lat-D.lat)*60,dx=(a.lon-D.lon)*Math.cos(D.lat*D2R)*60,dist=Math.hypot(dx,dy),brg=(Math.atan2(dx,dy)*R2D+360)%360;
+  const so=fresh('sog')&&fresh('cog')?D.sog:0,co=fresh('cog')?D.cog:0,st=a.sog||0,ct=a.cog==null?0:a.cog;
+  const vx=st*Math.sin(ct*D2R)-so*Math.sin(co*D2R),vy=st*Math.cos(ct*D2R)-so*Math.cos(co*D2R),v2=vx*vx+vy*vy;
+  let tcpa=null,cpa=dist;
+  if(v2>0.01){const t=-(dx*vx+dy*vy)/v2;if(t>0){tcpa=t*60;cpa=Math.hypot(dx+vx*t,dy+vy*t)}}
+  const danger=tcpa!=null&&tcpa<=(cfg.aisTcpa||20)&&cpa<(cfg.aisCpa??0.5)&&dist<8;
+  return{dist,brg,cpa,tcpa,danger};
+}
+const aisList=()=>{const lim=NOW()-(cfg.aisMin||10)*60000;return Object.values(AIS.t).filter(a=>a.lat!=null&&a.seen>=lim)};
+function aisDraw(g,P,W,H){
+  if(!aisOn())return;const L=aisList(),z=MV.z;if(!L.length)return;
+  const blink=Math.floor(Date.now()/450)%2;let nd=0;
+  g.save();g.textBaseline='middle';
+  L.forEach(a=>{
+    const[x,y]=P(a);if(x<-60||y<-60||x>W+60||y>H+60)return;
+    const c=aisCalc(a),old=NOW()-a.seen>180000,mv=(a.sog||0)>0.3,dg=c&&c.danger;if(dg)nd++;
+    const col=dg?'#ff3b30':a.cls==='A'?'#ffd23f':'#4dd0e1';
+    g.globalAlpha=old?.45:1;
+    if(mv){const nm=(a.sog*6/60)/60,ang=(a.cog||0)*D2R,q=P({lat:a.lat+nm*Math.cos(ang),lon:a.lon+nm*Math.sin(ang)/Math.cos(a.lat*D2R)});
+      g.strokeStyle=col;g.lineWidth=1.6;g.setLineDash([5,4]);g.beginPath();g.moveTo(x,y);g.lineTo(q[0],q[1]);g.stroke();g.setLineDash([])}
+    g.save();g.translate(x,y);
+    g.fillStyle=col;g.strokeStyle=AIS.sel===a.mmsi?'#fff':'#000';g.lineWidth=AIS.sel===a.mmsi?2.5:1.2;
+    if(mv){g.rotate(((a.hdg!=null?a.hdg:a.cog)||0)*D2R);g.beginPath();g.moveTo(0,-11);g.lineTo(7,8);g.lineTo(0,4);g.lineTo(-7,8);g.closePath()}
+    else{g.beginPath();g.moveTo(0,-8);g.lineTo(8,0);g.lineTo(0,8);g.lineTo(-8,0);g.closePath()}
+    g.fill();g.stroke();g.restore();
+    if(dg&&blink){g.strokeStyle='#ff3b30';g.lineWidth=2.5;g.beginPath();g.arc(x,y,17,0,6.2832);g.stroke()}
+    if(z>=10||dg||AIS.sel===a.mmsi){
+      const t=(a.name||String(a.mmsi))+(dg?' · CPA '+c.cpa.toFixed(2)+' NM / '+Math.round(c.tcpa)+' min':'');
+      g.font=(dg?'bold ':'')+'11px system-ui';const tw=g.measureText(t).width,lx=x+12+tw>W-48?x-12:x+12;g.textAlign=lx<x?'right':'left';g.lineWidth=2.5;g.lineJoin='round';g.strokeStyle='rgba(0,0,0,.7)';g.strokeText(t,lx,y-12);g.fillStyle=dg?'#ff8a80':'#fff';g.fillText(t,lx,y-12)}
+  });
+  g.restore();if(AIS.sel)aisPanel();
+  if(nd&&!aisDraw.warned){hap('strong')}aisDraw.warned=nd>0;
+}
+function aisTap(x,y){
+  if(!aisOn())return false;let best=null,bd=26;
+  aisList().forEach(a=>{const[px,py]=[wx(a.lon,VT.z)-VT.ox,wy(a.lat,VT.z)-VT.oy],d=Math.hypot(px-x,py-y);if(d<bd){bd=d;best=a}});
+  if(!best){if(AIS.sel){AIS.sel=null;aisPanel();scheduleDraw()}return false}
+  AIS.sel=best.mmsi;aisPanel();scheduleDraw();return true;
+}
+function aisPanel(){
+  const el=$('#aisInfo'),a=AIS.t[AIS.sel];if(!a||!aisOn()){el.hidden=true;return}
+  const c=aisCalc(a),p=[];el.hidden=false;
+  p.push('⛴ '+(a.name||tr('Sans nom'))+' · MMSI '+a.mmsi+' · '+tr('classe')+' '+a.cls);
+  const ty=aisType(a.type);if(ty||a.len)p.push([ty,a.len?Math.round(a.len)+' m':''].filter(Boolean).join(' · '));
+  if(a.nav!=null&&AISNAV()[a.nav])p.push(AISNAV()[a.nav]);
+  p.push(num(a.sog)+' '+tr('nds')+(a.cog!=null?' · '+tr('cap')+' '+num(a.cog,0)+'°':''));
+  if(c){p.push(c.dist.toFixed(2)+' NM · '+tr('relèvement')+' '+num(c.brg,0)+'°');
+    p.push(c.tcpa!=null?'CPA '+c.cpa.toFixed(2)+' NM '+tr('dans')+' '+Math.round(c.tcpa)+' min':tr('Pas de rapprochement'))}
+  p.push(tr('reçu il y a')+' '+Math.round((NOW()-a.seen)/1000)+' s');
+  el.textContent=p.join('\n');el.style.borderColor=c&&c.danger?'#ff3b30':'var(--line)';
+}
+/* cibles de démonstration (une en route de collision) */
+const AISD={init:false,list:[]};
+function aisDemo(lat,lon,cog,dt){
+  if(!aisOn())return;
+  if(!AISD.init){AISD.init=true;
+    const off=(nm,brg)=>({lat:lat+nm*Math.cos(brg*D2R)/60,lon:lon+nm*Math.sin(brg*D2R)/60/Math.cos(lat*D2R)});
+    AISD.list=[{m:227411000,n:'ARMOR FERRY',cls:'A',type:60,nav:0,hdg:null,cog:(cog+180+4)%360,sog:14,...off(3.2,cog)},
+      {m:228117000,n:'MARIE GALANTE',cls:'B',type:36,cog:(cog+70)%360,sog:5.4,...off(1.6,cog+60)},
+      {m:205512000,n:'CARGO NORDIC',cls:'A',type:71,nav:0,cog:(cog+120)%360,sog:11,...off(4.5,cog-70)},
+      {m:227998877,n:'',cls:'B',type:30,cog:0,sog:0,...off(1.1,cog-35)},
+      {m:227300100,n:'BREIZH FISH',cls:'A',type:30,nav:7,cog:310,sog:2.4,...off(2.4,cog-120)}]}
+  AISD.list.forEach(a=>{const v=a.sog*dt/3600/60,r=a.cog*D2R;a.lat+=v*Math.cos(r);a.lon+=v*Math.sin(r)/Math.cos(a.lat*D2R);
+    aisUpd(a.m,{cls:a.cls,lat:a.lat,lon:a.lon,cog:a.cog,sog:a.sog,hdg:a.hdg,nav:a.nav,name:a.n||null,type:a.type})});
+}
+{const cb=$('#aisOn'),b=$('#mAis'),sync=()=>{cb.checked=aisOn();b.setAttribute('aria-pressed',aisOn());b.style.opacity=aisOn()?1:.45};
+  const set=v=>{cfg.aisOn=v;saveCfg();sync();if(!v){AIS.sel=null;aisPanel()}scheduleDraw()};
+  cb.onchange=()=>set(cb.checked);b.onclick=()=>set(!aisOn());sync();
+  $('#aisCpa').value=cfg.aisCpa??0.5;$('#aisCpa').onchange=e=>{cfg.aisCpa=Math.max(0.1,+e.target.value||0.5);saveCfg()};
+  $('#aisMin').value=cfg.aisMin||10;$('#aisMin').onchange=e=>{cfg.aisMin=Math.max(1,+e.target.value||10);saveCfg()}}
 
 I18N.start();
 </script>
