@@ -446,7 +446,8 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
     <select id="mapBase"><option value="osm">OpenStreetMap</option><option value="voy">Carte claire (Carto)</option><option value="esri">Satellite (Esri)</option><option value="none">Aucun fond (hors ligne)</option></select>
     <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="mapSea" checked style="width:auto"> Balises et feux marins (OpenSeaMap)</label>
     <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="mapDepth" style="width:auto"> Profondeurs d'eau en couleur (EMODnet) · touche la carte pour lire la profondeur</label>
-    <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="mapIso" style="width:auto"> Lignes isobathes (courbes de profondeur EMODnet, généralisées : 50 m et plus profond)</label>
+    <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="mapIso" style="width:auto"> Lignes isobathes calculées (courbes de profondeur de 2 m à 2000 m, d'après les données EMODnet : indicatives, hauteur de marée non corrigée)</label>
+    <label>Niveaux des isobathes (mètres, séparés par des virgules)</label><input id="isoLv" placeholder="2,5,10,20,30,50,100,200,500,1000,2000">
     <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="aisOn" style="width:auto"> Cibles AIS (bateaux reçus par l'AIS raccordé au réseau NMEA 2000) · touche une cible pour le détail</label>
     <label>Alerte collision : distance de passage (CPA) inférieure à (NM)</label><input id="aisCpa" type="number" min="0.1" step="0.1">
     <label>Masquer les cibles muettes depuis (minutes)</label><input id="aisMin" type="number" min="1" step="1">
@@ -1420,7 +1421,12 @@ Supprimer tous les fichiers GRIB ?|Alle GRIB-bestanden verwijderen?|Delete all G
 Tout supprimer : cartes hors ligne, profondeurs et fichiers GRIB ?|Alles verwijderen: offline kaarten, dieptes en GRIB-bestanden?|Delete everything: offline charts, depths and GRIB files?|Alles löschen: Offline-Karten, Tiefen und GRIB-Dateien?|¿Borrar todo: mapas sin conexión, profundidades y archivos GRIB?
 Inclure les profondeurs (routage et mesure au toucher)|Dieptes opnemen (routering en meting door aanraking)|Include depths (routing and tap-to-read)|Tiefen einschließen (Routing und Antippen)|Incluir profundidades (ruta y lectura al tocar)
 Profondeurs…|Dieptes…|Depths…|Tiefen…|Profundidades…
-Profondeurs indisponibles pour cette zone.|Dieptes niet beschikbaar voor dit gebied.|Depths unavailable for this area.|Tiefen für diesen Bereich nicht verfügbar.|Profundidades no disponibles para esta zona.`;
+Profondeurs indisponibles pour cette zone.|Dieptes niet beschikbaar voor dit gebied.|Depths unavailable for this area.|Tiefen für diesen Bereich nicht verfügbar.|Profundidades no disponibles para esta zona.
+Zoome pour voir les isobathes (zone trop grande).|Zoom in om dieptelijnen te zien (gebied te groot).|Zoom in to see depth contours (area too large).|Zum Anzeigen der Tiefenlinien hineinzoomen (Bereich zu groß).|Acerca para ver las isobatas (zona demasiado grande).
+Isobathes|Dieptelijnen|Depth contours|Tiefenlinien|Isobatas
+Isobathes indisponibles (hors ligne ?)|Dieptelijnen niet beschikbaar (offline?)|Depth contours unavailable (offline?)|Tiefenlinien nicht verfügbar (offline?)|Isobatas no disponibles (¿sin conexión?)
+Niveaux des isobathes (mètres, séparés par des virgules)|Niveaus van de dieptelijnen (meters, door komma's gescheiden)|Contour levels (metres, comma-separated)|Stufen der Tiefenlinien (Meter, durch Komma getrennt)|Niveles de las isobatas (metros, separados por comas)
+Lignes isobathes calculées (courbes de profondeur de 2 m à 2000 m, d'après les données EMODnet : indicatives, hauteur de marée non corrigée)|Berekende dieptelijnen (2 m tot 2000 m, volgens EMODnet-gegevens: indicatief, getij niet gecorrigeerd)|Computed depth contours (2 m to 2000 m, from EMODnet data: indicative, tide not corrected)|Berechnete Tiefenlinien (2 m bis 2000 m, nach EMODnet-Daten: Richtwerte, Tide nicht korrigiert)|Isobatas calculadas (de 2 m a 2000 m, según datos EMODnet: orientativas, marea no corregida)`;
   const EX=new Map(),PAT=[];
   RAW.split('\n').forEach(l=>{const a=l.split('|');if(a.length!==5)return;const fr=a[0],t=a.slice(1);
     if(/\{\d\}/.test(fr)){const parts=fr.split(/\{\d\}/).map(x=>x.replace(/[.*+?^$()|[\]\\{}]/g,'\\$&'));PAT.push([new RegExp('^'+parts.join('(.+?)')+'$'),t,fr.length])}
@@ -1524,7 +1530,7 @@ const tr=I18N.tr,LOC=()=>I18N.LOC();
 </div>
 <script>
 let simT=null;
-const APPV='v32',ERRLOG=[];
+const APPV='v33',ERRLOG=[];
 const logErr=m=>{ERRLOG.push(new Date().toLocaleTimeString(LOC())+' '+String(m).slice(0,220));if(ERRLOG.length>25)ERRLOG.shift()};
 window.addEventListener('error',e=>logErr((e.message||'erreur')+' @'+String(e.filename||'').split('/').pop()+':'+e.lineno));
 window.addEventListener('unhandledrejection',e=>logErr('promesse : '+((e.reason&&e.reason.message)||e.reason)));
@@ -2921,7 +2927,7 @@ function renderMap(){
   for(let lo=Math.ceil(lon0/st)*st;lo<=lon1;lo+=st){const x=wx(lo,z)-ox;g.beginPath();g.moveTo(x,0);g.lineTo(x,H);g.stroke();g.fillText(lo.toFixed(st<0.01?3:st<1?2:0)+'°',x+3,H-4)}
   for(let la=Math.ceil(lat0/st)*st;la<=lat1;la+=st){const y=wy(la,z)-oy;g.beginPath();g.moveTo(0,y);g.lineTo(W,y);g.stroke();g.fillText(la.toFixed(st<0.01?3:st<1?2:0)+'°',3,y-3)}
   // fonds de carte
-  const base=$('#mapBase').value,layers=[];if(base!=='none')layers.push(base);if($('#mapDepth').checked)layers.push('depth');if($('#mapIso').checked)layers.push('iso');if($('#mapSea').checked)layers.push('sea');
+  const base=$('#mapBase').value,layers=[];if(base!=='none')layers.push(base);if($('#mapDepth').checked)layers.push('depth');if($('#mapIso').checked&&(ISO.span>2.5||!ISO.segs))layers.push('iso');if($('#mapSea').checked)layers.push('sea');
   const tz=Math.min(z,Math.max(...layers.map(l=>MAPSRC[l].max),0)),sc=2**(z-tz),n=2**tz;
   for(const layer of layers){
     const zz=Math.min(z,MAPSRC[layer].max),s2=2**(z-zz),nn=2**zz;
@@ -2942,6 +2948,7 @@ function renderMap(){
   fxBase(g,W,H,ox,oy,z);
   wpDraw(g,P);
   try{mobDraw(g,P)}catch(e){}
+  try{isoDraw(g,P,W,H)}catch(e){}
   try{aisDraw(g,P,W,H)}catch(e){}
   try{seaDraw(g,P)}catch(e){}
   if(!$('#offCard').classList.contains('hide')&&Date.now()-(renderMap.ou||0)>400){renderMap.ou=Date.now();try{offUi()}catch(e){}}
@@ -3783,9 +3790,9 @@ async function depthTap(g){
     $('#mapInfo').textContent=v==null?'Pas de données de profondeur ici (hors zone EMODnet).':v>0?`Terre ferme (altitude ≈ ${v.toFixed(0)} m) · ${g.lat.toFixed(4)}, ${g.lon.toFixed(4)}`:`Profondeur ≈ ${(-v).toFixed(1)} m (min ${(-j.max).toFixed(1)} · max ${(-j.min).toFixed(1)}) · EMODnet · ${g.lat.toFixed(4)}, ${g.lon.toFixed(4)}`;
   }catch(e){const d=await odPoint(g);$('#mapInfo').textContent=d!=null?(d>0?`Terre ferme (hors ligne) · ${g.lat.toFixed(4)}, ${g.lon.toFixed(4)}`:`Profondeur ≈ ${(-d).toFixed(1)} m (hors ligne, mesure approchée) · ${g.lat.toFixed(4)}, ${g.lon.toFixed(4)}`):'Profondeur indisponible : '+e.message}
 }
-async function loadDepthGridNet(bb,prog){
+async function loadDepthGridNet(bb,prog,minStep){
   const spLat=Math.max(0.02,bb.n-bb.s),spLon=Math.max(0.02,bb.e-bb.w);
-  let step=Math.max(0.01,Math.max(spLat,spLon)/90);
+  let step=Math.max(minStep||0.01,Math.max(spLat,spLon)/90);
   const chunkDeg=1.2;
   for(;;){const rows=Math.ceil(spLat/step)+1,ch=Math.ceil(spLon/chunkDeg);if(rows*ch<=380||step>0.5)break;step*=1.25}
   const rows=Math.ceil(spLat/step)+1,cols=Math.ceil(spLon/step)+1,dLa=spLat/(rows-1),dLo=spLon/(cols-1);
@@ -5750,6 +5757,62 @@ async function offPurgeTiles(){try{await caches.delete('tiles-v1')}catch(e){}OFF
 async function odPurge(){try{await caches.delete('depth-v1')}catch(e){}ODEP.length=0;localStorage.removeItem('offDepth');for(const k in ODEP_MEM)delete ODEP_MEM[k];try{offUi()}catch(e){}}
 async function grPurge(){try{for(const r of await db.all('grib'))await db.del('grib',r.id);GRIBS.set([]);gribUI()}catch(e){logErr('Purge GRIB : '+e.message)}}
 document.querySelector('details[data-g="storage"]').addEventListener('toggle',e=>{if(e.target.open)stoRender()});
+
+/* ---------- Isobathes calculées (marching squares sur la grille EMODnet) : de 2 m à 2000 m ---------- */
+const ISO={G:null,segs:null,gz:0,key:'',busy:false,tm:0,span:0};
+const isoLevels=()=>String(cfg.isoLv||'2,5,10,20,30,50,100,200,500,1000,2000').split(/[ ,;]+/).map(Number).filter(x=>x>0).sort((a,b)=>a-b);
+function isoBuild(G){
+  const lv=isoLevels(),segs={};lv.forEach(l=>segs[l]=[]);
+  const{rows,cols,v,bb,dLa,dLo}=G;
+  for(let i=0;i<rows-1;i++)for(let j=0;j<cols-1;j++){
+    const a=v[i*cols+j],b=v[i*cols+j+1],c=v[(i+1)*cols+j+1],d=v[(i+1)*cols+j];    // a SW, b SE, c NE, d NW (profondeur = -valeur)
+    if(isNaN(a)||isNaN(b)||isNaN(c)||isNaN(d))continue;
+    const za=-a,zb=-b,zc=-c,zd=-d,mn=Math.min(za,zb,zc,zd),mx=Math.max(za,zb,zc,zd);
+    for(const L of lv){
+      if(L<=mn||L>mx)continue;
+      const pt=[];   // intersections sur les 4 côtés
+      const ed=(z1,z2,x1,y1,x2,y2)=>{if((z1<L)!==(z2<L)){const t=(L-z1)/(z2-z1);pt.push([x1+(x2-x1)*t,y1+(y2-y1)*t])}};
+      ed(za,zb,j,i,j+1,i);ed(zb,zc,j+1,i,j+1,i+1);ed(zc,zd,j+1,i+1,j,i+1);ed(zd,za,j,i+1,j,i);
+      if(pt.length>=2){const s=segs[L];const g=p=>[bb.s+p[1]*dLa,bb.w+p[0]*dLo];const p0=g(pt[0]),p1=g(pt[1]);s.push(p0[0],p0[1],p1[0],p1[1]);if(pt.length===4){const p2=g(pt[2]),p3=g(pt[3]);s.push(p2[0],p2[1],p3[0],p3[1])}}
+    }
+  }
+  return segs;
+}
+async function isoLoad(){
+  if(ISO.busy)return;const v=viewBBox(),span=Math.max(v.n-v.s,v.e-v.w);ISO.span=span;
+  if(span>2.5){setIsoMsg(tr('Zoome pour voir les isobathes (zone trop grande).'));return}
+  const mLa=(v.n-v.s)*0.25,mLo=(v.e-v.w)*0.25,bb={s:v.s-mLa,n:v.n+mLa,w:v.w-mLo,e:v.e+mLo};
+  ISO.busy=true;let G=null;
+  try{G=await loadDepthGridNet(bb,m=>setIsoMsg(tr('Isobathes')+' : '+m.replace(/^.*?: /,'')),Math.max(0.001,span/180))}catch(e){}
+  if(!G&&window.caches){try{G=await odCover(v,0)}catch(e){}}
+  ISO.busy=false;
+  if(!G){setIsoMsg(tr('Isobathes indisponibles (hors ligne ?)'),4000);ISO.G=null;ISO.segs=null;return}
+  ISO.G=G;ISO.segs=isoBuild(G);ISO.gz=MV.z;setIsoMsg('');scheduleDraw();
+}
+function setIsoMsg(t,ms){let e=$('#isoMsg');if(!e){e=document.createElement('div');e.id='isoMsg';e.style.cssText='position:absolute;left:8px;top:60px;z-index:3;padding:3px 9px;border-radius:12px;background:var(--card);border:1px solid var(--line);font-size:11px;pointer-events:none';$('#mapStage').appendChild(e)}e.textContent=t;e.hidden=!t;if(ms)setTimeout(()=>{if(e.textContent===t)e.hidden=true},ms)}
+const isoCol=L=>L<=5?'#ff7a45':L<=10?'#ffb300':L<=20?'#29b6f6':L<=50?'#1e88e5':'#5c6bc0';
+function isoCovers(){const v=viewBBox(),b=ISO.G&&ISO.G.bb;return b&&v.s>=b.s-0.001&&v.n<=b.n+0.001&&v.w>=b.w-0.001&&v.e<=b.e+0.001}
+function isoDraw(g,P,W,H){
+  if(!$('#mapIso').checked)return;
+  if(!ISO.busy&&(!ISO.G||!isoCovers()||MV.z>ISO.gz+1.5||MV.z<ISO.gz-3)){const vk=MV.lat.toFixed(4)+'|'+MV.lon.toFixed(4)+'|'+MV.z;if(vk!==ISO.vk){ISO.vk=vk;clearTimeout(ISO.tm);ISO.tm=setTimeout(()=>{if($('#mapIso').checked&&$('#v-map').classList.contains('on')){ISO.G=ISO.G&&isoCovers()&&MV.z<=ISO.gz+1.5?ISO.G:null;isoLoad()}},700)}}
+  if(!ISO.segs)return;
+  const z=MV.z,lv=Object.keys(ISO.segs).map(Number).sort((a,b)=>a-b),minL=z>=12?0:z>=11?5:z>=10?10:z>=9?30:100,done=new Set();
+  g.save();g.lineJoin='round';g.lineCap='round';g.font='bold 10px system-ui';g.textAlign='center';g.textBaseline='middle';
+  lv.forEach(L=>{if(L<minL)return;const s=ISO.segs[L];if(!s.length)return;
+    g.strokeStyle=isoCol(L);g.lineWidth=L===Math.round(cfg.minDepth||0)?2.6:1.3;g.beginPath();
+    let lab=0;const lb=[];
+    for(let k=0;k<s.length;k+=4){const a=P({lat:s[k],lon:s[k+1]}),b=P({lat:s[k+2],lon:s[k+3]});
+      if((a[0]<-20&&b[0]<-20)||(a[0]>W+20&&b[0]>W+20)||(a[1]<-20&&b[1]<-20)||(a[1]>H+20&&b[1]>H+20))continue;
+      g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);
+      const cx=Math.round((a[0]+b[0])/2/150)+'_'+Math.round((a[1]+b[1])/2/150)+'_'+L;if(!done.has(cx)&&lab<14){done.add(cx);lab++;lb.push([(a[0]+b[0])/2,(a[1]+b[1])/2])}}
+    g.stroke();
+    g.lineWidth=3;lb.forEach(([x,y])=>{if(x<10||y<10||x>W-10||y>H-10)return;g.strokeStyle='rgba(255,255,255,.85)';g.strokeText(L,x,y);g.fillStyle=isoCol(L);g.fillText(L,x,y)});
+  });
+  g.restore();
+}
+$('#isoLv').value=cfg.isoLv||'2,5,10,20,30,50,100,200,500,1000,2000';
+$('#isoLv').onchange=e=>{cfg.isoLv=e.target.value.trim()||'2,5,10,20,30,50,100,200,500,1000,2000';saveCfg();if(ISO.G)ISO.segs=isoBuild(ISO.G);scheduleDraw()};
+$('#mapIso').addEventListener('change',()=>{ISO.G=null;ISO.segs=null;if(!$('#mapIso').checked)setIsoMsg('');scheduleDraw()});
 
 I18N.start();
 </script>
