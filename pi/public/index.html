@@ -125,7 +125,7 @@ body.navc{padding-bottom:84px!important}
 .le.k-mob::before,.le.k-mobend::before{background:#e5322d}.le.k-mob{border-color:#e5322d}
 
 .warn{border-left:4px solid var(--warn)}
-#windy{height:60vh;border-radius:var(--r);overflow:hidden;margin-top:8px}
+#windy{position:relative;z-index:0;isolation:isolate;height:min(55vh,440px);min-height:260px;border-radius:var(--r);overflow:hidden;margin:8px 0 80px;contain:layout paint}
 /* --- v3 : marges, cadrans, config, route, logbook --- */
 :root{--sat:0px;--sab:0px}
 body.native{--sat:max(env(safe-area-inset-top),26px)}
@@ -4370,7 +4370,7 @@ const loadScript=src=>new Promise((ok,ko)=>{const s=document.createElement('scri
 async function showWindy(){
   if(!cfg.kMap){alert('Renseigne la clé Windy Map Forecast dans ⚙️ Réglages.');return}
   $('#windy').classList.remove('hide');$('#windyCtl').classList.remove('hide');
-  if(wm){drawPlanOnWindy();return}
+  if(wm){setTimeout(()=>{try{wm.map.invalidateSize()}catch(e){}},50);drawPlanOnWindy();return}
   try{
     const css=document.createElement('link');css.rel='stylesheet';css.href='https://unpkg.com/leaflet@1.4.0/dist/leaflet.css';document.head.appendChild(css);
     await loadScript('https://unpkg.com/leaflet@1.4.0/dist/leaflet.js');
@@ -4384,10 +4384,28 @@ async function showWindy(){
         wpFromFields();
       });
       applyWindyLayers();drawPlanOnWindy();
+      setTimeout(()=>{try{wm.map.invalidateSize()}catch(e){}},300);
     });
   }catch(e){$('#windy').textContent='Carte Windy indisponible : '+e.message}
 }
-function applyWindyLayers(){if(!wm)return;try{wm.store.set('overlay',$('#wOv').value);wm.store.set('product',$('#wPr').value)}catch(e){}}
+function applyWindyLayers(ev){
+  if(!wm)return;
+  const ovS=$('#wOv'),prS=$('#wPr'),st=wm.store;
+  try{
+    st.set('overlay',ovS.value);
+    // produits réellement disponibles pour cette couche (ex. vagues : pas de GFS/ICON classiques)
+    let ok=null;try{ok=st.getAllowed('product')}catch(e){}
+    if(Array.isArray(ok)&&ok.length){
+      const want=prS.value,names={ecmwf:'ECMWF',gfs:'GFS',icon:'ICON',iconEu:'ICON-EU'};
+      if(ev&&ev.target===ovS||!ok.includes(want)){
+        prS.innerHTML=ok.map(k=>'<option value="'+k+'">'+(names[k]||k)+'</option>').join('');
+        prS.value=ok.includes(want)?want:(st.get('product')||ok[0]);
+      }
+    }
+    if(!ok||ok.includes(prS.value))st.set('product',prS.value);
+    setTimeout(()=>{try{wm.map.invalidateSize()}catch(e){}},50);
+  }catch(e){console.warn('Windy',e);$('#rStat').textContent='Windy : '+e.message}
+}
 function drawPlanOnWindy(){
   if(!wm||!plan?.routes||typeof L==='undefined')return;
   if(wLayer)wm.map.removeLayer(wLayer);
