@@ -1,0 +1,30 @@
+name: Paquet Raspberry Pi (OpenPlotter / Signal K)
+
+on:
+  push:
+    branches: [main, master]
+    paths: ['pi/**', 'www/**', 'package.json']
+  workflow_dispatch:
+
+jobs:
+  pack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Construire la version Pi
+        working-directory: pi
+        run: node scripts/build.js
+      - name: Tests du plugin
+        working-directory: pi
+        run: node test/run.js
+      - name: Créer le paquet
+        working-directory: pi
+        run: npm pack
+      - name: Publier le paquet
+        uses: actions/upload-artifact@v4
+        with:
+          name: carnet-de-bord-raspberry-pi
+          path: pi/signalk-carnet-de-bord-*.tgz

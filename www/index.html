@@ -1628,9 +1628,9 @@ const db={h:null,
     r.onsuccess=()=>{this.h=r.result;ok()};r.onerror=()=>ko(r.error)})},
   st(s,m){return this.h.transaction(s,m||'readonly').objectStore(s)},
   req(q){return new Promise((ok,ko)=>{q.onsuccess=()=>ok(q.result);q.onerror=()=>ko(q.error)})},
-  all(s){return this.req(this.st(s).getAll())},
-  put(s,o){return this.req(this.st(s,'readwrite').put(o))},
-  del(s,id){return this.req(this.st(s,'readwrite').delete(id))}};
+  all(s){if(window.PIBOX&&PIBOX.has(s))return PIBOX.all(s);return this.req(this.st(s).getAll())},
+  put(s,o){if(window.PIBOX&&PIBOX.has(s))return PIBOX.put(s,o);return this.req(this.st(s,'readwrite').put(o))},
+  del(s,id){if(window.PIBOX&&PIBOX.has(s))return PIBOX.del(s,id);return this.req(this.st(s,'readwrite').delete(id))}};
 
 /* ---------- Données instantanées ---------- */
 const D={bats:{},tanks:{}}, T={}; // valeurs et horodatages
@@ -1765,7 +1765,7 @@ function skValue(path,v){
 let ws=null, wsTimer=null;
 function connectSK(){
   closeSrc();
-  const url=`ws://${cfg.host}/signalk/v1/stream?subscribe=all`;
+  const url=window.PIBOX?`${location.protocol==='https:'?'wss':'ws'}://${cfg.host}/signalk/v1/stream?subscribe=self`:`ws://${cfg.host}/signalk/v1/stream?subscribe=all`;
   setSrc('connexion…','');
   try{ws=new WebSocket(url)}catch(e){setSrc('erreur','bad');return}
   ws.onopen=()=>setSrc('Signal K','ok');
@@ -1874,7 +1874,8 @@ function tick(){
   computeTrueWind();
   if(fresh('lat')&&fresh('lon')){
     const sog=fresh('sog')?D.sog:0;
-    if(!cur){
+    if(window.PIBOX){/* version Raspberry Pi : le Pi enregistre les trajets 24 h/24 */}
+    else if(!cur){
       if(sog>=cfg.startKn){moveCnt+=dt;if(moveCnt>=cfg.startSec)startTrip(true)}else moveCnt=0;
     }else{
       if(now-lastPt>=cfg.interval*1000){cur.points.push(snapshot());lastPt=now}
@@ -1884,7 +1885,7 @@ function tick(){
   }
   if(fresh('sog')&&D.sog>SESS.maxSog)SESS.maxSog=D.sog;
   if(fresh('depth')&&now-HIST.dt>5000){HIST.depth.push({t:now,v:D.depth});HIST.dt=now;if(HIST.depth.length>130)HIST.depth.shift()}
-  if(cur&&now-lastLog>=cfg.logMin*60000)addLog('auto');   // entrée de journal automatique, même sans position GPS
+  if(cur&&!window.PIBOX&&now-lastLog>=cfg.logMin*60000)addLog('auto');   // entrée de journal automatique, même sans position GPS
   renderLive();
 }
 const onBoatData=()=>{if(NOW()-lastTick>800)tick()};   // l'arrivée des données déclenche aussi le calcul, même si l'écran est éteint
@@ -4681,7 +4682,7 @@ function startSource(){
   // reprise d'un trajet interrompu
   const open=(await db.all('trips')).find(t=>t.open);
   if(open&&!open.demo){const last=open.points.length?open.points[open.points.length-1].t:open.start;
-    if(NOW()-last<15*60000){cur=open;lastPt=last;lastLog=(open.log||[]).reduce((m,e)=>Math.max(m,e.t),open.start)}else{open.open=false;open.end=last;await db.put('trips',open)}}
+    if(window.PIBOX||NOW()-last<15*60000){cur=open;lastPt=last;lastLog=(open.log||[]).reduce((m,e)=>Math.max(m,e.t),open.start)}else{open.open=false;open.end=last;await db.put('trips',open)}}
   buildTiles();loadSettings();fillRoute();renderPolar();updAuditSummary();updateRecUI();startSource();wpRender();
   setInterval(tick,1000);
   setInterval(()=>{if($('#v-map').classList.contains('on')&&$('#mapSel').value==='live')drawMapSel('keep')},5000);
