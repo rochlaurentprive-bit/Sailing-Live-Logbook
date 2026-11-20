@@ -2276,13 +2276,14 @@ function sailTarget(awa,t){
   if(awa==null||!isFinite(awa))return{m:0,j:0};
   const a=Math.min(180,Math.abs(awa)),side=awa>=0?-1:1,fl=a<28?Math.sin(t*11)*3.5*(1-a/28):0;
   return{m:side*sailInterp(SAIL_M,a)+fl,j:(a>165?-side:side)*sailInterp(SAIL_J,a)+fl*1.4}}
-function sailPts(pl,tm,tj){
-  const q=pl.p;
-  if(pl.id==='main'){const th=tm*D2R,Lb=q[2][2]-pl.pv;return[q[0],q[1],[Math.sin(th)*-Lb,q[2][1],pl.pv+Lb*Math.cos(th)]]}
+function sailPts(pl,tm,tj,f){
+  const q=pl.p;f=f||0;
+  if(pl.id==='main'){const th=tm*D2R,Lb=q[2][2]-pl.pv,hd=[0,q[1][1]+(q[0][1]+0.12-q[1][1])*f,q[1][2]];return[q[0],hd,[Math.sin(th)*-Lb,q[2][1],pl.pv+Lb*Math.cos(th)]]}   // moteur : grand-voile affalée sur la bôme
   const T=q[0],Hh=q[1],C=q[2],u=[0,Hh[1]-T[1],Hh[2]-T[2]],ul=Math.hypot(u[1],u[2]);u[1]/=ul;u[2]/=ul;
   const v=[0,C[1]-T[1],C[2]-T[2]],d=v[1]*u[1]+v[2]*u[2],vp=[0,v[1]-d*u[1],v[2]-d*u[2]],cx=u[1]*vp[2]-u[2]*vp[1],th=tj*D2R;
-  const x=Math.abs(cx)*Math.sin(th),k=Math.cos(th);
-  return[T,Hh,[x,T[1]+d*u[1]+vp[1]*k,T[2]+d*u[2]+vp[2]*k]]}
+  const x=Math.abs(cx)*Math.sin(th),k=Math.cos(th),c=[x,T[1]+d*u[1]+vp[1]*k,T[2]+d*u[2]+vp[2]*k];
+  if(f){const lf=[0,T[1]+(Hh[1]-T[1])*0.4,T[2]+(Hh[2]-T[2])*0.4+0.06];for(let i=0;i<3;i++)c[i]+=(lf[i]-c[i])*f}   // moteur : foc enroulé sur l'étai
+  return[T,Hh,c]}
 const B3_CLASSIC=[{psi:-34,e:15,n:'vue 3/4 arrière'},{psi:0,e:11,n:'vue arrière'},{psi:-90,e:7,n:'vue de côté'},{psi:-148,e:20,n:'vue 3/4 avant'}];
 let WXCL=false;
 const B3_VIEWS=[{psi:0,e:7,n:'vue arrière',d:19.5},{psi:-34,e:15,n:'vue 3/4 arrière'},{psi:-90,e:7,n:'vue de côté'},{psi:-148,e:20,n:'vue 3/4 avant'}];
@@ -2349,7 +2350,8 @@ function mkAtt3D(root,opts){
     const g=cv.getContext('2d'),cs=getComputedStyle(document.documentElement),acc=hexRGB(cs.getPropertyValue('--acc')),wnd=hexRGB(cs.getPropertyValue('--wind')),tx=hexRGB(cs.getPropertyValue('--tx')),mut=cs.getPropertyValue('--mut').trim(),font=cs.getPropertyValue('--num');
     const k=1-Math.exp(-dt*5);
     S.roll+=(S.tr-S.roll)*k;S.pitch+=(S.tp-S.pitch)*k;
-    {const sv=typeof fresh==='function'?(fresh('awa')?D.awa:fresh('twa')?D.twa:null):null,st=sailTarget(sv,t),ks=1-Math.exp(-dt*2.2);S.sm=(S.sm||0)+(st.m-(S.sm||0))*ks;S.sj=(S.sj||0)+(st.j-(S.sj||0))*ks}
+    {const sv=typeof fresh==='function'?(fresh('awa')?D.awa:fresh('twa')?D.twa:null):null,st=sailTarget(sv,t),ks=1-Math.exp(-dt*2.2);const mot=(fresh('rpm')&&D.rpm>=300)?1:0,kf=1-Math.exp(-dt*1.1);S.sf=(S.sf||0)+(mot-(S.sf||0))*kf;   // moteur en marche : voiles rangées
+    S.sm=(S.sm||0)+(st.m*(1-S.sf)-(S.sm||0))*ks;S.sj=(S.sj||0)+(st.j*(1-S.sf)-(S.sj||0))*ks}
     const dpsi=((S.tpsi-S.psi+540)%360)-180;S.psi+=dpsi*k;S.e+=(S.te-S.e)*k;S.dist+=(S.td-S.dist)*k;
     const psi=(S.psi+3*Math.sin(t*0.35))*D2R,el=(S.e+1.2*Math.sin(t*0.5))*D2R;
     const fx=Math.sin(psi)*Math.cos(el),fy=-Math.sin(el),fz=Math.cos(psi)*Math.cos(el),rx=Math.cos(psi),rz=-Math.sin(psi),ux=Math.sin(psi)*Math.sin(el),uy=Math.cos(el),uz=Math.cos(psi)*Math.sin(el);
@@ -2365,7 +2367,7 @@ function mkAtt3D(root,opts){
     const under=[],above=[];
     const clip=(pts,side)=>{const out=[];for(let i=0;i<pts.length;i++){const a=pts[i],b=pts[(i+1)%pts.length],ia=a[1]*side>=0,ib=b[1]*side>=0;if(ia)out.push(a);if(ia!==ib){const f=a[1]/(a[1]-b[1]);out.push([a[0]+(b[0]-a[0])*f,0,a[2]+(b[2]-a[2])*f])}}return out};
     for(const pl of BOAT3D.P){
-      const w=(pl.id?sailPts(pl,S.sm||0,S.sj||0):pl.p).map(xf),n=(()=>{const a=w[0],b=w[1],c=w[2],u=[b[0]-a[0],b[1]-a[1],b[2]-a[2]],v=[c[0]-a[0],c[1]-a[1],c[2]-a[2]],nn=[u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0]],l=Math.hypot(...nn)||1;return Math.abs((nn[0]*Ld[0]+nn[1]*Ld[1]+nn[2]*Ld[2])/l/Ll)})();
+      const w=(pl.id?sailPts(pl,S.sm||0,S.sj||0,S.sf||0):pl.p).map(xf),n=(()=>{const a=w[0],b=w[1],c=w[2],u=[b[0]-a[0],b[1]-a[1],b[2]-a[2]],v=[c[0]-a[0],c[1]-a[1],c[2]-a[2]],nn=[u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0]],l=Math.hypot(...nn)||1;return Math.abs((nn[0]*Ld[0]+nn[1]*Ld[1]+nn[2]*Ld[2])/l/Ll)})();
       const c=COL[pl.k],sh=0.55+0.45*n;
       const push=(arr,pts,wet)=>{if(pts.length<3)return;const q=pts.map(proj),d=q.reduce((s,r)=>s+r[2],0)/q.length;arr.push({q,d,c,sh,wet,k:pl.k})};
       const ys=w.map(p=>p[1]);
