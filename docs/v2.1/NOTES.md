@@ -1,0 +1,1 @@
+Version 2.1 : bandeau « pas de signal bateau », provenance des données par couleur, référence du vent vrai, vent de secours corrigé, historique InfluxDB en lecture seule (Raspberry Pi). Deux packages : Android et Raspberry Pi, chacun avec sa documentation en français (notes de version, manuel, note de déploiement, note détaillée).

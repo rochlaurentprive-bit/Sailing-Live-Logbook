@@ -1,0 +1,97 @@
+name: Publier les 2 packages (Android et Raspberry Pi)
+
+# Lancement : Actions > « Publier les 2 packages » > Run workflow, ou pousser un tag vX.Y.
+# La version vient de package.json. La documentation doit être dans docs/v<version>/<langue>/ (voir docs/README.md).
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Version
+        id: v
+        run: echo "ver=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Vérifier la documentation
+        run: |
+          test -d "docs/v${{ steps.v.outputs.ver }}" || { echo "::error::docs/v${{ steps.v.outputs.ver }} absent : ajouter la documentation de cette version"; exit 1; }
+          find "docs/v${{ steps.v.outputs.ver }}" -name '*.pdf'
+
+      - name: Installer les dépendances
+        run: npm install
+
+      - name: Test de non-régression (appli sans Pi ni Signal K)
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+          node test/regression.js
+
+      - name: Créer le projet Android
+        run: npx cap add android
+
+      - name: Ajouter le plugin natif, les permissions et l'icône
+        run: node scripts/patch-android.js
+
+      - name: Copier l'appli dans le projet Android
+        run: npx cap sync android
+
+      - name: Compiler l'APK
+        working-directory: android
+        run: |
+          for i in 1 2 3; do
+            ./gradlew assembleDebug && break
+            echo "Tentative $i échouée (réseau ?), nouvelle tentative…"; sleep 20
+          done
+          test -f app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Nommer l'APK
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk "carnet-de-bord-${{ steps.v.outputs.ver }}.apk"
+
+      - name: Construire, tester et empaqueter la version Raspberry Pi
+        working-directory: pi
+        run: |
+          node scripts/build.js
+          node test/run.js && node test/influx.js
+          npm pack
+
+      - name: Assembler les 2 packages
+        run: |
+          scripts/package-release.sh "${{ steps.v.outputs.ver }}" \
+            "carnet-de-bord-${{ steps.v.outputs.ver }}.apk" \
+            "$(ls pi/signalk-carnet-de-bord-*.tgz | head -1)" dist
+
+      - name: Publier la version sur GitHub
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="v${{ steps.v.outputs.ver }}"
+          NOTES="docs/v${{ steps.v.outputs.ver }}/NOTES.md"
+          [ -f "$NOTES" ] || { echo "Carnet de bord $TAG : un package Android et un package Raspberry Pi, avec leur documentation." > /tmp/notes.md; NOTES=/tmp/notes.md; }
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist/*.zip --clobber
+          else
+            gh release create "$TAG" dist/*.zip --target "$GITHUB_SHA" --title "Carnet de bord $TAG" --notes-file "$NOTES"
+          fi
+
+      - name: Garder aussi les packages comme artefacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: packages-${{ steps.v.outputs.ver }}
+          path: dist/*.zip
