@@ -3217,7 +3217,9 @@ async function openNoteEdit(id){
    <label>Date et heure</label><input type="datetime-local" id="nnT" value="${toLocalInput(n.t)}">
    <label>Type</label><select id="nnY">${types.map(x=>`<option${x===n.type?' selected':''}>${esc(x)}</option>`).join('')}</select>
    <label>Note</label><textarea id="nnN" rows="5">${esc(n.text)}</textarea>
-   ${n.lat!=null?`<div class="mut" style="margin-top:6px">${fmtPos(n.lat,n.lon)}</div>`:''}
+   <label>Position (latitude, longitude en degrés décimaux)</label><input id="nnP" inputmode="text" autocomplete="off" placeholder="47.5200, -3.0500" value="${n.lat!=null?n.lat.toFixed(5)+', '+n.lon.toFixed(5):''}">
+   <div class="mut" id="nnPf" style="margin-top:4px">${n.lat!=null?fmtPos(n.lat,n.lon):'Aucune position'}</div>
+   <div class="row" style="margin-top:6px"><button class="b sec" id="nnPc" type="button">📍 Position actuelle</button><button class="b sec" id="nnPx" type="button">Effacer</button></div>
    <label>Photos</label><div class="phs" id="nnPh"></div>
    <div class="row"><label class="b sec" style="margin:0;color:var(--tx);cursor:pointer;display:inline-block;width:auto;border:1px solid var(--line);border-radius:12px;padding:10px 14px">📷 Prendre une photo<input type="file" id="nnCam" accept="image/*" capture="environment" class="hide"></label>
      <label class="b sec" style="margin:0;color:var(--tx);cursor:pointer;display:inline-block;width:auto;border:1px solid var(--line);border-radius:12px;padding:10px 14px">🖼 Galerie<input type="file" id="nnGal" accept="image/*" multiple class="hide"></label></div>
@@ -3234,8 +3236,14 @@ async function openNoteEdit(id){
   const onF=async ev=>{const fs=[...ev.target.files];ev.target.value='';if(!fs.length)return;await addNotePhotos(n,fs);draw();renderNotes()};
   $('#nnCam').onchange=onF;$('#nnGal').onchange=onF;
   m.onclick=ev=>{if(ev.target===m)close()};$('#nnX').onclick=close;
+  const pI=$('#nnP'),pF=$('#nnPf');
+  const pShow=()=>{const v=pI.value.trim();if(!v){pF.textContent='Aucune position';pF.style.color='';return}const q=parseLL(v);pF.textContent=q?fmtPos(q.lat,q.lon):'Format invalide (ex. 47.52, -3.05)';pF.style.color=q?'':'var(--red,#c0392b)'};
+  pI.oninput=pShow;
+  $('#nnPc').onclick=()=>{if(fresh('lat')&&fresh('lon')){pI.value=D.lat.toFixed(5)+', '+D.lon.toFixed(5)}else if(navigator.geolocation){navigator.geolocation.getCurrentPosition(g=>{pI.value=g.coords.latitude.toFixed(5)+', '+g.coords.longitude.toFixed(5);pShow()},()=>alert('Position indisponible.'),{timeout:8000})}else alert('Position indisponible.');pShow()};
+  $('#nnPx').onclick=()=>{pI.value='';pShow()};
   $('#nnS').onclick=async()=>{
     const text=$('#nnN').value.trim();if(!text){alert('La note est vide.');return}
+    const pv=pI.value.trim();if(pv){const q=parseLL(pv);if(!q){alert('Position invalide. Format : 47.52, -3.05');return}n.lat=q.lat;n.lon=q.lon}else{n.lat=null;n.lon=null}
     const tm=new Date($('#nnT').value).getTime();if(!isNaN(tm))n.t=tm;n.type=$('#nnY').value;n.text=text;n.edited=true;
     await db.put('notes',n);close();renderNotes();if(openTrip)try{showTrip(openTrip)}catch(_){}
   };
