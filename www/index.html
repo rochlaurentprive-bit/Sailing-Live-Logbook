@@ -474,6 +474,8 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
     <label>Adresse Signal K (hôte:port)</label><input id="sHost" placeholder="192.168.1.50:3000">
     <label>YDWG-02 : adresse (Wi-Fi du boîtier) et port TCP</label>
     <div class="row"><input id="sYdHost" placeholder="192.168.4.1" style="flex:2"><input id="sYdPort" type="number" placeholder="1456" style="flex:1"></div>
+    <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="b3Sail" style="width:auto"> Vues 3D : voiles animées (réglées selon le vent, rangées au moteur ou à l'arrêt)</label>
+    <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="b3Wake" style="width:auto"> Vues 3D : remous de l'hélice quand le moteur tourne</label>
     <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="sAwake" style="width:auto"> Garder l'écran allumé (Android)</label>
     <label>Vitesse de croisière du bateau (nœuds)</label><input id="sCruise" type="number" step="0.1">
     <label>Seuil d'alerte de gîte (°)</label><input id="sHeel" type="number" min="10" max="45" step="1">
@@ -2349,7 +2351,7 @@ function mkAtt3D(root,opts){
     const g=cv.getContext('2d'),cs=getComputedStyle(document.documentElement),acc=hexRGB(cs.getPropertyValue('--acc')),wnd=hexRGB(cs.getPropertyValue('--wind')),tx=hexRGB(cs.getPropertyValue('--tx')),mut=cs.getPropertyValue('--mut').trim(),font=cs.getPropertyValue('--num');
     const k=1-Math.exp(-dt*5);
     S.roll+=(S.tr-S.roll)*k;S.pitch+=(S.tp-S.pitch)*k;
-    {const sv=typeof fresh==='function'?(fresh('awa')?D.awa:fresh('twa')?D.twa:null):null,st=sailTarget(sv,t),ks=1-Math.exp(-dt*2.2);const stopd=fresh('sog')&&D.sog<0.4,mot=((fresh('rpm')&&D.rpm>=300)||stopd)?1:0,kf=1-Math.exp(-dt*1.1);S.sf=(S.sf||0)+(mot-(S.sf||0))*kf;   // moteur en marche : voiles rangées
+    {const sv=typeof fresh==='function'?(fresh('awa')?D.awa:fresh('twa')?D.twa:null):null,SA=cfg.b3sail!==false,st=SA?sailTarget(sv,t):{m:12,j:10},ks=1-Math.exp(-dt*2.2);const stopd=fresh('sog')&&D.sog<0.4,mot=SA&&((fresh('rpm')&&D.rpm>=300)||stopd)?1:0,kf=1-Math.exp(-dt*1.1);S.sf=(S.sf||0)+(mot-(S.sf||0))*kf;   // moteur en marche : voiles rangées
     S.sm=(S.sm||0)+(st.m*(1-S.sf)-(S.sm||0))*ks;S.sj=(S.sj||0)+(st.j*(1-S.sf)-(S.sj||0))*ks}
     const dpsi=((S.tpsi-S.psi+540)%360)-180;S.psi+=dpsi*k;S.e+=(S.te-S.e)*k;S.dist+=(S.td-S.dist)*k;
     const psi=(S.psi+3*Math.sin(t*0.35))*D2R,el=(S.e+1.2*Math.sin(t*0.5))*D2R;
@@ -2423,7 +2425,7 @@ function mkAtt3D(root,opts){
     w2.globalCompositeOperation='destination-out';w2.fillStyle=mg;w2.fillRect(0,0,W,W);w2.globalCompositeOperation='source-over';
     if(!MO)g.drawImage(wc,0,0);
     // remous léger de l'hélice quand le moteur tourne : mousse qui part derrière la poupe puis s'efface
-    {const rp=fresh('rpm')?D.rpm:0,WK=S.wk||(S.wk=[]),eng=rp>=300?Math.min(1,(rp-300)/2700):0;
+    {const rp=fresh('rpm')&&cfg.b3wake!==false?D.rpm:0,WK=S.wk||(S.wk=[]),eng=rp>=300?Math.min(1,(rp-300)/2700):0;
       const still=fresh('sog')&&D.sog<0.4;   // à l'arrêt : pas de remous
       if(rp>=300&&!still){S.wa=(S.wa||0)+(10+34*eng)*dt;while(S.wa>=1&&WK.length<110){S.wa--;WK.push({x:(Math.random()-.5)*.35,z:-5.15+Math.random()*.3,a:0,vx:(Math.random()-.5)*.4,r:.05+Math.random()*.06})}}
       const vz=1.6+(fresh('sog')?Math.min(12,D.sog)*0.25:0);
@@ -3902,7 +3904,7 @@ function loadSettings(){
   $('#boat').textContent=cfg.boat;
   $('#sBoat').value=cfg.boat;$('#sSrc').value=cfg.src;$('#sGps').value=cfg.gpsSrc||'auto';$('#sWind').value=cfg.windRef||'auto';try{initHist()}catch(e){}try{initSync()}catch(e){}$('#sHost').value=cfg.host;
   $('#sDemoSpd').value=String(cfg.demoSpeed||1);buildLogCfg();updDemoBar();
-  $('#sNoGo').value=cfg.noGo;$('#sYdHost').value=cfg.ydHost;$('#sYdPort').value=cfg.ydPort;$('#sAwake').checked=!!cfg.awake;['lnHdg','lnCog','lnLay'].forEach(k=>$('#'+k).checked=cfg[k]!==false);$('#lnMin').value=cfg.lnMin||30;$('#map3dCb').checked=M3D;$('#sAvoid').checked=cfg.avoidLand!==false;$('#sMinDepth').value=cfg.minDepth??3;$('#sHapLvl').value=String(cfg.hapLvl!=null?cfg.hapLvl:(cfg.haptic===false?0:2));$('#sCruise').value=cfg.cruise;$('#sHeel').value=cfg.heelAlert||25;$('#sKPoint').value=cfg.kPoint;$('#sKMap').value=cfg.kMap;
+  $('#sNoGo').value=cfg.noGo;$('#sYdHost').value=cfg.ydHost;$('#sYdPort').value=cfg.ydPort;$('#sAwake').checked=!!cfg.awake;$('#b3Sail').checked=cfg.b3sail!==false;$('#b3Wake').checked=cfg.b3wake!==false;['lnHdg','lnCog','lnLay'].forEach(k=>$('#'+k).checked=cfg[k]!==false);$('#lnMin').value=cfg.lnMin||30;$('#map3dCb').checked=M3D;$('#sAvoid').checked=cfg.avoidLand!==false;$('#sMinDepth').value=cfg.minDepth??3;$('#sHapLvl').value=String(cfg.hapLvl!=null?cfg.hapLvl:(cfg.haptic===false?0:2));$('#sCruise').value=cfg.cruise;$('#sHeel').value=cfg.heelAlert||25;$('#sKPoint').value=cfg.kPoint;$('#sKMap').value=cfg.kMap;
   $('#sStartKn').value=cfg.startKn;$('#sStartSec').value=cfg.startSec;$('#sStopKn').value=cfg.stopKn;$('#sStopMin').value=cfg.stopMin;$('#sInt').value=cfg.interval;
 }
 ['lnHdg','lnCog','lnLay'].forEach(k=>$('#'+k).onchange=e=>{cfg[k]=e.target.checked;saveCfg();scheduleDraw()});$('#sNoGo').onchange=e=>{cfg.noGo=Math.max(0,Math.min(80,+e.target.value||0));e.target.value=cfg.noGo;saveCfg();try{updDials()}catch(_){}};
@@ -3914,7 +3916,7 @@ $('#hapTest').onclick=()=>{const w=cfg.haptic,l=cfg.hapLvl;cfg.haptic=true;if(!c
 $('#sHapLvl').onchange=e=>{cfg.hapLvl=+e.target.value;cfg.haptic=cfg.hapLvl>0;saveCfg();if(cfg.hapLvl>0)hap('strong')};
 $('#sSave').onclick=()=>{
   cfg={...cfg,boat:$('#sBoat').value||DEF.boat,src:$('#sSrc').value,gpsSrc:$('#sGps').value,windRef:$('#sWind').value,host:$('#sHost').value.trim(),
-   ydHost:$('#sYdHost').value.trim()||DEF.ydHost,ydPort:+$('#sYdPort').value||DEF.ydPort,awake:$('#sAwake').checked,avoidLand:$('#sAvoid').checked,minDepth:Math.max(0,+$('#sMinDepth').value||0),
+   ydHost:$('#sYdHost').value.trim()||DEF.ydHost,ydPort:+$('#sYdPort').value||DEF.ydPort,awake:$('#sAwake').checked,b3sail:$('#b3Sail').checked,b3wake:$('#b3Wake').checked,avoidLand:$('#sAvoid').checked,minDepth:Math.max(0,+$('#sMinDepth').value||0),
    cruise:+$('#sCruise').value||DEF.cruise,heelAlert:Math.max(10,Math.min(45,+$('#sHeel').value||25)),kPoint:$('#sKPoint').value.trim(),kMap:$('#sKMap').value.trim(),
    startKn:+$('#sStartKn').value||DEF.startKn,startSec:+$('#sStartSec').value||DEF.startSec,
    stopKn:+$('#sStopKn').value||DEF.stopKn,stopMin:+$('#sStopMin').value||DEF.stopMin,interval:Math.max(1,+$('#sInt').value||DEF.interval)};
