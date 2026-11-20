@@ -125,6 +125,8 @@ body.navc{padding-bottom:84px!important}
 .le.k-mob::before,.le.k-mobend::before{background:#e5322d}.le.k-mob{border-color:#e5322d}
 
 .warn{border-left:4px solid var(--warn)}
+#wLeg{margin:-70px 0 80px}#wBar{height:12px;border-radius:6px}.wlab{display:flex;justify-content:space-between;font-size:12px;margin-top:3px}#wSrc{font-size:11.5px;margin-top:4px}
+#windy [id*=legend],#windy [class*=legend],#windy [id*=logo],#windy [class*=bottom],#windy [class*=timeline]{z-index:1000!important}
 #windy{position:relative;z-index:0;isolation:isolate;height:min(55vh,440px);min-height:260px;border-radius:var(--r);overflow:hidden;margin:8px 0 80px;contain:layout paint}
 /* --- v3 : marges, cadrans, config, route, logbook --- */
 :root{--sat:0px;--sab:0px}
@@ -413,6 +415,7 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
         <label style="display:inline"><input type="radio" name="wClick" value="V" style="width:auto"> via</label></div>
     </div>
     <div id="windy" class="hide"></div>
+    <div id="wLeg" class="hide"><div id="wBar"></div><div class="wlab"><span id="wLo"></span><span id="wUn"></span><span id="wHi"></span></div><div class="mut" id="wSrc"></div></div>
   </div>
 </section>
 
@@ -4387,6 +4390,14 @@ async function showWindy(){
     });
   }catch(e){$('#windy').textContent='Carte Windy indisponible : '+e.message}
 }
+const WLEG={wind:['#3b7fc4,#2fb6a0,#9bd04a,#f2d13a,#f08a2c,#d9342b,#a31f7a','0','vent (nœuds)','50+'],gust:['#3b7fc4,#2fb6a0,#9bd04a,#f2d13a,#f08a2c,#d9342b,#a31f7a','0','rafales (nœuds)','60+'],waves:['#1f5fa8,#2fb6a0,#9bd04a,#f2d13a,#f08a2c,#d9342b,#7a1f7a','0','hauteur des vagues (m)','8+'],swell1:['#1f5fa8,#2fb6a0,#9bd04a,#f2d13a,#f08a2c,#d9342b,#7a1f7a','0','houle (m)','8+'],currents:['#1f5fa8,#2fb6a0,#9bd04a,#f2d13a,#f08a2c,#d9342b','0','courant (nœuds)','4+'],pressure:['#5a3d9a,#3b7fc4,#2fb6a0,#e8e8d8,#e0b060,#c8602c,#8a2a1a','980','pression (hPa)','1040'],rain:['#cfe8f5,#6fb7e8,#2e7fc0,#2fb67c,#f2d13a,#d9342b','0','pluie (mm/3 h)','20+']};
+const WSRC={ecmwf:'ECMWF (centre européen)',gfs:'GFS (NOAA, États-Unis)',icon:'ICON (DWD, Allemagne)',iconEu:'ICON-EU (DWD, Europe)'};
+function wLegend(){
+  const o=$('#wOv').value,l=WLEG[o];if(!l)return;
+  $('#wLeg').classList.remove('hide');$('#wBar').style.background='linear-gradient(90deg,'+l[0]+')';
+  $('#wLo').textContent=l[1];$('#wUn').textContent=l[2];$('#wHi').textContent=l[3];
+  $('#wSrc').textContent='Échelle indicative (l’échelle exacte est celle de Windy). Données : Windy.com · modèle '+(WSRC[$('#wPr').value]||$('#wPr').value)+'.';
+}
 function applyWindyLayers(ev){
   if(!wm)return;
   const ovS=$('#wOv'),prS=$('#wPr'),st=wm.store;
@@ -4402,7 +4413,7 @@ function applyWindyLayers(ev){
       }
     }
     if(!ok||ok.includes(prS.value))st.set('product',prS.value);
-    setTimeout(()=>{try{wm.map.invalidateSize()}catch(e){}},50);
+    wLegend();setTimeout(()=>{try{wm.map.invalidateSize()}catch(e){}},50);
   }catch(e){console.warn('Windy',e);$('#rStat').textContent='Windy : '+e.message}
 }
 function drawPlanOnWindy(){
