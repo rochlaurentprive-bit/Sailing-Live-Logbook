@@ -3013,7 +3013,8 @@ function renderMap(){
   c.onpointerup=c.onpointercancel=e=>{
     const[x,y]=rel(e),ok=e.type==='pointerup',d=WPE.drag;
     if(d&&d.id===e.pointerId){WPE.drag=null;if(d.moved){WPE.sel=-1;wpChanged()}else if(ok)wpTap(x,y);ptrs.delete(e.pointerId);tap=null;last=0;return}
-    if(WPE.on&&ok&&tap&&!tap.moved&&ptrs.size===1&&NOW()-tap.t<700)wpTap(x,y);
+    if(PICK&&ok&&tap&&!tap.moved&&ptrs.size===1){const f=PICK;PICK=null;f(toGeo(x,y))}
+    else if(WPE.on&&ok&&tap&&!tap.moved&&ptrs.size===1&&NOW()-tap.t<700)wpTap(x,y);
     else if(!WPE.on&&ok&&tap&&!tap.moved&&ptrs.size===1&&aisTap(x,y)){}
     else if(!WPE.on&&ok&&tap&&!tap.moved&&ptrs.size===1&&($('#mapDepth').checked||$('#mapSea').checked))mapObjTap(x,y);
     tap=null;ptrs.delete(e.pointerId);last=0;
@@ -3219,7 +3220,7 @@ async function openNoteEdit(id){
    <label>Note</label><textarea id="nnN" rows="5">${esc(n.text)}</textarea>
    <label>Position (latitude, longitude en degrés décimaux)</label><input id="nnP" inputmode="text" autocomplete="off" placeholder="47.5200, -3.0500" value="${n.lat!=null?n.lat.toFixed(5)+', '+n.lon.toFixed(5):''}">
    <div class="mut" id="nnPf" style="margin-top:4px">${n.lat!=null?fmtPos(n.lat,n.lon):'Aucune position'}</div>
-   <div class="row" style="margin-top:6px"><button class="b sec" id="nnPc" type="button">📍 Position actuelle</button><button class="b sec" id="nnPx" type="button">Effacer</button></div>
+   <div class="row" style="margin-top:6px"><button class="b sec" id="nnPc" type="button">📍 Position actuelle</button><button class="b sec" id="nnPm" type="button">🗺 Sur la carte</button><button class="b sec" id="nnPx" type="button">Effacer</button></div>
    <label>Photos</label><div class="phs" id="nnPh"></div>
    <div class="row"><label class="b sec" style="margin:0;color:var(--tx);cursor:pointer;display:inline-block;width:auto;border:1px solid var(--line);border-radius:12px;padding:10px 14px">📷 Prendre une photo<input type="file" id="nnCam" accept="image/*" capture="environment" class="hide"></label>
      <label class="b sec" style="margin:0;color:var(--tx);cursor:pointer;display:inline-block;width:auto;border:1px solid var(--line);border-radius:12px;padding:10px 14px">🖼 Galerie<input type="file" id="nnGal" accept="image/*" multiple class="hide"></label></div>
@@ -3241,6 +3242,17 @@ async function openNoteEdit(id){
   pI.oninput=pShow;
   $('#nnPc').onclick=()=>{if(fresh('lat')&&fresh('lon')){pI.value=D.lat.toFixed(5)+', '+D.lon.toFixed(5)}else if(navigator.geolocation){navigator.geolocation.getCurrentPosition(g=>{pI.value=g.coords.latitude.toFixed(5)+', '+g.coords.longitude.toFixed(5);pShow()},()=>alert('Position indisponible.'),{timeout:8000})}else alert('Position indisponible.');pShow()};
   $('#nnPx').onclick=()=>{pI.value='';pShow()};
+  $('#nnPm').onclick=()=>{
+    const q=parseLL(pI.value),prev=$$('section.on')[0]?.id.replace('v-','')||'notes';
+    m.style.display='none';go('map');
+    if(q&&typeof MV!=='undefined'){MV.auto=false;MV.lat=q.lat;MV.lon=q.lon;if(MV.z<11)MV.z=11;scheduleDraw()}
+    const bar=document.createElement('div');bar.style.cssText='position:fixed;left:10px;right:10px;top:10px;z-index:60;background:#1b2a3a;color:#fff;border:2px solid #f2b134;border-radius:12px;padding:10px 12px;display:flex;gap:10px;align-items:center;font:600 14px system-ui';
+    bar.innerHTML='<span style="flex:1">Touchez la carte pour placer la note</span><button class="b sec" style="width:auto;margin:0;padding:6px 12px;color:#fff;border-color:#fff">Annuler</button>';
+    document.body.appendChild(bar);
+    const back=()=>{bar.remove();m.style.display='';go(prev)};
+    PICK=g=>{pI.value=g.lat.toFixed(5)+', '+g.lon.toFixed(5);pShow();back()};
+    bar.querySelector('button').onclick=()=>{PICK=null;back()};
+  };
   $('#nnS').onclick=async()=>{
     const text=$('#nnN').value.trim();if(!text){alert('La note est vide.');return}
     const pv=pI.value.trim();if(pv){const q=parseLL(pv);if(!q){alert('Position invalide. Format : 47.52, -3.05');return}n.lat=q.lat;n.lon=q.lon}else{n.lat=null;n.lon=null}
@@ -4061,6 +4073,7 @@ const wpRole=(i,n=WP.length)=>i===0?'D':i===n-1&&n>1?'A':String(i);
 const wpColor=(i,n=WP.length)=>i===0?'#2fbf71':i===n-1&&n>1?'#e5484d':'#2f7fe0';
 const wpName=(i,n=WP.length)=>i===0?'Départ':i===n-1&&n>1?'Arrivée':'Étape '+i;
 const toXY=p=>[wx(p.lon,VT.z)-VT.ox,wy(p.lat,VT.z)-VT.oy];
+let PICK=null;
 const toGeo=(x,y)=>({lat:uny(VT.oy+y,VT.z),lon:unx(VT.ox+x,VT.z)});
 function wpHit(x,y){
   let best=null,bd=30;
