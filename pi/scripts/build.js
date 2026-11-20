@@ -22,6 +22,7 @@ fs.mkdirSync(out, { recursive: true });
 fs.writeFileSync(path.join(out, 'index.html'), html);
 fs.copyFileSync(path.join(root, 'www', 'manifest.webmanifest'), path.join(out, 'manifest.webmanifest'));
 fs.copyFileSync(path.join(root, 'icone-512.png'), path.join(out, 'icon.png'));
+fs.copyFileSync(path.join(root, 'icone-512.png'), path.join(out, 'icon-512.png'));
 fs.writeFileSync(path.join(out, 'sw.js'), `const C='carnet-pi-${ver}';
 const TILE_HOSTS=['tile.openstreetmap.org','basemaps.cartocdn.com','server.arcgisonline.com','tiles.openseamap.org'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(['./','./index.html','./pi-adapter.js','./manifest.webmanifest'])));self.skipWaiting()});
