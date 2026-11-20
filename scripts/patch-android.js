@@ -75,7 +75,8 @@ if (fs.existsSync(resSrc)) {
   let g = fs.readFileSync(gp, 'utf8');
   const ks = path.join(root, 'signing', 'carnet.keystore').replace(/\\/g, '/');
   const run = parseInt(process.env.GITHUB_RUN_NUMBER || '1', 10);
-  g = g.replace(/versionCode\s+\d+/, `versionCode ${run}`).replace(/versionName\s+"[^"]*"/, `versionName "1.${run}"`);
+  const VER = require(path.join(root, 'package.json')).version;   // numérotation x.y : à changer dans package.json à chaque version
+  g = g.replace(/versionCode\s+\d+/, `versionCode ${run}`).replace(/versionName\s+"[^"]*"/, `versionName "${VER}"`);
   if (!g.includes('signingConfigs')) {
     g = g.replace(/android\s*\{/, `android {\n    signingConfigs {\n        carnet {\n            storeFile file("${ks}")\n            storePassword "carnet2026"\n            keyAlias "carnet"\n            keyPassword "carnet2026"\n        }\n    }`);
     g = g.replace(/buildTypes\s*\{\s*\n?\s*debug\s*\{|buildTypes\s*\{/, (s) => s + `\n        debug { signingConfig signingConfigs.carnet }`);

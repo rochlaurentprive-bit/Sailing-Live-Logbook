@@ -550,6 +550,7 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
     <div class="mut" style="margin-top:12px">Enregistre un journal technique (erreurs, connexions, données reçues, actions) pour m'aider à diagnostiquer un problème. Les clés Windy ne sont pas incluses. Lance l'enregistrement, reproduis le problème, arrête, puis partage le fichier.</div>
     <div class="row" style="margin-top:8px;gap:8px;flex-wrap:wrap"><button class="b" id="recGo">Enregistrer le log</button><button class="b sec hide" id="recShare">Partager / exporter le log</button><button class="b sec hide" id="recCopy">Copier le log</button><button class="b sec hide" id="recClear">Effacer le log</button></div>
     <div class="mut" id="recSt" style="margin-top:6px"></div></div></details>
+  <div class="mut" id="appVer" data-notr style="margin:16px 4px 6px;text-align:center"></div>
 </section>
 
 <div id="auditView" class="overlay hide" role="dialog" aria-label="Journal d'audit">
@@ -3178,6 +3179,8 @@ $('#fxPlay').onclick=()=>{
 };
 
 
+const APP_VERSION='2.0';
+(()=>{const e=document.getElementById('appVer');if(e)e.textContent='Carnet de bord · v'+APP_VERSION})();
 /* ---------- Météo du parcours : vent, vagues, houle et courant le long du tracé (routage, tracé modifié, depuis ma position) ---------- */
 const RWL={wind:{n:'Vent',u:'nds',lim:'maxW',def:22,to:false},waves:{n:'Vagues',u:'m',lim:'maxH',def:2,to:false},swell:{n:'Houle',u:'m',lim:'maxH',def:2,to:false},cur:{n:'Courant',u:'nds',lim:null,to:true}};
 const rwV=(s,L)=>s?(L==='wind'?s.tws:L==='waves'?s.hs:L==='swell'?s.sh:s.cm):null;
