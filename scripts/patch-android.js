@@ -74,7 +74,9 @@ if (fs.existsSync(resSrc)) {
   const gp = path.join(root, 'android', 'app', 'build.gradle');
   let g = fs.readFileSync(gp, 'utf8');
   const ks = path.join(root, 'signing', 'carnet.keystore').replace(/\\/g, '/');
-  const run = parseInt(process.env.GITHUB_RUN_NUMBER || '1', 10);
+  // versionCode = minutes écoulées depuis 1970 : toujours croissant, même si le dépôt change de nom ou si le compteur
+  // d'exécutions GitHub repart de zéro (un versionCode plus bas que celui installé fait refuser la mise à jour).
+  const run = parseInt(process.env.VERSION_CODE || String(Math.floor(Date.now() / 60000)), 10);
   const VER = require(path.join(root, 'package.json')).version;   // numérotation x.y : à changer dans package.json à chaque version
   g = g.replace(/versionCode\s+\d+/, `versionCode ${run}`).replace(/versionName\s+"[^"]*"/, `versionName "${VER}"`);
   if (!g.includes('signingConfigs')) {
