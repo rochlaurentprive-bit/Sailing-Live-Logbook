@@ -2256,9 +2256,9 @@ function buildBoat(){
   poly('cockpit',[[-.95,0.93,-4.7],[.95,0.93,-4.7],[.95,0.93,-2.3],[-.95,0.93,-2.3]]);
   // gréement et voiles
   const H=yt+11,mz=0.7;
-  line('mast',[0,yt,mz],[0,H,mz],3.2);line('mast',[0,yt+1.35,mz],[0,yt+1.35,-3.6],2.4);
-  poly('sail',[[0,yt+1.45,0.78],[0,H-0.4,0.8],[0,yt+1.45,-3.5]]);
-  poly('sail',[[0,deckY(0.97)+0.15,5.1],[0,H-1.4,0.85],[0,yt+0.5,-0.2]]);
+  line('mast',[0,yt,mz],[0,H,mz],3.2);L.push({k:'mast',p:[[0,yt+1.35,mz],[0,yt+1.35,-3.6]],w:2.4,id:'boom',pv:[0,yt+1.35,mz]});
+  P.push({k:'sail',id:'main',p:[[0,yt+1.45,0.78],[0,H-0.4,0.8],[0,yt+1.45,-3.5]],pv:mz});   // grand-voile : pivote autour du mât
+  P.push({k:'sail',id:'jib',p:[[0,deckY(0.97)+0.15,5.1],[0,H-1.4,0.85],[0,yt+0.5,-0.2]]});   // foc : pivote autour de l'étai
   line('rig',[0,deckY(1)+0.1,5.35],[0,H,mz],1);line('rig',[0,H,mz],[0,deckY(0)+0.2,-5.2],1);
   for(const s of[1,-1])line('rig',[0,yt+8,mz],[s*1.5,1.0,0.6],1);
   // quille et safran
@@ -2266,6 +2266,22 @@ function buildBoat(){
   return{P,L};
 }
 const hexRGB=h=>{h=String(h).trim();if(h[0]!=='#')return[100,200,255];if(h.length===4)h='#'+[...h.slice(1)].map(c=>c+c).join('');return[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)]};
+/* Réglage des voiles selon le vent apparent : angle de la bôme / du foc par rapport à l'axe du bateau.
+   Au près serré les voiles sont bordées (et faseyent si on est trop près du vent), au vent arrière la bôme est choquée,
+   à plus de 165° le foc passe en ciseau de l'autre bord. Le vent vient de tribord (AWA>0) : voiles à bâbord (x<0). */
+const SAIL_M=[[0,6],[30,8],[45,12],[60,22],[90,40],[120,58],[150,75],[180,85]],SAIL_J=[[0,4],[30,6],[45,10],[60,18],[90,34],[120,50],[150,65],[180,72]];
+const sailInterp=(T,a)=>{for(let i=1;i<T.length;i++)if(a<=T[i][0]){const f=(a-T[i-1][0])/(T[i][0]-T[i-1][0]);return T[i-1][1]+(T[i][1]-T[i-1][1])*f}return T[T.length-1][1]};
+function sailTarget(awa,t){
+  if(awa==null||!isFinite(awa))return{m:0,j:0};
+  const a=Math.min(180,Math.abs(awa)),side=awa>=0?-1:1,fl=a<28?Math.sin(t*11)*3.5*(1-a/28):0;
+  return{m:side*sailInterp(SAIL_M,a)+fl,j:(a>165?-side:side)*sailInterp(SAIL_J,a)+fl*1.4}}
+function sailPts(pl,tm,tj){
+  const q=pl.p;
+  if(pl.id==='main'){const th=tm*D2R,Lb=q[2][2]-pl.pv;return[q[0],q[1],[Math.sin(th)*-Lb,q[2][1],pl.pv+Lb*Math.cos(th)]]}
+  const T=q[0],Hh=q[1],C=q[2],u=[0,Hh[1]-T[1],Hh[2]-T[2]],ul=Math.hypot(u[1],u[2]);u[1]/=ul;u[2]/=ul;
+  const v=[0,C[1]-T[1],C[2]-T[2]],d=v[1]*u[1]+v[2]*u[2],vp=[0,v[1]-d*u[1],v[2]-d*u[2]],cx=u[1]*vp[2]-u[2]*vp[1],th=tj*D2R;
+  const x=Math.abs(cx)*Math.sin(th),k=Math.cos(th);
+  return[T,Hh,[x,T[1]+d*u[1]+vp[1]*k,T[2]+d*u[2]+vp[2]*k]]}
 const B3_CLASSIC=[{psi:-34,e:15,n:'vue 3/4 arrière'},{psi:0,e:11,n:'vue arrière'},{psi:-90,e:7,n:'vue de côté'},{psi:-148,e:20,n:'vue 3/4 avant'}];
 let WXCL=false;
 const B3_VIEWS=[{psi:0,e:7,n:'vue arrière',d:19.5},{psi:-34,e:15,n:'vue 3/4 arrière'},{psi:-90,e:7,n:'vue de côté'},{psi:-148,e:20,n:'vue 3/4 avant'}];
@@ -2332,6 +2348,7 @@ function mkAtt3D(root,opts){
     const g=cv.getContext('2d'),cs=getComputedStyle(document.documentElement),acc=hexRGB(cs.getPropertyValue('--acc')),wnd=hexRGB(cs.getPropertyValue('--wind')),tx=hexRGB(cs.getPropertyValue('--tx')),mut=cs.getPropertyValue('--mut').trim(),font=cs.getPropertyValue('--num');
     const k=1-Math.exp(-dt*5);
     S.roll+=(S.tr-S.roll)*k;S.pitch+=(S.tp-S.pitch)*k;
+    {const sv=typeof fresh==='function'?(fresh('awa')?D.awa:fresh('twa')?D.twa:null):null,st=sailTarget(sv,t),ks=1-Math.exp(-dt*2.2);S.sm=(S.sm||0)+(st.m-(S.sm||0))*ks;S.sj=(S.sj||0)+(st.j-(S.sj||0))*ks}
     const dpsi=((S.tpsi-S.psi+540)%360)-180;S.psi+=dpsi*k;S.e+=(S.te-S.e)*k;S.dist+=(S.td-S.dist)*k;
     const psi=(S.psi+3*Math.sin(t*0.35))*D2R,el=(S.e+1.2*Math.sin(t*0.5))*D2R;
     const fx=Math.sin(psi)*Math.cos(el),fy=-Math.sin(el),fz=Math.cos(psi)*Math.cos(el),rx=Math.cos(psi),rz=-Math.sin(psi),ux=Math.sin(psi)*Math.sin(el),uy=Math.cos(el),uz=Math.cos(psi)*Math.sin(el);
@@ -2347,13 +2364,13 @@ function mkAtt3D(root,opts){
     const under=[],above=[];
     const clip=(pts,side)=>{const out=[];for(let i=0;i<pts.length;i++){const a=pts[i],b=pts[(i+1)%pts.length],ia=a[1]*side>=0,ib=b[1]*side>=0;if(ia)out.push(a);if(ia!==ib){const f=a[1]/(a[1]-b[1]);out.push([a[0]+(b[0]-a[0])*f,0,a[2]+(b[2]-a[2])*f])}}return out};
     for(const pl of BOAT3D.P){
-      const w=pl.p.map(xf),n=(()=>{const a=w[0],b=w[1],c=w[2],u=[b[0]-a[0],b[1]-a[1],b[2]-a[2]],v=[c[0]-a[0],c[1]-a[1],c[2]-a[2]],nn=[u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0]],l=Math.hypot(...nn)||1;return Math.abs((nn[0]*Ld[0]+nn[1]*Ld[1]+nn[2]*Ld[2])/l/Ll)})();
+      const w=(pl.id?sailPts(pl,S.sm||0,S.sj||0):pl.p).map(xf),n=(()=>{const a=w[0],b=w[1],c=w[2],u=[b[0]-a[0],b[1]-a[1],b[2]-a[2]],v=[c[0]-a[0],c[1]-a[1],c[2]-a[2]],nn=[u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0]],l=Math.hypot(...nn)||1;return Math.abs((nn[0]*Ld[0]+nn[1]*Ld[1]+nn[2]*Ld[2])/l/Ll)})();
       const c=COL[pl.k],sh=0.55+0.45*n;
       const push=(arr,pts,wet)=>{if(pts.length<3)return;const q=pts.map(proj),d=q.reduce((s,r)=>s+r[2],0)/q.length;arr.push({q,d,c,sh,wet,k:pl.k})};
       const ys=w.map(p=>p[1]);
       if(Math.min(...ys)>=0)push(above,w,false);else if(Math.max(...ys)<=0)push(under,w,true);else{push(above,clip(w,1),false);push(under,clip(w,-1),true)}
     }
-    const lines=BOAT3D.L.map(l=>{const a=proj(xf(l.p[0])),b=proj(xf(l.p[1]));return{q:[a,b],d:(a[2]+b[2])/2,k:l.k,w:l.w}});
+    const lines=BOAT3D.L.map(l=>{let p1=l.p[1];if(l.id==='boom'){const th=(S.sm||0)*D2R,Lb=l.p[1][2]-l.pv[2];p1=[Math.sin(th)*-Lb,l.p[1][1],l.pv[2]+Lb*Math.cos(th)]}const a=proj(xf(l.p[0])),b=proj(xf(p1));return{q:[a,b],d:(a[2]+b[2])/2,k:l.k,w:l.w}});
     under.sort((a,b)=>b.d-a.d);above.sort((a,b)=>b.d-a.d);
     const rgba=(c,sh,aMul)=>`rgba(${Math.round(c[0]*sh)},${Math.round(c[1]*sh)},${Math.round(c[2]*sh)},${(c[3]*(aMul||1)).toFixed(3)})`;
     g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,W,W);
