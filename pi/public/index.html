@@ -2423,6 +2423,14 @@ function mkAtt3D(root,opts){
     const mg=w2.createRadialGradient(cx,cy*1.02,W*0.2,cx,cy*1.02,W*0.5);mg.addColorStop(0,'rgba(0,0,0,0)');mg.addColorStop(0.55,'rgba(0,0,0,0)');mg.addColorStop(1,'rgba(0,0,0,1)');
     w2.globalCompositeOperation='destination-out';w2.fillStyle=mg;w2.fillRect(0,0,W,W);w2.globalCompositeOperation='source-over';
     if(!MO)g.drawImage(wc,0,0);
+    // remous léger de l'hélice quand le moteur tourne : mousse qui part derrière la poupe puis s'efface
+    {const rp=fresh('rpm')?D.rpm:0,WK=S.wk||(S.wk=[]),eng=rp>=300?Math.min(1,(rp-300)/2700):0;
+      if(rp>=300){S.wa=(S.wa||0)+(10+34*eng)*dt;while(S.wa>=1&&WK.length<110){S.wa--;WK.push({x:(Math.random()-.5)*.35,z:-5.15+Math.random()*.3,a:0,vx:(Math.random()-.5)*.4,r:.05+Math.random()*.06})}}
+      const vz=1.6+(fresh('sog')?Math.min(12,D.sog)*0.25:0);
+      for(let i=WK.length-1;i>=0;i--){const q=WK[i];q.a+=dt;q.z-=vz*dt;q.x+=q.vx*dt;if(q.a>2.6)WK.splice(i,1)}
+      g.fillStyle='rgb(238,246,255)';
+      for(const q of WK){const pj=proj([q.x,0.02,q.z]),rr=Math.max(0.6,(q.r+q.a*0.1)*F/pj[2]);g.globalAlpha=Math.max(0,(1-q.a/2.6)*0.38*(0.5+0.5*Math.max(eng,0.3)));g.beginPath();g.ellipse(pj[0],pj[1],rr*1.5,rr*0.75,0,0,6.2832);g.fill()}
+      g.globalAlpha=1}
     // parties émergées
     const items=above.concat(lines).sort((a,b)=>b.d-a.d);
     for(const p of items){
