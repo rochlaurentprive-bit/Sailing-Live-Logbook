@@ -462,6 +462,14 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
       <button class="b sec" id="histGo" style="margin-top:6px">Reconstruire les trajets depuis InfluxDB</button>
       <div class="mut" id="histRes" style="margin:6px 0"></div>
     </div>
+    <div id="syncBox" style="display:none;margin-top:12px;padding-top:10px;border-top:1px solid var(--line,#2a4658)">
+      <label>Synchronisation avec le Raspberry Pi</label>
+      <div class="mut" style="margin:4px 0">Copie le journal, les notes, les photos et les routes entre le téléphone et le Pi, dans les deux sens, quand le Pi est joignable. Sans le Pi, l'appli fonctionne seule.</div>
+      <input id="syncHost" placeholder="Adresse du Pi (ex. openplotter.local:3000)">
+      <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="syncAuto" style="width:auto"> Synchroniser automatiquement quand le Pi est joignable</label>
+      <button class="b sec" id="syncGo" style="margin-top:6px">Synchroniser maintenant</button>
+      <div class="mut" id="syncSt" style="margin:6px 0"></div>
+    </div>
     <button class="b sec" id="gpsAsk">Autoriser / tester le GPS du téléphone</button>
     <label>Adresse Signal K (hôte:port)</label><input id="sHost" placeholder="192.168.1.50:3000">
     <label>YDWG-02 : adresse (Wi-Fi du boîtier) et port TCP</label>
@@ -1674,6 +1682,7 @@ if(cfg.src==='sim')cfg.src='demo';
 if(NATIVE)document.body.classList.add('native');
 
 /* ---------- Stockage IndexedDB ---------- */
+let SYNCING=false;   // vrai pendant une synchro avec le Pi : on garde alors l'horodatage d'origine
 const db={h:null,
   open(){return new Promise((ok,ko)=>{const r=indexedDB.open('carnet',3);
     r.onupgradeneeded=()=>{const d=r.result;['trips','notes','photos','audit','grib'].forEach(n=>{if(!d.objectStoreNames.contains(n))d.createObjectStore(n,{keyPath:'id'})})};
@@ -1681,7 +1690,7 @@ const db={h:null,
   st(s,m){return this.h.transaction(s,m||'readonly').objectStore(s)},
   req(q){return new Promise((ok,ko)=>{q.onsuccess=()=>ok(q.result);q.onerror=()=>ko(q.error)})},
   all(s){if(window.PIBOX&&PIBOX.has(s))return PIBOX.all(s);return this.req(this.st(s).getAll())},
-  put(s,o){if(window.PIBOX&&PIBOX.has(s))return PIBOX.put(s,o);return this.req(this.st(s,'readwrite').put(o))},
+  put(s,o){if(!SYNCING)o._m=Date.now();if(window.PIBOX&&PIBOX.has(s))return PIBOX.put(s,o);return this.req(this.st(s,'readwrite').put(o))},
   del(s,id){if(window.PIBOX&&PIBOX.has(s))return PIBOX.del(s,id);return this.req(this.st(s,'readwrite').delete(id))}};
 
 /* ---------- Données instantanées ---------- */
@@ -3260,7 +3269,7 @@ $('#fxPlay').onclick=()=>{
 };
 
 
-const APP_VERSION='2.2';
+const APP_VERSION='2.3';
 (()=>{const e=document.getElementById('appVer');if(e)e.textContent='Carnet de bord · v'+APP_VERSION})();
 /* ---------- Météo du parcours : vent, vagues, houle et courant le long du tracé (routage, tracé modifié, depuis ma position) ---------- */
 const RWL={wind:{n:'Vent',u:'nds',lim:'maxW',def:22,to:false},waves:{n:'Vagues',u:'m',lim:'maxH',def:2,to:false},swell:{n:'Houle',u:'m',lim:'maxH',def:2,to:false},cur:{n:'Courant',u:'nds',lim:null,to:true}};
@@ -3748,6 +3757,101 @@ const dataToBlob=async d=>(await fetch(d)).blob();
 /* ---------- Réglages / sauvegarde ---------- */
 
 /* Historique InfluxDB : uniquement quand l'appli est servie par le Raspberry Pi (window.PIBOX). Inactif sur Android. */
+/* Synchronisation avec le Raspberry Pi : uniquement pour l'appli seule (Android / PWA), jamais en mode Pi (window.PIBOX).
+   Trois états par élément (téléphone, Pi, dernier état synchronisé) : copie dans les deux sens, le plus récent gagne ;
+   un élément supprimé d'un côté est supprimé de l'autre. Le Pi reste facultatif : tout échec réseau est sans conséquence. */
+const SYNC_KV=['wp','plan','polar','mob','chk','maint','aisFavD'],SYNC_ST=['trips','notes','photos','audit'];
+let syncBusy=false,syncTimer=null;
+const jget=(k,d)=>{try{return JSON.parse(localStorage.getItem(k)||'')||d}catch(e){return d}};
+if(!window.PIBOX){const _si=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){_si.call(this,k,v);if(this===localStorage&&!SYNCING&&SYNC_KV.indexOf(k)>=0){const m=jget('syncM',{});m[k]=Date.now();_si.call(this,'syncM',JSON.stringify(m))}}}
+const syncBase=()=>{const h=String(cfg.syncHost||cfg.host||'').trim().replace(/^https?:\/\//,'').replace(/\/.*$/,'');return h?'http://'+h+'/plugins/carnet-de-bord':null};
+async function sx(B,m,p,b,ct,ms){const c=new AbortController(),t=setTimeout(()=>c.abort(),ms||15000);
+  try{const r=await fetch(B+p,{method:m,body:b,headers:b!=null?{'Content-Type':ct||'text/plain;charset=utf-8'}:{},signal:c.signal,cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);return r}finally{clearTimeout(t)}}
+const blobKeys=o=>Object.keys(o).filter(k=>o[k] instanceof Blob);
+async function syncPush(B,s,o){
+  if(s==='photos'){const ks=blobKeys(o),meta=Object.assign({},o);meta._blobs=ks;
+    for(const k of ks){delete meta[k];await sx(B,'PUT','/blob/'+encodeURIComponent(o.id+(k==='blob'?'':'.'+k)),o[k],'application/octet-stream',60000)}
+    return sx(B,'PUT','/store/photos/'+encodeURIComponent(o.id),JSON.stringify(meta))}
+  return sx(B,'PUT','/store/'+s+'/'+encodeURIComponent(o.id)+(s==='trips'?'?seen='+Date.now():''),JSON.stringify(o))}
+async function syncPull(B,s,o){
+  if(s==='photos'){const ks=o._blobs||[],n=Object.assign({},o);delete n._blobs;
+    for(const k of ks)n[k]=await (await sx(B,'GET','/blob/'+encodeURIComponent(o.id+(k==='blob'?'':'.'+k)),null,null,60000)).blob();o=n}
+  await db.put(s,o)}
+async function syncRun(){
+  if(window.PIBOX||syncBusy)return {off:true};
+  const B=syncBase();if(!B)return {err:tr('Renseigne l’adresse du Pi')};
+  syncBusy=true;const rep={push:0,pull:0,del:0,kv:0,skipped:0};
+  let st=jget('syncState',{});if(st.base!==B)st={base:B};
+  try{
+    const ping=await (await sx(B,'GET','/ping',null,null,8000)).json();if(!ping||ping.app!=='carnet-de-bord')throw new Error(tr('Ce n’est pas un Pi avec le carnet de bord'));
+    SYNCING=true;
+    const RR={};for(const s of SYNC_ST)RR[s]=new Map((await (await sx(B,'GET','/store/'+s)).json()).map(o=>[String(o.id),o]));
+    if(SYNC_ST.every(s=>!RR[s].size)&&SYNC_ST.some(s=>Object.keys(st[s]||{}).length)){SYNC_ST.forEach(s=>{st[s]={}})}   // Pi entièrement vide (réinstallé) : on renvoie tout, on ne supprime rien
+    for(const s of SYNC_ST){
+      const R=RR[s];
+      const L=new Map((await db.all(s)).map(o=>[String(o.id),o]));
+      const S=st[s]||(st[s]={});
+      const gone=[...L.keys()].filter(id=>S[id]!==undefined&&!R.has(id)&&!(s==='trips'&&L.get(id).open)).length+[...R.keys()].filter(id=>S[id]!==undefined&&!L.has(id)).length;
+      const noDel=gone>3&&gone>Object.keys(S).length/2;                    // suppression massive suspecte : ignorée
+      for(const id of new Set([...L.keys(),...R.keys()])){
+        const l=L.get(id),r=R.get(id);
+        if(s==='trips'&&((l&&l.open)||(r&&r.open))){rep.skipped++;continue}   // un trajet en cours appartient à son enregistreur
+        try{
+          if(l&&r){
+            const lm=l._m||0,rm=r._m||0;
+            if(lm>rm){await syncPush(B,s,l);rep.push++}
+            else if(rm>lm){await syncPull(B,s,r);rep.pull++}
+            else if(s!=='photos'&&!lm&&JSON.stringify(l)!==JSON.stringify(r)){if(JSON.stringify(l).length>=JSON.stringify(r).length){await syncPush(B,s,l);rep.push++}else{await syncPull(B,s,r);rep.pull++}}
+            S[id]=Math.max(lm,rm,1)}
+          else if(l){
+            if(S[id]!==undefined){if(noDel){rep.skipped++;continue}await db.del(s,id);delete S[id];rep.del++}
+            else{await syncPush(B,s,l);S[id]=Math.max(l._m||0,1);rep.push++}}
+          else{
+            if(S[id]!==undefined){if(noDel){rep.skipped++;continue}await sx(B,'DELETE','/store/'+s+'/'+encodeURIComponent(id));delete S[id];rep.del++}
+            else{await syncPull(B,s,r);S[id]=Math.max(r._m||0,1);rep.pull++}}
+        }catch(e){rep.skipped++}
+      }
+    }
+    const kv=await (await sx(B,'GET','/kv')).json(),M=jget('syncM',{});
+    for(const k of SYNC_KV){
+      const lv=localStorage.getItem(k),lm=M[k]||0,rv=kv[k],rm=+kv['sync.m.'+k]||0;
+      const em=v=>v==null||v===''||v==='[]'||v==='{}'||v==='null';          // valeur vide ou par défaut : jamais prioritaire
+      if(lv===rv||(em(lv)&&em(rv)))continue;
+      const toPi=!em(lv)&&(em(rv)||lm>rm);
+      if(toPi){await sx(B,'PUT','/kv/'+encodeURIComponent(k),lv);const t=lm||Date.now();await sx(B,'PUT','/kv/sync.m.'+k,String(t));M[k]=t;rep.push++}
+      else if(!em(rv)){localStorage.setItem(k,rv);M[k]=rm||Date.now();rep.kv++;rep.pull++}
+    }
+    localStorage.setItem('syncM',JSON.stringify(M));
+    SYNCING=false;st.t=Date.now();localStorage.setItem('syncState',JSON.stringify(st));localStorage.setItem('syncLast',JSON.stringify({t:st.t,rep}));
+    return {ok:true,rep}
+  }catch(e){return {err:String(e&&e.message||e)}}
+  finally{SYNCING=false;syncBusy=false}
+}
+function syncText(r){
+  if(r.off)return '';if(!r.ok)return tr('Pi injoignable')+(r.err?' : '+r.err:'');
+  const x=r.rep,n=x.push+x.pull+x.del;
+  return (n?tr('Synchronisé')+' : '+x.push+' '+tr('envoyé(s)')+' · '+x.pull+' '+tr('reçu(s)')+(x.del?' · '+x.del+' '+tr('supprimé(s)'):''):tr('Déjà à jour'))+(x.skipped?' · '+x.skipped+' '+tr('ignoré(s)'):'')+' · '+new Date().toLocaleTimeString()}
+async function syncGo(manual){
+  const r=await syncRun();const el=$('#syncSt');
+  if(el&&!r.off){el.textContent=syncText(r)}
+  if(r.ok){try{renderTrips();renderNotes()}catch(e){}
+    if(r.rep.kv){if(manual){if(el)el.textContent+=' · '+tr('rechargement…');setTimeout(()=>location.reload(),1200)}else if(el)el.textContent+=' · '+tr('recharge l’appli pour voir la route reçue')}}
+  return r}
+function initSync(){
+  const box=$('#syncBox');if(!box)return;
+  if(window.PIBOX){box.style.display='none';return}
+  box.style.display='';
+  $('#syncHost').value=cfg.syncHost||'';$('#syncHost').placeholder=cfg.host||'openplotter.local:3000';$('#syncAuto').checked=!!cfg.syncAuto;
+  const sv=()=>{cfg.syncHost=$('#syncHost').value.trim();cfg.syncAuto=$('#syncAuto').checked;localStorage.setItem('cfg',JSON.stringify(cfg));syncSchedule()};
+  $('#syncHost').onchange=sv;$('#syncAuto').onchange=sv;
+  $('#syncGo').onclick=async()=>{sv();$('#syncGo').disabled=true;$('#syncSt').textContent='…';try{await syncGo(true)}finally{$('#syncGo').disabled=false}};
+  const last=jget('syncLast',null);if(last)$('#syncSt').textContent=tr('Dernière synchro')+' : '+new Date(last.t).toLocaleString();
+}
+function syncSchedule(){
+  clearInterval(syncTimer);syncTimer=null;if(window.PIBOX||!cfg.syncAuto)return;
+  const go=()=>{if(!document.hidden)syncGo(false).catch(()=>{})};
+  syncTimer=setInterval(go,120000);setTimeout(go,6000)}
+window.CarnetSync={run:syncRun,go:syncGo,schedule:syncSchedule};
 function initHist(){
   const box=$('#histBox');if(!box)return;
   if(!(window.PIBOX&&PIBOX.influx)){box.style.display='none';return}
@@ -3769,7 +3873,7 @@ function initHist(){
 }
 function loadSettings(){
   $('#boat').textContent=cfg.boat;
-  $('#sBoat').value=cfg.boat;$('#sSrc').value=cfg.src;$('#sGps').value=cfg.gpsSrc||'auto';$('#sWind').value=cfg.windRef||'auto';try{initHist()}catch(e){}$('#sHost').value=cfg.host;
+  $('#sBoat').value=cfg.boat;$('#sSrc').value=cfg.src;$('#sGps').value=cfg.gpsSrc||'auto';$('#sWind').value=cfg.windRef||'auto';try{initHist()}catch(e){}try{initSync()}catch(e){}$('#sHost').value=cfg.host;
   $('#sDemoSpd').value=String(cfg.demoSpeed||1);buildLogCfg();updDemoBar();
   $('#sNoGo').value=cfg.noGo;$('#sYdHost').value=cfg.ydHost;$('#sYdPort').value=cfg.ydPort;$('#sAwake').checked=!!cfg.awake;['lnHdg','lnCog','lnLay'].forEach(k=>$('#'+k).checked=cfg[k]!==false);$('#lnMin').value=cfg.lnMin||30;$('#map3dCb').checked=M3D;$('#sAvoid').checked=cfg.avoidLand!==false;$('#sMinDepth').value=cfg.minDepth??3;$('#sHapLvl').value=String(cfg.hapLvl!=null?cfg.hapLvl:(cfg.haptic===false?0:2));$('#sCruise').value=cfg.cruise;$('#sHeel').value=cfg.heelAlert||25;$('#sKPoint').value=cfg.kPoint;$('#sKMap').value=cfg.kMap;
   $('#sStartKn').value=cfg.startKn;$('#sStartSec').value=cfg.startSec;$('#sStopKn').value=cfg.stopKn;$('#sStopMin').value=cfg.stopMin;$('#sInt').value=cfg.interval;
@@ -4810,7 +4914,7 @@ function startSource(){
   const open=(await db.all('trips')).find(t=>t.open);
   if(open&&!open.demo){const last=open.points.length?open.points[open.points.length-1].t:open.start;
     if(window.PIBOX||NOW()-last<15*60000){cur=open;lastPt=last;lastLog=(open.log||[]).reduce((m,e)=>Math.max(m,e.t),open.start)}else{open.open=false;open.end=last;await db.put('trips',open)}}
-  buildTiles();loadSettings();fillRoute();renderPolar();updAuditSummary();updateRecUI();startSource();wpRender();
+  buildTiles();loadSettings();syncSchedule();fillRoute();renderPolar();updAuditSummary();updateRecUI();startSource();wpRender();
   setInterval(tick,1000);
   setInterval(()=>{if($('#v-map').classList.contains('on')&&$('#mapSel').value==='live')drawMapSel('keep')},5000);
   if(!NATIVE&&'serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});

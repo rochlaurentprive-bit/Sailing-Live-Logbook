@@ -19,6 +19,8 @@ function start({ dir, publicDir, options } = {}) {
   p.start({ enabled: true, ...(options || {}) }); p.registerWithRouter(router);
   const server = http.createServer((req, res) => {
     const u = new URL(req.url, 'http://x'); let path_ = u.pathname;
+    res.setHeader('Access-Control-Allow-Origin', '*'); res.setHeader('Access-Control-Allow-Headers', '*'); res.setHeader('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');   // Signal K accepte aussi les requêtes d'autres origines
+    if (req.method === 'OPTIONS') { res.statusCode = 204; return res.end(); }
     res.status = c => { res.statusCode = c; return res; };
     res.set = (k, v) => { res.setHeader(k, v); return res; };
     res.json = o => { res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify(o)); };
