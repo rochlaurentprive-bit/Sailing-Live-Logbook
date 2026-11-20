@@ -16,7 +16,7 @@ build() {  # $1 = android|pi, $2 = nom du dossier, $3 = fichier principal
       b=$(basename "$f")
       case "$b" in
         3-Deploiement-Android*)      [ "$flavor" = android ] || continue ;;
-        3-Deploiement-RaspberryPi*)  [ "$flavor" = pi ] || continue ;;
+        3-Deploiement-RaspberryPi*|5-Guide-Installation-RaspberryPi*)  [ "$flavor" = pi ] || continue ;;
       esac
       cp "$f" "$dir/Documentation/$l/"
     done
@@ -35,6 +35,7 @@ Carnet de bord - version $VER - Raspberry Pi (OpenPlotter / Signal K)
 1. Ouvrez Documentation/<langue>/3-Deploiement-RaspberryPi.pdf
 2. Copiez $(basename "$main") sur le Pi puis : cd ~/.signalk && npm install /chemin/$(basename "$main")
 3. Redemarrez Signal K, activez le plugin, ouvrez la webapp, suivez la recette du document.
+Le guide d'installation illustre (5-Guide-Installation-RaspberryPi.pdf) detaille chaque etape.
 Les autres documents : notes de version, manuel, note detaillee des evolutions.
 T
   fi

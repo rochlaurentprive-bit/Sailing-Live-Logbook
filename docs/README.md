@@ -9,6 +9,7 @@ Chaque version a un dossier `docs/v<version>/<langue>/` (fr, nl, en, de, es), av
 | `3-Deploiement-Android.pdf` | note de déploiement Android | Android |
 | `3-Deploiement-RaspberryPi.pdf` | note de déploiement Pi | Raspberry Pi |
 | `4-Note-detaillee-evolution.pdf` | quoi, comment, pourquoi, impacts | Android et Raspberry Pi |
+| `5-Guide-Installation-RaspberryPi.pdf` | guide d'installation illustré du Pi (à mettre à jour à chaque version) | Raspberry Pi |
 
 Facultatif : `docs/v<version>/NOTES.md` = texte de la publication GitHub.
 
