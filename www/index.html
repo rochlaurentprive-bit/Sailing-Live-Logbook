@@ -88,6 +88,7 @@ th{color:var(--mut);font-weight:500}
 th:first-child,td:first-child{text-align:left}
 .scroll{overflow-x:auto}
 canvas#map{width:100%;height:58vh;background:var(--map);border-radius:var(--r);border:1px solid var(--line);touch-action:none;display:block}
+body.rw canvas#map{height:36vh}
 .bar{height:8px;background:var(--acc);border-radius:4px}
 .hide{display:none!important}
 .seg{display:flex;background:var(--line);border-radius:12px;padding:3px;margin-bottom:10px}.seg button{flex:1;border:0;background:none;color:var(--mut);padding:10px;border-radius:10px;font:600 15px system-ui}.seg button.on{background:var(--card);color:var(--tx);box-shadow:0 1px 4px #0002}
@@ -316,7 +317,7 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
     <div id="selCard" class="card hide" style="position:absolute;left:6px;right:54px;top:6px;z-index:5;margin:0;padding:8px;box-shadow:0 2px 10px rgba(0,0,0,.4)"><select id="mapSel" style="width:100%"></select></div>
     <div id="mapName" style="position:absolute;left:8px;top:8px;z-index:3;max-width:calc(100% - 70px);padding:3px 9px;border-radius:12px;background:var(--card);border:1px solid var(--line);font-size:11px;pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
     <div style="position:absolute;right:8px;top:8px;display:flex;flex-direction:column;gap:6px;z-index:3">
-      <button class="b" id="wpToggle" style="width:40px;padding:6px;font-size:18px" title="Tracer une route">📍</button><button class="b sec" id="mSel" style="width:40px;padding:6px;font-size:18px" title="Trajet affiché">🗂</button><button class="b sec" id="mZin" style="width:40px;padding:6px">+</button><button class="b sec" id="mZout" style="width:40px;padding:6px">−</button><button class="b sec" id="mFit" style="width:40px;padding:6px" title="Recentrer">⌖</button><button class="b sec" id="mWx" style="width:40px;padding:6px;font-size:18px" aria-pressed="false" title="Météo animée">💨</button><button class="b sec" id="mOff" style="width:40px;padding:6px;font-size:18px" title="Cartes hors ligne">💾</button><button class="b sec" id="mAis" style="width:40px;padding:6px;font-weight:700;font-size:12px" aria-pressed="true" title="AIS">AIS</button><button class="b sec" id="m3d" style="width:40px;padding:6px;font-weight:700" aria-pressed="false" title="Vue 3D">3D</button>
+      <button class="b" id="wpToggle" style="width:40px;padding:6px;font-size:18px" title="Tracer une route">📍</button><button class="b sec" id="mSel" style="width:40px;padding:6px;font-size:18px" title="Trajet affiché">🗂</button><button class="b sec" id="mZin" style="width:40px;padding:6px">+</button><button class="b sec" id="mZout" style="width:40px;padding:6px">−</button><button class="b sec" id="mFit" style="width:40px;padding:6px" title="Recentrer">⌖</button><button class="b sec" id="mWx" style="width:40px;padding:6px;font-size:18px" aria-pressed="false" title="Météo animée">💨</button><button class="b sec" id="mRw" style="width:40px;padding:6px;font-size:18px" aria-pressed="false" title="Météo du parcours">🌦</button><button class="b sec" id="mOff" style="width:40px;padding:6px;font-size:18px" title="Cartes hors ligne">💾</button><button class="b sec" id="mAis" style="width:40px;padding:6px;font-weight:700;font-size:12px" aria-pressed="true" title="AIS">AIS</button><button class="b sec" id="m3d" style="width:40px;padding:6px;font-weight:700" aria-pressed="false" title="Vue 3D">3D</button>
     </div>
     <div style="position:absolute;left:6px;right:54px;bottom:6px;z-index:3;max-height:62%;overflow:auto;display:flex;flex-direction:column;gap:5px;pointer-events:none"><div id="aisInfo" hidden style="pointer-events:auto"></div><div id="aisFavs" hidden style="display:flex;flex-direction:column;gap:5px;pointer-events:auto"></div></div>
   <div class="card hide" id="fxCard" style="position:absolute;left:6px;right:54px;top:6px;z-index:4;margin:0;padding:10px;max-height:78%;overflow:auto;box-shadow:0 2px 10px rgba(0,0,0,.4)">
@@ -327,6 +328,16 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
     <input type="range" id="fxT" min="0" max="48" value="0" style="margin-top:8px;padding:0">
     <div class="mut" id="fxLbl" style="margin-top:4px"></div>
   </div>
+    <div class="card hide" id="rwCard" style="margin:8px 0 0;padding:8px">
+      <div class="row" style="justify-content:space-between;align-items:center"><b>🌦 Météo du parcours</b><button class="b sec" id="rwX" style="width:auto;padding:4px 10px">Fermer</button></div>
+      <div class="row" id="rwModes" style="margin-top:6px;gap:4px"></div>
+      <div class="row" id="rwLayers" style="margin-top:6px;gap:4px"></div>
+      <div class="mut" id="rwMsg" style="margin-top:4px"></div>
+      <canvas id="rwCv" style="width:100%;height:112px;margin-top:6px;touch-action:none;display:block"></canvas>
+      <div id="rwRead" style="margin-top:4px;font-size:13px"></div>
+      <div id="rwSum" class="mut" style="margin-top:4px"></div>
+      <div class="row" id="rwAct" style="margin-top:6px"></div>
+    </div>
     <div id="offCard" class="card hide" style="position:absolute;left:6px;right:54px;top:6px;z-index:4;margin:0;padding:10px;max-height:80%;overflow:auto;box-shadow:0 2px 10px rgba(0,0,0,.4)"><b>💾 Carte hors ligne</b>
       <div class="mut" style="margin:4px 0 8px">Enregistre la zone affichée (fonds de carte et couches actives) pour l'utiliser sans connexion.</div>
       <label>Niveau de détail maximum (zoom)</label><select id="offZ"></select>
@@ -343,6 +354,7 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
     <div id="wpList"></div>
     <div class="row" style="margin-top:8px"><button class="b sec" id="wpUndo">↶ Annuler</button><button class="b sec" id="wpClear">Tout effacer</button><button class="b sec" id="wpOpts">Départ, modèles…</button></div>
     <button class="b" id="wpGo" style="width:100%;margin-top:10px;padding:16px;font-size:17px">Lancer le routage</button>
+    <button class="b sec" id="wpRw" style="width:100%;margin-top:6px">🌦 Météo de ce parcours</button>
     <div class="mut" id="wpStat" style="margin-top:6px"></div>
   </div>
     <div class="mut" id="mapInfo" style="margin-top:6px"></div>
@@ -853,6 +865,30 @@ Aucune photo.|Geen foto's.|No photos.|Keine Fotos.|Sin fotos.
 modifiée|gewijzigd|edited|bearbeitet|editada
 Modifier|Wijzigen|Edit|Bearbeiten|Editar
 Bateau 3D et météo|3D-boot en weer|3D boat and weather|3D-Boot und Wetter|Barco 3D y meteo
+Météo du parcours|Weer langs de route|Weather along the route|Wetter entlang der Route|Meteo del recorrido
+Mon tracé|Mijn route|My track|Meine Strecke|Mi trazado
+Depuis ici|Vanaf hier|From here|Von hier|Desde aquí
+Courant|Stroom|Current|Strömung|Corriente
+Pic|Piek|Peak|Spitze|Pico
+Voir|Bekijk|Show|Anzeigen|Ver
+angle|hoek|angle|Winkel|ángulo
+moteur|motor|engine|Motor|motor
+Arrivée prévue|Verwachte aankomst|Expected arrival|Voraussichtliche Ankunft|Llegada prevista
+Au-dessus de ta limite de|Boven je limiet van|Above your limit of|Über deiner Grenze von|Por encima de tu límite de
+Sous ta limite de|Onder je limiet van|Below your limit of|Unter deiner Grenze von|Por debajo de tu límite de
+pendant|gedurende|for|für|durante
+Calcul de la météo du parcours…|Weer langs de route berekenen…|Computing weather along the route…|Wetter entlang der Route wird berechnet…|Calculando la meteo del recorrido…
+Recalculer le routage avec mon tracé|Routering opnieuw berekenen met mijn route|Recompute the routing with my track|Routing mit meiner Strecke neu berechnen|Recalcular la ruta con mi trazado
+🌦 Météo de ce parcours|🌦 Weer op deze route|🌦 Weather on this route|🌦 Wetter auf dieser Route|🌦 Meteo de este recorrido
+🌦 Météo du parcours|🌦 Weer langs de route|🌦 Weather along the route|🌦 Wetter entlang der Route|🌦 Meteo del recorrido
+Tracé modifié depuis le dernier routage : ce graphique montre l'ancien routage. Choisis « Mon tracé » ou relance le routage.|Route gewijzigd sinds de laatste routering: deze grafiek toont de oude routering. Kies «Mijn route» of start de routering opnieuw.|Track changed since the last routing: this chart shows the old routing. Choose «My track» or run the routing again.|Strecke seit dem letzten Routing geändert: dieses Diagramm zeigt das alte Routing. Wähle «Meine Strecke» oder starte das Routing neu.|Trazado modificado desde la última ruta: este gráfico muestra la ruta anterior. Elige «Mi trazado» o relanza la ruta.
+Tracé modifié depuis le dernier routage : cette météo suit ton tracé actuel (ligne droite entre tes points). Relance le routage pour un calcul précis.|Route gewijzigd sinds de laatste routering: dit weer volgt je huidige route (rechte lijn tussen je punten). Start de routering opnieuw voor een nauwkeurige berekening.|Track changed since the last routing: this weather follows your current track (straight line between your points). Run the routing again for an accurate result.|Strecke seit dem letzten Routing geändert: dieses Wetter folgt deiner aktuellen Strecke (Gerade zwischen deinen Punkten). Starte das Routing neu für ein genaues Ergebnis.|Trazado modificado desde la última ruta: esta meteo sigue tu trazado actual (línea recta entre tus puntos). Relanza la ruta para un cálculo preciso.
+Estimation en ligne droite entre tes points, sans louvoyage.|Schatting in rechte lijn tussen je punten, zonder laveren.|Straight-line estimate between your points, no tacking.|Schätzung als Gerade zwischen deinen Punkten, ohne Kreuzen.|Estimación en línea recta entre tus puntos, sin ceñir.
+Depuis ta position actuelle, en suivant les points restants de ton tracé.|Vanaf je huidige positie, langs de resterende punten van je route.|From your current position, following the remaining points of your track.|Von deiner aktuellen Position entlang der verbleibenden Punkte deiner Strecke.|Desde tu posición actual, siguiendo los puntos restantes de tu trazado.
+ Vitesse minimale supposée près du vent.|Minimale snelheid aangenomen dicht bij de wind.|Minimum speed assumed close to the wind.|Mindestgeschwindigkeit nahe am Wind angenommen.|Velocidad mínima supuesta cerca del viento.
+ Au-delà de l'horizon des prévisions : dernières valeurs prolongées.|Voorbij de voorspellingshorizon: laatste waarden verlengd.|Beyond the forecast horizon: last values extended.|Jenseits des Vorhersagehorizonts: letzte Werte fortgeschrieben.|Más allá del horizonte de previsión: últimos valores prolongados.
+Trace un parcours (📍) ou calcule un routage pour voir la météo.|Teken een route (📍) of bereken een routering om het weer te zien.|Draw a route (📍) or compute a routing to see the weather.|Zeichne eine Route (📍) oder berechne ein Routing, um das Wetter zu sehen.|Traza un recorrido (📍) o calcula una ruta para ver la meteo.
+Position GPS indisponible.|GPS-positie niet beschikbaar.|GPS position unavailable.|GPS-Position nicht verfügbar.|Posición GPS no disponible.
 Seuil d'alerte de gîte (°)|Waarschuwingsdrempel helling (°)|Heel alert threshold (°)|Krängungs-Warnschwelle (°)|Umbral de alerta de escora (°)
 Routage « Confort » : vent max (nœuds) / vagues max (m)|«Comfort»-routering: max. wind (knopen) / max. golven (m)|«Comfort» routing: max wind (knots) / max waves (m)|«Komfort»-Routing: max. Wind (Knoten) / max. Wellen (m)|Ruta «Confort»: viento máx. (nudos) / olas máx. (m)
 Lancer le routage|Routering starten|Run routing|Routing starten|Calcular ruta
@@ -2894,9 +2930,10 @@ const wy=(lat,z)=>(1-Math.log(Math.tan(lat*D2R)+1/Math.cos(lat*D2R))/Math.PI)/2*
 const unx=(x,z)=>x/(256*2**z)*360-180;
 const uny=(y,z)=>Math.atan(Math.sinh(Math.PI*(1-2*y/(256*2**z))))*R2D;
 let MV={lat:47,lon:-3,z:12,auto:true}, MD={pts:[],ov:null,alt:[]};
+const RW={open:false,mode:'route',layer:'wind',samples:null,cur:0,busy:false,err:'',msg:'',horizon:Infinity,at:0,slow:false,t:0};
 const scheduleDraw=()=>{if(!drawQ)drawQ=requestAnimationFrame(()=>{drawQ=0;renderMap()})};
 function mapNameUp(){const o=$('#mapSel').selectedOptions[0],n=$('#mapName');n.textContent=o?o.textContent:'';n.classList.toggle('hide',!$('#selCard').classList.contains('hide'))}
-$('#mSel').onclick=()=>{$('#fxCard').classList.add('hide');$('#selCard').classList.toggle('hide');fxMiniUp();mapNameUp()};
+$('#mSel').onclick=()=>{rwClose();$('#fxCard').classList.add('hide');$('#selCard').classList.toggle('hide');fxMiniUp();mapNameUp()};
 $('#mapSel').addEventListener('change',()=>{$('#selCard').classList.add('hide');mapNameUp()});
 async function drawMapSel(fit){
   mapNameUp();
@@ -2952,6 +2989,8 @@ function renderMap(){
   if(MD.ov&&MD.ov.length){dot(MD.ov[0],'#3fb6ff');dot(MD.ov[MD.ov.length-1],'#3fb6ff')}
   fxBase(g,W,H,ox,oy,z);
   wpDraw(g,P);
+  try{rwDraw(g,P)}catch(e){}
+  try{fxAutoZone()}catch(e){}
   try{mobDraw(g,P)}catch(e){}
   try{isoDraw(g,P,W,H)}catch(e){}
   try{aisDraw(g,P,W,H)}catch(e){}
@@ -3015,6 +3054,7 @@ function renderMap(){
     if(d&&d.id===e.pointerId){WPE.drag=null;if(d.moved){WPE.sel=-1;wpChanged()}else if(ok)wpTap(x,y);ptrs.delete(e.pointerId);tap=null;last=0;return}
     if(PICK&&ok&&tap&&!tap.moved&&ptrs.size===1){const f=PICK;PICK=null;f(toGeo(x,y))}
     else if(WPE.on&&ok&&tap&&!tap.moved&&ptrs.size===1&&NOW()-tap.t<700)wpTap(x,y);
+    else if(RW.open&&ok&&tap&&!tap.moved&&ptrs.size===1&&rwMapTap(x,y)){}
     else if(!WPE.on&&ok&&tap&&!tap.moved&&ptrs.size===1&&aisTap(x,y)){}
     else if(!WPE.on&&ok&&tap&&!tap.moved&&ptrs.size===1&&($('#mapDepth').checked||$('#mapSea').checked))mapObjTap(x,y);
     tap=null;ptrs.delete(e.pointerId);last=0;
@@ -3120,7 +3160,7 @@ function fxStart(){if(!FX.raf&&FX.layer!=='none')FX.raf=requestAnimationFrame(fx
 function fxMiniUp(){const m=$('#fxMini'),on=FX.layer!=='none'&&LAST&&$('#fxCard').classList.contains('hide');m.classList.toggle('hide',!on);
   if(on)m.textContent=({wind:'🌬',waves:'🌊',swell:'🌊',cur:'↗'}[FX.layer]||'')+' '+fmtDT(LAST.t0+FX.t*3600000).slice(0,16)+' (+'+FX.t+' h)';
   const b=$('#mWx');b.style.outline=FX.layer!=='none'?'2px solid var(--acc)':'';b.setAttribute('aria-pressed',!$('#fxCard').classList.contains('hide'))}
-$('#mWx').onclick=()=>{$('#selCard').classList.add('hide');$('#fxCard').classList.toggle('hide');fxMiniUp();mapNameUp()};
+$('#mWx').onclick=()=>{rwClose();$('#selCard').classList.add('hide');$('#fxCard').classList.toggle('hide');fxMiniUp();mapNameUp()};
 function updFxLbl(){
   const mx=fxMax();$('#fxT').max=mx;if(FX.t>mx){FX.t=mx;$('#fxT').value=mx}
   const e=$('#fxLbl');
@@ -3136,6 +3176,230 @@ $('#fxPlay').onclick=()=>{
   FX.playing=!FX.playing;$('#fxPlay').textContent=FX.playing?'⏸':'▶︎';clearInterval(FX.timer);
   if(FX.playing)FX.timer=setInterval(()=>{if(!$('#v-map').classList.contains('on'))return;const mx=+$('#fxT').max;FX.t=FX.t>=mx?0:FX.t+1;$('#fxT').value=FX.t;FX.key='';updFxLbl();scheduleDraw()},1200);
 };
+
+
+/* ---------- Météo du parcours : vent, vagues, houle et courant le long du tracé (routage, tracé modifié, depuis ma position) ---------- */
+const RWL={wind:{n:'Vent',u:'nds',lim:'maxW',def:22,to:false},waves:{n:'Vagues',u:'m',lim:'maxH',def:2,to:false},swell:{n:'Houle',u:'m',lim:'maxH',def:2,to:false},cur:{n:'Courant',u:'nds',lim:null,to:true}};
+const rwV=(s,L)=>s?(L==='wind'?s.tws:L==='waves'?s.hs:L==='swell'?s.sh:s.cm):null;
+const rwD=(s,L)=>s?(L==='wind'?s.wdir:L==='waves'?s.hd:L==='swell'?s.sd:s.cd):null;
+const rwLim=L=>{const k=RWL[L].lim;if(!k)return null;const v=k==='maxW'?(plan?.form?.maxW??(+$('#rMaxW').value||22)):(plan?.form?.maxH??(+$('#rMaxH').value||2));return v>0?v:null};
+const rwPts=()=>{const A=parseLL($('#rA').value),B=parseLL($('#rB').value),V=$('#rV').value.split('\n').map(x=>parseLL(x.trim())).filter(Boolean);return A&&B?[A,...V,B]:null};
+const rwStale=()=>!!plan&&!!plan.form&&(plan.form.A!==$('#rA').value||plan.form.B!==$('#rB').value||plan.form.V!==$('#rV').value);
+let rwTmr=0;
+function rwSoon(){if(!RW.open||RW.mode==='route')return;clearTimeout(rwTmr);rwTmr=setTimeout(rwBuild,700)}
+function rwClose(){if(!RW.open)return;RW.open=false;document.body.classList.remove('rw');$('#rwCard').classList.add('hide');$('#mRw').setAttribute('aria-pressed','false');$('#mRw').style.outline='';scheduleDraw()}
+function rwOpen(mode){
+  go('map');
+  $('#fxCard').classList.add('hide');$('#selCard').classList.add('hide');if(typeof fxMiniUp==='function')fxMiniUp();
+  const has=planRoute(),pts=rwPts();
+  if(mode)RW.mode=mode;else RW.mode=rwStale()&&pts?'mine':has?'route':pts?'mine':'route';
+  RW.fitKey='';RW.open=true;document.body.classList.add('rw');$('#rwCard').classList.remove('hide');$('#mRw').setAttribute('aria-pressed','true');$('#mRw').style.outline='2px solid var(--acc)';
+  if(has&&RW.mode==='route'){fillMapSel().then(()=>{$('#mapSel').value='plan';drawMapSel(true)})}
+  rwBuild();setTimeout(()=>{try{$('#rwCard').scrollIntoView({block:'end',behavior:'smooth'})}catch(e){}},400);
+}
+function rwFromRoute(r){
+  const smp=LAST_ROUTE&&LAST_ROUTE.smp,out=[];let d=0;
+  r.forEach((n,i)=>{
+    if(i)d+=hav({lat:r[i-1].la,lon:r[i-1].lo},{lat:n.la,lon:n.lo});
+    const o={lat:n.la,lon:n.lo,t:n.t,d,tws:n.ws,twa:n.wa,hs:n.hs,sh:n.sh,cm:Math.hypot(n.cu,n.cv),cd:(Math.atan2(n.cu,n.cv)*R2D+360)%360,m:n.m,sog:n.g,hdg:n.h};
+    if(smp){try{const q=smp(n.la,n.lo,n.t);if(q){o.wdir=q.wdir;o.hd=q.hd;o.sd=q.sd}}catch(e){}}
+    out.push(o)});
+  if(out.length>1)['tws','twa','hs','sh','cm','cd','wdir','hd','sd'].forEach(k=>{out[0][k]=out[1][k]});
+  return out;
+}
+async function rwSmp(pts,t0){
+  const wxM=plan?.form?.wx||$('#rWx').value,wave=plan?.form?.wave??$('#rWave').value,cur2=plan?.form?.cur??$('#rCur').checked;
+  if(wxM==='demo')return{smp:demoSampler,horizon:Infinity};
+  let a=90,b=-90,l=180,r=-180;pts.forEach(p=>{a=Math.min(a,p.lat);b=Math.max(b,p.lat);l=Math.min(l,p.lon);r=Math.max(r,p.lon)});
+  const o=LAST_ROUTE;if(o&&o.bb&&a>=o.bb.s&&b<=o.bb.n&&l>=o.bb.w&&r<=o.bb.e)return{smp:o.smp,horizon:o.horizon};
+  if(!cfg.kPoint&&!GRIBS.on())throw new Error('clé Windy Point Forecast manquante (⚙️ Réglages)');
+  const bb=bboxOf(pts),key=[wxM,wave,cur2,bb.s,bb.n,bb.w,bb.e].join('|');
+  let L=gridCache[key];
+  if(!L||NOW()-L.at>3600000){L=await loadAll(bb,wxM,wave,cur2,m=>{RW.msg=m;rwUI()});L.at=NOW();gridCache[key]=L}
+  return{smp:makeSampler(L),horizon:L.horizon,warns:L.warns};
+}
+function rwSim(pts,t0,smp){
+  const V=cfg.cruise||6,mot=plan?.form?.motor??(+$('#rMotor').value||0);
+  let tot=0;for(let i=1;i<pts.length;i++)tot+=hav(pts[i-1],pts[i]);
+  const step=Math.max(0.5,tot/170),out=[];let t=t0,d=0;RW.slow=false;
+  const rec=(p,brg,leg)=>{
+    const q=smp?(smp(p.lat,p.lon,t)||{}):{};const b=boat(V,brg,q,{motorBelow:mot});
+    const vx=b.stw*Math.sin(brg*D2R)+(q.cu||0),vy=b.stw*Math.cos(brg*D2R)+(q.cv||0);
+    let sog=vx*Math.sin(brg*D2R)+vy*Math.cos(brg*D2R);if(sog<1){sog=1;RW.slow=true}
+    out.push({lat:p.lat,lon:p.lon,t,d,tws:q.tws,wdir:q.wdir,twa:b.twa,hs:q.hs,hd:q.hd,sh:q.sh,sd:q.sd,cm:Math.hypot(q.cu||0,q.cv||0),cd:(Math.atan2(q.cu||0,q.cv||0)*R2D+360)%360,m:b.motor?1:0,sog,hdg:brg});
+    return sog};
+  for(let i=0;i<pts.length-1;i++){
+    const A=pts[i],B=pts[i+1],L=hav(A,B),brg=bearing(A,B),n=Math.max(1,Math.ceil(L/step));
+    for(let k=0;k<n;k++){
+      const f=k/n,p={lat:A.lat+(B.lat-A.lat)*f,lon:A.lon+(B.lon-A.lon)*f},sog=rec(p,brg),ds=L/n;
+      d+=ds;t+=ds/sog*3600000;
+    }
+  }
+  const last=pts[pts.length-1];rec(last,out.length?out[out.length-1].hdg:0);
+  return out;
+}
+async function rwBuild(){
+  if(!RW.open)return;
+  const my=++RW.t;RW.busy=true;RW.err='';RW.msg='Calcul de la météo du parcours…';rwUI();
+  try{
+    let S;
+    if(RW.mode==='route'){
+      const r=planRoute();if(!r)throw new Error('Trace un parcours (📍) ou calcule un routage pour voir la météo.');
+      S=rwFromRoute(r);
+    }else{
+      let pts=rwPts(),t0=new Date($('#rT').value).getTime();if(isNaN(t0)||t0<NOW()-6*3600e3)t0=NOW();
+      if(RW.mode==='here'){
+        if(!fresh('lat'))throw new Error('Position GPS indisponible.');
+        const here={lat:D.lat,lon:D.lon};if(!pts)throw new Error('Renseigne d\'abord l\'arrivée (📍).');
+        const B=pts[pts.length-1],dH=hav(here,B);
+        const via=pts.slice(1,-1).filter(p=>hav(p,B)<dH&&hav(p,here)>1);
+        pts=[here,...via,B];t0=NOW();
+      }
+      if(!pts||pts.length<2)throw new Error('Trace un parcours (📍) ou calcule un routage pour voir la météo.');
+      const w=await rwSmp(pts,t0);if(my!==RW.t)return;
+      RW.horizon=w.horizon;S=rwSim(pts,t0,w.smp);
+    }
+    if(my!==RW.t)return;
+    S.forEach(s=>{try{s.night=sunPos(s.lat,s.lon,s.t).el<-6}catch(e){s.night=false}});
+    if(RW.mode==='route'){const h=(LAST_ROUTE&&LAST_ROUTE.horizon);RW.horizon=h!=null?h:Infinity}
+    RW.samples=S;RW.cur=Math.min(RW.cur,S.length-1);RW.at=Date.now();RW.msg='';
+  }catch(e){RW.err=e.message;RW.samples=null;RW.msg=''}
+  RW.busy=false;rwUI();rwFit();scheduleDraw();
+}
+function rwFit(){
+  const S=RW.samples;if(!S||!S.length||RW.fitKey===RW.mode)return;RW.fitKey=RW.mode;
+  const c=$('#map'),W=c.clientWidth,H=c.clientHeight*0.55;let a=90,b=-90,l=180,r=-180;
+  S.forEach(p=>{a=Math.min(a,p.lat);b=Math.max(b,p.lat);l=Math.min(l,p.lon);r=Math.max(r,p.lon)});
+  let z=14;for(;z>3;z--){if(wx(r,z)-wx(l,z)<W*0.8&&wy(a,z)-wy(b,z)<H*0.8)break}
+  MV.auto=false;MV.z=z;MV.lat=(a+b)/2-(b-a)*0.18;MV.lon=(l+r)/2;
+}
+const rwHM=t=>new Date(t).toLocaleString(LOC(),{weekday:'short',hour:'2-digit',minute:'2-digit'});
+function rwFmt(s,L){const v=rwV(s,L);if(v==null)return '--';return num(v,L==='wind'||L==='cur'?(L==='cur'?1:0):1)+' '+tr(RWL[L].u)}
+function rwUI(){
+  if(!RW.open)return;
+  const m=$('#rwModes'),ly=$('#rwLayers');
+  const modes=[['route','Routage'],['mine','Mon tracé'],['here','Depuis ici']];
+  m.innerHTML=modes.map(([k,n])=>`<button class="b ${RW.mode===k?'':'sec'}" data-rwm="${k}" style="flex:1;padding:6px 4px;font-size:13px">${tr(n)}</button>`).join('');
+  m.querySelectorAll('[data-rwm]').forEach(b=>b.onclick=()=>{RW.mode=b.dataset.rwm;RW.fitKey='';rwBuild()});
+  const hasCur=!RW.samples||RW.samples.some(s=>s.cm>0.05);
+  ly.innerHTML=[['wind','🌬'],['waves','🌊'],['swell','〰']].concat(hasCur?[['cur','↗']]:[]).map(([k,ic])=>`<button class="b ${RW.layer===k?'':'sec'}" data-rwl="${k}" style="flex:1;padding:6px 2px;font-size:13px">${ic} ${tr(RWL[k].n)}</button>`).join('');
+  ly.querySelectorAll('[data-rwl]').forEach(b=>b.onclick=()=>{RW.layer=b.dataset.rwl;rwUI();scheduleDraw()});
+  const msg=$('#rwMsg'),S=RW.samples;let note='';
+  if(RW.busy)note=RW.msg||'';
+  else if(RW.err)note='⚠️ '+tr(RW.err);
+  else if(S){
+    if(RW.mode==='route'&&rwStale())note='Tracé modifié depuis le dernier routage : ce graphique montre l\'ancien routage. Choisis « Mon tracé » ou relance le routage.';
+    else if(RW.mode==='mine')note=rwStale()?'Tracé modifié depuis le dernier routage : cette météo suit ton tracé actuel (ligne droite entre tes points). Relance le routage pour un calcul précis.':'Estimation en ligne droite entre tes points, sans louvoyage.';
+    else if(RW.mode==='here')note='Depuis ta position actuelle, en suivant les points restants de ton tracé.';
+    if(RW.slow)note+=' Vitesse minimale supposée près du vent.';
+    if(S[S.length-1].t>RW.horizon)note+=' Au-delà de l\'horizon des prévisions : dernières valeurs prolongées.'
+  }
+  msg.textContent=RW.err&&!RW.busy?note:note?tr(note):'';
+  const act=$('#rwAct');act.innerHTML='';
+  if(S&&RW.mode!=='route'&&rwStale()){act.innerHTML=`<button class="b" id="rwRe" style="flex:1">${tr('Recalculer le routage avec mon tracé')}</button>`;$('#rwRe').onclick=()=>{go('map');$('#wpGo').click()}}
+  rwChart();rwRead();
+}
+function rwRead(){
+  const S=RW.samples,rd=$('#rwRead'),sm=$('#rwSum');
+  if(!S||!S.length){rd.innerHTML='';sm.innerHTML='';return}
+  const s=S[RW.cur],L=RW.layer;
+  const dir=(v,d)=>v==null?'':' '+card(d);
+  let h=`<b>${esc(rwHM(s.t))}</b> · ${esc(fmtPos(s.lat,s.lon))}<br>`;
+  if(s.tws!=null)h+=`🌬 <b>${num(s.tws,0)}</b> ${tr('nds')}${s.wdir!=null?' '+card(s.wdir):''}${s.twa!=null?' · '+tr('angle')+' '+Math.round(s.twa)+'°':''}`;
+  if(s.hs!=null)h+=` · 🌊 <b>${num(s.hs)}</b> m${s.hd!=null?' '+card(s.hd):''}`;
+  if(s.sh!=null)h+=` · 〰 <b>${num(s.sh)}</b> m${s.sd!=null?' '+card(s.sd):''}`;
+  if(s.cm>0.2)h+=` · ↗ ${num(s.cm)} ${tr('nds')}`;
+  if(s.m)h+=` · ⚙ ${tr('moteur')}`;
+  if(s.night)h+=' · 🌙';
+  rd.innerHTML=h;
+  const lim=rwLim(L);let mx=-1,mi=0,over=0;
+  for(let i=0;i<S.length;i++){const v=rwV(S[i],L);if(v==null)continue;if(v>mx){mx=v;mi=i}
+    if(lim&&v>lim&&i<S.length-1)over+=S[i+1].t-S[i].t}
+  const tot=S[S.length-1],dur=(tot.t-S[0].t)/3600000;
+  let t=`${tr('Arrivée prévue')} ${esc(rwHM(tot.t))} · ${num(tot.d,0)} NM · ${fmtDur(dur*3600)}`;
+  if(mx>=0){t+=`<br>${tr('Pic')} <b>${rwFmt(S[mi],L)}</b> ${esc(rwHM(S[mi].t))} <button class="b sec" id="rwPk" style="width:auto;padding:2px 8px;font-size:12px">${tr('Voir')}</button>`;
+    if(lim)t+=over>0?`<br><span style="color:var(--bad)">⚠️ ${tr('Au-dessus de ta limite de')} ${num(lim,0)} ${tr(RWL[L].u)} ${tr('pendant')} ${fmtDur(over/1000)}</span>`:`<br>✓ ${tr('Sous ta limite de')} ${num(lim,0)} ${tr(RWL[L].u)}`}
+  sm.innerHTML=t;const pk=$('#rwPk');if(pk)pk.onclick=()=>{RW.cur=mi;rwChart();rwRead();scheduleDraw()};
+}
+function rwChart(){
+  const c=$('#rwCv'),S=RW.samples;if(!c)return;
+  const dpr=window.devicePixelRatio||1,W=c.clientWidth,H=c.clientHeight;if(!W||!H)return;
+  c.width=W*dpr;c.height=H*dpr;const g=c.getContext('2d');g.scale(dpr,dpr);
+  if(!S||S.length<2){return}
+  const L=RW.layer,t0=S[0].t,t1=S[S.length-1].t,span=Math.max(1,t1-t0),pl=26,pr=4,tp=16,bt=16,w=W-pl-pr,h=H-tp-bt;
+  const cs=getComputedStyle(document.documentElement),mut=cs.getPropertyValue('--mut')||'#888',tx=cs.getPropertyValue('--tx')||'#fff';
+  let mx=0;S.forEach(s=>{const v=rwV(s,L);if(v!=null)mx=Math.max(mx,v)});
+  const lim=rwLim(L);let hi=Math.max(L==='wind'?10:1,mx*1.15,lim?lim*1.2:0);
+  const nice=L==='wind'?[10,15,20,30,40,50,60]:[1,2,3,4,6,8,12];hi=nice.find(x=>x>=hi)||Math.ceil(hi);
+  const X=t=>pl+(t-t0)/span*w,Y=v=>tp+h-Math.min(1,v/hi)*h;
+  for(let i=0;i<S.length-1;i++)if(S[i].night){g.fillStyle='rgba(0,0,30,.28)';g.fillRect(X(S[i].t),tp,X(S[i+1].t)-X(S[i].t)+0.5,h)}
+  g.strokeStyle='rgba(128,128,128,.35)';g.lineWidth=1;g.font='10px system-ui';g.fillStyle=mut;g.textAlign='right';
+  [0,0.5,1].forEach(f=>{const y=tp+h-f*h;g.beginPath();g.moveTo(pl,y);g.lineTo(pl+w,y);g.stroke();g.fillText(String(+(hi*f).toFixed(1)),pl-3,y+3)});
+  for(let i=0;i<S.length;i++){
+    const v=rwV(S[i],L);if(v==null)continue;
+    const x0=X(S[i].t),x1=i<S.length-1?X(S[i+1].t):x0+Math.max(2,w/S.length);
+    g.fillStyle=fxColor(L,v,.95);g.fillRect(x0,Y(v),Math.max(1,x1-x0+0.6),tp+h-Y(v));
+  }
+  if(lim&&lim<hi){g.setLineDash([5,4]);g.strokeStyle='#ff5d6c';g.lineWidth=1.5;g.beginPath();g.moveTo(pl,Y(lim));g.lineTo(pl+w,Y(lim));g.stroke();g.setLineDash([])}
+  // flèches de direction
+  const nA=Math.max(2,Math.floor(w/30));
+  for(let k=0;k<nA;k++){
+    const i=Math.min(S.length-1,Math.round(k*(S.length-1)/(nA-1))),d=rwD(S[i],L);if(d==null)continue;
+    const a=(RWL[L].to?d:d+180)*D2R;g.save();g.translate(X(S[i].t),7);g.rotate(a);g.strokeStyle=tx;g.lineWidth=1.5;g.beginPath();g.moveTo(0,5);g.lineTo(0,-5);g.moveTo(-3,-1.5);g.lineTo(0,-5);g.lineTo(3,-1.5);g.stroke();g.restore();
+  }
+  // axe du temps
+  const hrs=span/3600000,stp=[1,2,3,6,12,24,48].find(x=>hrs/x<=6)||72;g.fillStyle=mut;g.textAlign='center';
+  for(let tk=Math.ceil(t0/3600000)*3600000;tk<=t1;tk+=3600000){const d=new Date(tk);if(d.getHours()%stp)continue;
+    g.fillText(d.getHours()===0&&stp<24?d.toLocaleDateString(LOC(),{weekday:'short'}):d.getHours()+'h',X(tk),H-3);
+    g.strokeStyle='rgba(128,128,128,.35)';g.beginPath();g.moveTo(X(tk),tp+h);g.lineTo(X(tk),tp+h+3);g.stroke()}
+  const cx=X(S[RW.cur].t);g.strokeStyle=tx;g.lineWidth=2;g.beginPath();g.moveTo(cx,tp-4);g.lineTo(cx,tp+h);g.stroke();
+  g.fillStyle=tx;g.beginPath();g.arc(cx,tp-4,3.5,0,7);g.fill();
+}
+(function(){
+  $('#mapStage').insertAdjacentElement('afterend',$('#rwCard'));
+  const c=$('#rwCv');let dn=false;
+  const at=e=>{const S=RW.samples;if(!S||S.length<2)return;const r=c.getBoundingClientRect(),pl=26,w=r.width-pl-4,f=Math.max(0,Math.min(1,(e.clientX-r.left-pl)/w)),t=S[0].t+f*(S[S.length-1].t-S[0].t);
+    let k=0;while(k<S.length-1&&S[k+1].t<=t)k++;if(k<S.length-1&&t-S[k].t>S[k+1].t-t)k++;RW.cur=k;rwChart();rwRead();scheduleDraw()};
+  c.addEventListener('pointerdown',e=>{dn=true;c.setPointerCapture(e.pointerId);at(e)});c.addEventListener('pointermove',e=>{if(dn)at(e)});
+  ['pointerup','pointercancel'].forEach(ev=>c.addEventListener(ev,()=>{dn=false}));
+  $('#rwX').onclick=rwClose;$('#mRw').onclick=()=>RW.open?rwClose():rwOpen();
+  window.addEventListener('resize',()=>{if(RW.open)rwChart()});
+  setInterval(()=>{if(RW.open&&RW.mode==='here'&&!RW.busy&&Date.now()-RW.at>120000)rwBuild()},30000);
+})();
+function rwDraw(g,P){
+  const S=RW.samples;if(!RW.open||!S||S.length<2)return;const L=RW.layer;
+  g.save();g.lineCap='round';g.lineJoin='round';
+  g.strokeStyle='rgba(0,0,0,.5)';g.lineWidth=10;g.beginPath();S.forEach((p,i)=>{const[x,y]=P(p);i?g.lineTo(x,y):g.moveTo(x,y)});g.stroke();
+  g.lineWidth=6;
+  for(let i=0;i<S.length-1;i++){const v=rwV(S[i+1],L);g.strokeStyle=v==null?'#9aa':fxColor(L,v,1);const[x0,y0]=P(S[i]),[x1,y1]=P(S[i+1]);g.beginPath();g.moveTo(x0,y0);g.lineTo(x1,y1);g.stroke()}
+  const hrs=(S[S.length-1].t-S[0].t)/3600000,stp=[1,2,3,6,12,24,48].find(x=>hrs/x<=7)||72;
+  g.font='bold 11px system-ui';g.textAlign='center';
+  for(let tk=Math.ceil(S[0].t/3600000)*3600000;tk<S[S.length-1].t;tk+=3600000){
+    if(new Date(tk).getHours()%stp)continue;let k=0;while(k<S.length-2&&S[k+1].t<=tk)k++;
+    const a=S[k],b=S[k+1],f=b.t>a.t?(tk-a.t)/(b.t-a.t):0,[x,y]=P({lat:a.lat+(b.lat-a.lat)*f,lon:a.lon+(b.lon-a.lon)*f});
+    g.fillStyle='#fff';g.strokeStyle='#000';g.lineWidth=2;g.beginPath();g.arc(x,y,3.5,0,7);g.fill();g.stroke();
+    g.shadowColor='#000';g.shadowBlur=4;g.fillStyle='#fff';g.fillText(new Date(tk).getHours()+'h',x,y-8);g.shadowBlur=0}
+  const s=S[RW.cur],[cx,cy]=P(s),v=rwV(s,L);
+  g.fillStyle=v==null?'#9aa':fxColor(L,v,1);g.strokeStyle='#fff';g.lineWidth=3;g.beginPath();g.arc(cx,cy,9,0,7);g.fill();g.stroke();
+  const lb=rwHM(s.t)+' · '+rwFmt(s,L);g.font='bold 12px system-ui';const tw=g.measureText(lb).width+12,bx=Math.max(4,Math.min(VT.W-tw-4,cx-tw/2)),by=cy>40?cy-34:cy+14;
+  g.fillStyle='rgba(10,22,38,.85)';g.fillRect(bx,by,tw,20);g.fillStyle='#fff';g.textAlign='left';g.fillText(lb,bx+6,by+14);
+  g.restore();
+}
+function rwMapTap(x,y){
+  const S=RW.samples;if(!S||S.length<2)return false;let best=-1,bd=34;
+  S.forEach((p,i)=>{const d=Math.hypot(wx(p.lon,VT.z)-VT.ox-x,wy(p.lat,VT.z)-VT.oy-y);if(d<bd){bd=d;best=i}});
+  if(best<0)return false;RW.cur=best;rwChart();rwRead();scheduleDraw();return true;
+}
+/* Rechargement automatique de la zone météo quand on en sort ou qu'on zoome beaucoup */
+const FXA={t:0,last:0,key:''};
+function fxAutoZone(){
+  if(!FX.zone||FX.layer==='none'||!LAST_ZONE||!LAST_ZONE.bb||!$('#v-map').classList.contains('on')||$('#fxReload').disabled)return;
+  const v=viewBBox(),b=LAST_ZONE.bb,out=v.s<b.s||v.n>b.n||v.w<b.w||v.e>b.e;
+  const vs=Math.max(v.n-v.s,v.e-v.w),bs=Math.max(b.n-b.s,b.e-b.w),fine=bs>1.5&&vs<bs*0.4;
+  if(!out&&!fine){clearTimeout(FXA.t);FXA.t=0;return}
+  const key=[v.s,v.n,v.w,v.e].map(x=>x.toFixed(2)).join('|');if(key===FXA.key)return;FXA.key=key;
+  clearTimeout(FXA.t);FXA.t=setTimeout(()=>{FXA.t=0;if(MV.auto)return;const w=4000-(Date.now()-FXA.last);if(w>0){FXA.key='';FXA.t=setTimeout(()=>{FXA.t=0;fxAutoZone()},w);return}FXA.last=Date.now();loadZone()},1200);
+}
 
 /* ---------- Météo de la zone affichée (sans routage) ---------- */
 function viewBBox(){
@@ -3156,7 +3420,7 @@ async function loadZone(){
       let L=gridCache[key];
       if(!L||NOW()-L.at>3600000){L=await loadAll(bb,wxM,wave,cur2,m=>{st.textContent=m});L.at=NOW();gridCache[key]=L}
       LAST_ZONE={smp:makeSampler(L),bb,wave:!!L.wave,cur:!!L.cur,t0,horizon:L.horizon,zone:true};
-      st.textContent='Zone chargée à '+fmtT(NOW())+' · '+wxM+(L.warns.length?' · '+L.warns[0]:'');
+      st.textContent='Zone chargée à '+fmtT(NOW())+' · '+wxM+' · rechargement auto si tu sors de la zone ou zoomes beaucoup'+(L.warns.length?' · '+L.warns[0]:'');
     }
     if(FX.zone){LAST=LAST_ZONE;FX.key='';FX.parts=[];FX.t=0;$('#fxT').value=0;updFxLbl();scheduleDraw()}
   }catch(e){st.textContent='Erreur : '+e.message}
@@ -3963,7 +4227,7 @@ async function computePlan(force){
     common.push(depthNote||'Le routage ignore la terre et les hauts-fonds : vérifie le tracé.');
     plan={at:NOW(),form:{A:$('#rA').value,B:$('#rB').value,V:$('#rV').value,wx:wxM,wave,cur:cur2,motor,maxW,maxH,t0},warns:common,routes,sel:Math.max(0,routes.findIndex(r=>r.route))};
     localStorage.setItem('plan',JSON.stringify(plan));
-    st.textContent='3 routages calculés.';renderPlan();drawPlanOnWindy();FX.key='';updFxLbl();
+    st.textContent='3 routages calculés.';renderPlan();drawPlanOnWindy();FX.key='';updFxLbl();if(RW.open){if(RW.mode!=='here')RW.mode='route';rwBuild()}
   }catch(e){st.textContent='Erreur météo : '+e.message}
   finally{$('#rGo').disabled=$('#rUpd').disabled=false;$('#wpGo').disabled=WP.length<2}
 }
@@ -3992,9 +4256,10 @@ function renderPlan(){
    ${warns.map(w=>`<div class="mut" style="margin-top:4px">⚠️ ${esc(w)}</div>`).join('')}
    <div class="mut" style="margin-top:10px"><b style="color:${cr.color}">${cr.name}</b> : détail étape par étape</div>
    <div class="scroll"><table><tr><th>Heure</th><th>Position</th><th>Cap</th><th>SOG</th><th>Vent nds/angle</th><th>Vagues m</th><th>Houle m</th><th>Courant nds/vers</th></tr>${rt.slice(1).map(row).join('')}</table></div>
-   <div class="row noprint" style="margin-top:8px"><button class="b sec" id="rGpx">Export GPX (${cr.name})</button><button class="b sec" id="rMap">Voir sur la carte</button></div></div>`;
+   <div class="row noprint" style="margin-top:8px"><button class="b sec" id="rGpx">Export GPX (${cr.name})</button><button class="b sec" id="rMap">Voir sur la carte</button><button class="b" id="rRw">🌦 Météo du parcours</button></div></div>`;
   $$('[data-sel]').forEach(b=>b.onclick=()=>{plan.sel=+b.dataset.sel;localStorage.setItem('plan',JSON.stringify(plan));renderPlan();drawPlanOnWindy()});
   $('#rGpx').onclick=()=>download('routage-'+cr.id+'.gpx',toGPX({name:'Routage '+cr.name,points:rt.map(n=>({lat:n.la,lon:n.lo,t:n.t}))}),'application/gpx+xml');
+  $('#rRw').onclick=()=>rwOpen('route');
   $('#rMap').onclick=()=>{go('map');fillMapSel().then(()=>{$('#mapSel').value='plan';drawMapSel(true)})};
 }
 /* Carte Windy (Map Forecast API) */
@@ -4068,7 +4333,7 @@ function wpFromFields(){
   localStorage.setItem('wp',JSON.stringify(WP));wpRender();scheduleDraw();
 }
 function wpPush(){WPE.undo.push(JSON.stringify(WP));if(WPE.undo.length>30)WPE.undo.shift()}
-function wpChanged(){localStorage.setItem('wp',JSON.stringify(WP));wpToFields();wpRender();scheduleDraw()}
+function wpChanged(){localStorage.setItem('wp',JSON.stringify(WP));wpToFields();wpRender();scheduleDraw();rwSoon()}
 const wpRole=(i,n=WP.length)=>i===0?'D':i===n-1&&n>1?'A':String(i);
 const wpColor=(i,n=WP.length)=>i===0?'#2fbf71':i===n-1&&n>1?'#e5484d':'#2f7fe0';
 const wpName=(i,n=WP.length)=>i===0?'Départ':i===n-1&&n>1?'Arrivée':'Étape '+i;
@@ -4162,6 +4427,8 @@ $('#wpGo').onclick=async()=>{
 };
 $('#rRoutePick').onclick=()=>{go('map');wpOn(true)};
 ['#rA','#rB','#rV'].forEach(s=>$(s).addEventListener('input',wpFromFields));
+$('#wpRw').onclick=()=>rwOpen();
+
 
 /* ---------- Mode démo : une navigation de voilier réaliste (données fictives) ---------- */
 const DEMO={start:{lat:47.478,lon:-3.075},wps:[[47.30,-3.00],[47.20,-3.55],[47.50,-3.55],[47.50,-3.30]]};
@@ -4440,7 +4707,9 @@ const HELP=[
    ['Comment la météo est prise en compte : le calcul avance dans le temps (pas de 0,5 à 3 h selon la distance) et, à chaque pas, lit la météo à l\'endroit et à l\'heure exacts où se trouve le bateau, pas une moyenne. La vitesse dépend du vent vrai (force et angle) selon ta polaire, ou une polaire générique réglée sur ta vitesse de croisière. Sous le seuil de vent « moteur » que tu fixes, le bateau est supposé au moteur à 75 % de la vitesse de croisière. Partir plus tôt ou plus tard donne donc un autre trajet.','Hoe het weer meetelt: de berekening loopt door de tijd (stappen van 0,5 tot 3 u naargelang de afstand) en leest bij elke stap het weer op de exacte plaats en het exacte uur van de boot, geen gemiddelde. De snelheid hangt af van de ware wind (kracht en hoek) volgens je polaire, of een algemene polaire afgestemd op je kruissnelheid. Onder de motordrempel die je instelt, vaart de boot op de motor met 75 % van de kruissnelheid. Vroeger of later vertrekken geeft dus een ander traject.','How weather is taken into account: the calculation moves forward in time (steps of 0.5 to 3 h depending on distance) and at each step reads the weather at the boat\'s exact position and time, not an average. Speed depends on true wind (strength and angle) from your polar, or a generic polar scaled to your cruising speed. Below the motor wind threshold you set, the boat is assumed to motor at 75% of cruising speed. Leaving earlier or later therefore gives a different route.','So fließt das Wetter ein: Die Berechnung läuft in der Zeit voran (Schritte von 0,5 bis 3 h je nach Strecke) und liest bei jedem Schritt das Wetter an der genauen Position und Zeit des Boots, keinen Durchschnitt. Die Geschwindigkeit hängt vom wahren Wind (Stärke und Winkel) laut deiner Polare ab, oder einer allgemeinen Polare, abgestimmt auf deine Reisegeschwindigkeit. Unter der eingestellten Motor-Windschwelle fährt das Boot mit 75 % der Reisegeschwindigkeit unter Motor. Früher oder später abzufahren ergibt daher eine andere Route.','Cómo se tiene en cuenta la meteo: el cálculo avanza en el tiempo (pasos de 0,5 a 3 h según la distancia) y en cada paso lee la meteo en la posición y la hora exactas del barco, no una media. La velocidad depende del viento real (fuerza y ángulo) según tu polar, o una polar genérica ajustada a tu velocidad de crucero. Por debajo del umbral de viento de motor que fijes, se supone que el barco va a motor al 75 % de la velocidad de crucero. Salir antes o después da, por tanto, otra ruta.'],
    ['Houle et vagues : si tu choisis un modèle de vagues (GFS Wave, ICON Wave ou ICON-EU Wave ; « Aucun » les ignore), l\'appli lit à chaque point la hauteur et la direction des vagues, et celles de la houle principale. Mer debout, la vitesse baisse de 8 % par mètre de vagues, jusqu\'à 40 % ; mer de travers, la perte est légère (1 % par mètre). La houle de travers retire jusqu\'à 15 % (1,5 % par mètre). La variante Confort écarte les positions où le vent ou les vagues dépassent tes limites (vent max, vagues max), tant qu\'une alternative existe ; sinon elle le signale. Les vagues max rencontrées sont affichées pour chaque variante. Si le modèle n\'a pas de données sur la zone, le routage se fait sans vagues, avec un avertissement.','Deining en golven: kies je een golfmodel (GFS Wave, ICON Wave of ICON-EU Wave; «Geen» negeert ze), dan leest de app op elk punt hoogte en richting van de golven en van de hoofddeining. Bij tegenzee daalt de snelheid met 8 % per meter golfhoogte, tot 40 %; bij zijdelingse zee is het verlies klein (1 % per meter). Zijdelingse deining kost tot 15 % (1,5 % per meter). De variant Comfort schuift posities weg waar wind of golven je grenzen overschrijden (max. wind, max. golven), zolang er een alternatief is; anders meldt ze dat. De maximale golven worden per variant getoond. Heeft het model geen gegevens voor het gebied, dan wordt zonder golven gerouteerd, met een waarschuwing.','Swell and waves: if you pick a wave model (GFS Wave, ICON Wave or ICON-EU Wave; «None» ignores them), the app reads at each point the wave height and direction and those of the main swell. Head seas cut speed by 8% per metre of wave height, up to 40%; beam seas cost little (1% per metre). Beam swell takes off up to 15% (1.5% per metre). The Comfort variant discards positions where wind or waves exceed your limits (max wind, max waves) as long as an alternative exists; otherwise it flags it. The maximum waves met are shown for each variant. If the model has no data for the area, routing runs without waves, with a warning.','Dünung und Wellen: Wählst du ein Wellenmodell (GFS Wave, ICON Wave oder ICON-EU Wave; «Keins» ignoriert sie), liest die App an jedem Punkt Höhe und Richtung der Wellen und der Hauptdünung. Bei Seegang von vorn sinkt die Geschwindigkeit um 8 % pro Meter, bis zu 40 %; bei Seegang von der Seite ist der Verlust gering (1 % pro Meter). Seitliche Dünung kostet bis zu 15 % (1,5 % pro Meter). Die Variante Komfort verwirft Positionen, an denen Wind oder Wellen deine Grenzen überschreiten (max. Wind, max. Wellen), solange es eine Alternative gibt; sonst weist sie darauf hin. Die größten Wellen werden je Variante angezeigt. Hat das Modell keine Daten für das Gebiet, wird ohne Wellen geroutet, mit Warnung.','Olas y mar de fondo: si eliges un modelo de olas (GFS Wave, ICON Wave o ICON-EU Wave; «Ninguno» las ignora), la app lee en cada punto la altura y la dirección de las olas y del mar de fondo principal. Con mar de proa la velocidad baja un 8 % por metro de ola, hasta un 40 %; con mar de costado la pérdida es leve (1 % por metro). El mar de fondo de costado resta hasta un 15 % (1,5 % por metro). La variante Confort descarta las posiciones donde el viento o las olas superan tus límites (viento máx., olas máx.), mientras haya alternativa; si no, lo avisa. Se muestran las olas máximas de cada variante. Si el modelo no tiene datos de la zona, se rutea sin olas, con un aviso.'],
    ['Courant : si la case courant est cochée, le courant (Copernicus/CMEMS via Windy) s\'ajoute à la vitesse du bateau pour donner la vitesse fond ; il peut raccourcir ou allonger le trajet. Sans données de courant sur la zone, le calcul se fait sans, avec un avertissement.','Stroom: is het vakje stroom aangevinkt, dan wordt de stroom (Copernicus/CMEMS via Windy) bij de bootsnelheid opgeteld voor de snelheid over de grond; hij kan het traject korter of langer maken. Zonder stroomgegevens voor het gebied wordt zonder gerekend, met een waarschuwing.','Current: if the current box is ticked, the current (Copernicus/CMEMS via Windy) is added to the boat\'s speed to give speed over ground; it can shorten or lengthen the route. Without current data for the area, the calculation runs without it, with a warning.','Strömung: Ist das Strömungsfeld angehakt, wird die Strömung (Copernicus/CMEMS über Windy) zur Bootsgeschwindigkeit addiert und ergibt die Fahrt über Grund; sie kann die Route verkürzen oder verlängern. Ohne Strömungsdaten für das Gebiet wird ohne gerechnet, mit Warnung.','Corriente: si la casilla de corriente está marcada, la corriente (Copernicus/CMEMS vía Windy) se suma a la velocidad del barco para dar la velocidad sobre el fondo; puede acortar o alargar la ruta. Sin datos de corriente en la zona, se calcula sin ella, con un aviso.'],
-   ['Sources et limites : un fichier GRIB importé remplace les appels Windy (sans connexion ni clé). Au-delà de l\'horizon des prévisions, les dernières valeurs sont prolongées et l\'appli le signale. Le planificateur de départ compare plusieurs heures de départ avec les mêmes règles. Ce sont des prévisions : elles peuvent se tromper, vérifie toujours la météo officielle.','Bronnen en beperkingen: een geïmporteerd GRIB-bestand vervangt de Windy-oproepen (zonder verbinding of sleutel). Voorbij de voorspellingshorizon worden de laatste waarden verlengd en dat wordt gemeld. De vertrekplanner vergelijkt meerdere vertrekuren met dezelfde regels. Het zijn voorspellingen: ze kunnen fout zijn, controleer altijd het officiële weerbericht.','Sources and limits: an imported GRIB file replaces Windy calls (no connection or key needed). Beyond the forecast horizon the last values are extended and the app flags it. The departure planner compares several departure times with the same rules. These are forecasts: they can be wrong, always check the official weather.','Quellen und Grenzen: Eine importierte GRIB-Datei ersetzt die Windy-Abfragen (ohne Verbindung oder Schlüssel). Jenseits des Vorhersagehorizonts werden die letzten Werte fortgeschrieben und die App weist darauf hin. Der Abfahrtsplaner vergleicht mehrere Abfahrtszeiten nach denselben Regeln. Es sind Vorhersagen: Sie können falsch sein, prüfe immer den offiziellen Wetterbericht.','Fuentes y límites: un GRIB importado sustituye las llamadas a Windy (sin conexión ni clave). Más allá del horizonte de previsión se prolongan los últimos valores y la app lo avisa. El planificador de salida compara varias horas de salida con las mismas reglas. Son previsiones: pueden fallar, consulta siempre la meteo oficial.']]],
+   ['Sources et limites : un fichier GRIB importé remplace les appels Windy (sans connexion ni clé). Au-delà de l\'horizon des prévisions, les dernières valeurs sont prolongées et l\'appli le signale. Le planificateur de départ compare plusieurs heures de départ avec les mêmes règles. Ce sont des prévisions : elles peuvent se tromper, vérifie toujours la météo officielle.','Bronnen en beperkingen: een geïmporteerd GRIB-bestand vervangt de Windy-oproepen (zonder verbinding of sleutel). Voorbij de voorspellingshorizon worden de laatste waarden verlengd en dat wordt gemeld. De vertrekplanner vergelijkt meerdere vertrekuren met dezelfde regels. Het zijn voorspellingen: ze kunnen fout zijn, controleer altijd het officiële weerbericht.','Sources and limits: an imported GRIB file replaces Windy calls (no connection or key needed). Beyond the forecast horizon the last values are extended and the app flags it. The departure planner compares several departure times with the same rules. These are forecasts: they can be wrong, always check the official weather.','Quellen und Grenzen: Eine importierte GRIB-Datei ersetzt die Windy-Abfragen (ohne Verbindung oder Schlüssel). Jenseits des Vorhersagehorizonts werden die letzten Werte fortgeschrieben und die App weist darauf hin. Der Abfahrtsplaner vergleicht mehrere Abfahrtszeiten nach denselben Regeln. Es sind Vorhersagen: Sie können falsch sein, prüfe immer den offiziellen Wetterbericht.','Fuentes y límites: un GRIB importado sustituye las llamadas a Windy (sin conexión ni clave). Más allá del horizonte de previsión se prolongan los últimos valores y la app lo avisa. El planificador de salida compara varias horas de salida con las mismas reglas. Son previsiones: pueden fallar, consulta siempre la meteo oficial.']],
+   ['Météo du parcours (bouton 🌦 sur la carte, ou « Météo du parcours » dans Routage ou dans le panneau de route 📍) : un graphique montre le vent, les vagues, la houle et le courant heure par heure le long de ton tracé. Glisse le doigt sur le graphique : un repère se déplace sur la carte et affiche l\'heure, la position, le vent (force, direction, angle), les vagues, la houle et le moteur. Touche aussi le tracé sur la carte pour lire la météo à cet endroit. Le tracé est coloré selon la couche choisie, les zones de nuit sont grisées et ta limite (vent max, vagues max) apparaît en pointillés rouges avec la durée de dépassement et le pic.','Weer langs de route (knop 🌦 op de kaart, of «Weer langs de route» in Routering of in het routepaneel 📍): een grafiek toont wind, golven, deining en stroom uur per uur langs je route. Sleep met je vinger over de grafiek: een markering beweegt op de kaart en toont uur, positie, wind (kracht, richting, hoek), golven, deining en motor. Tik ook op de route op de kaart om het weer op die plek te lezen. De route is gekleurd volgens de gekozen laag, nachtzones zijn grijs en je limiet (max. wind, max. golven) staat als rode stippellijn met de duur van de overschrijding en de piek.','Weather along the route (🌦 button on the chart, or «Weather along the route» in Routing or in the 📍 route panel): a chart shows wind, waves, swell and current hour by hour along your track. Drag a finger over the chart: a marker moves on the map and shows time, position, wind (strength, direction, angle), waves, swell and engine. Tap the track on the map to read the weather at that spot too. The track is coloured by the chosen layer, night zones are greyed and your limit (max wind, max waves) appears as a red dotted line with the time spent above it and the peak.','Wetter entlang der Route (Taste 🌦 auf der Karte, oder «Wetter entlang der Route» im Routing oder im Routenfeld 📍): Ein Diagramm zeigt Wind, Wellen, Dünung und Strömung Stunde für Stunde entlang deiner Strecke. Ziehe den Finger über das Diagramm: Eine Markierung wandert auf der Karte und zeigt Zeit, Position, Wind (Stärke, Richtung, Winkel), Wellen, Dünung und Motor. Tippe auch auf die Strecke auf der Karte, um das Wetter dort zu lesen. Die Strecke ist nach der gewählten Ebene gefärbt, Nachtzonen sind grau, und deine Grenze (max. Wind, max. Wellen) erscheint als rote Strichlinie mit der Dauer der Überschreitung und dem Maximum.','Meteo del recorrido (botón 🌦 en la carta, o «Meteo del recorrido» en Rutas o en el panel de ruta 📍): un gráfico muestra viento, olas, mar de fondo y corriente hora a hora a lo largo de tu trazado. Desliza el dedo por el gráfico: una marca se mueve en la carta y muestra hora, posición, viento (fuerza, dirección, ángulo), olas, mar de fondo y motor. Toca también el trazado en la carta para leer la meteo en ese punto. El trazado se colorea según la capa elegida, las zonas de noche se ven en gris y tu límite (viento máx., olas máx.) aparece como línea roja discontinua con el tiempo por encima y el pico.'],
+   ['Trois vues du parcours : « Routage » montre le routage calculé (la variante choisie). « Mon tracé » suit ton tracé actuel, y compris tes étapes ajoutées ou déplacées, en ligne droite entre tes points : la vitesse est estimée avec ta polaire, ta vitesse de croisière et la météo rencontrée (sans simuler le louvoyage). « Depuis ici » part de ta position actuelle, maintenant, et suit les points restants de ton tracé : utile en navigation pour savoir ce qui t\'attend ; elle se met à jour toute seule toutes les 2 minutes. Si tu modifies le tracé après un routage, l\'appli te le dit et propose « Recalculer le routage avec mon tracé » pour obtenir de nouvelles trajectoires qui passent par tes étapes.','Drie weergaven van de route: «Routering» toont de berekende routering (de gekozen variant). «Mijn route» volgt je huidige route, inclusief toegevoegde of verplaatste etappepunten, in rechte lijn tussen je punten: de snelheid wordt geschat met je polaire, je kruissnelheid en het weer onderweg (zonder laveren te simuleren). «Vanaf hier» start op je huidige positie, nu, en volgt de resterende punten van je route: handig onderweg om te weten wat je te wachten staat; ze ververst zichzelf elke 2 minuten. Wijzig je de route na een routering, dan meldt de app dat en stelt «Routering opnieuw berekenen met mijn route» voor, voor nieuwe trajecten die door je punten gaan.','Three views of the route: «Routing» shows the computed routing (the chosen variant). «My track» follows your current track, including waypoints you added or moved, in a straight line between your points: speed is estimated from your polar, your cruising speed and the weather met (tacking is not simulated). «From here» starts at your current position, now, and follows the remaining points of your track: useful under way to see what lies ahead; it refreshes itself every 2 minutes. If you change the track after a routing, the app tells you and offers «Recompute the routing with my track» to get new routes that pass through your waypoints.','Drei Ansichten der Route: «Routing» zeigt das berechnete Routing (die gewählte Variante). «Meine Strecke» folgt deiner aktuellen Strecke, einschließlich hinzugefügter oder verschobener Etappenpunkte, als Gerade zwischen deinen Punkten: Die Geschwindigkeit wird mit deiner Polare, deiner Reisegeschwindigkeit und dem angetroffenen Wetter geschätzt (Kreuzen wird nicht simuliert). «Von hier» startet an deiner aktuellen Position, jetzt, und folgt den verbleibenden Punkten deiner Strecke: nützlich unterwegs, um zu sehen, was kommt; sie aktualisiert sich alle 2 Minuten selbst. Änderst du die Strecke nach einem Routing, weist die App darauf hin und bietet «Routing mit meiner Strecke neu berechnen» an, für neue Routen durch deine Punkte.','Tres vistas del recorrido: «Ruta» muestra la ruta calculada (la variante elegida). «Mi trazado» sigue tu trazado actual, incluidos los puntos que añadiste o moviste, en línea recta entre tus puntos: la velocidad se estima con tu polar, tu velocidad de crucero y la meteo encontrada (no se simula el ceñir). «Desde aquí» parte de tu posición actual, ahora, y sigue los puntos restantes de tu trazado: útil en navegación para saber qué te espera; se actualiza sola cada 2 minutos. Si cambias el trazado tras calcular una ruta, la app te lo dice y propone «Recalcular la ruta con mi trazado» para obtener nuevas rutas que pasen por tus puntos.']],
  [['Notes, Stats','Notities, Statistieken','Notes, Stats','Notizen, Statistik','Notas, Estadísticas'],
   [['Notes : bloc-notes libre (pense-bête, travaux, avitaillement). Stats : distance totale, temps en mer, milles par mois, vitesses et consommation sur l\'ensemble de tes trajets.','Notities: vrij notitieblok (geheugensteun, klussen, bevoorrading). Statistieken: totale afstand, tijd op zee, mijlen per maand, snelheden en verbruik over al je trajecten.','Notes: free notepad (reminders, jobs, provisioning). Stats: total distance, time at sea, miles per month, speeds and consumption across all your trips.','Notizen: freier Notizblock (Merkzettel, Arbeiten, Proviant). Statistik: Gesamtstrecke, Zeit auf See, Meilen pro Monat, Geschwindigkeiten und Verbrauch über alle Törns.','Notas: bloc libre (recordatorios, trabajos, avituallamiento). Estadísticas: distancia total, tiempo en el mar, millas por mes, velocidades y consumo de todas tus travesías.']]],
  [['Réglages et connexion au bateau','Instellingen en verbinding met de boot','Settings and boat connection','Einstellungen und Verbindung zum Boot','Ajustes y conexión con el barco'],
@@ -4462,6 +4731,7 @@ const VIS=[
    ['Zoom avant / arrière (ou pince avec deux doigts).','In- / uitzoomen (of knijp met twee vingers).','Zoom in / out (or pinch with two fingers).','Vergrößern / verkleinern (oder zwei Finger).','Acercar / alejar (o pellizca con dos dedos).'],
    ['Recentrer sur le bateau.','Op de boot centreren.','Re-centre on the boat.','Auf das Boot zentrieren.','Centrar en el barco.'],
    ['Météo animée (vent, vagues, houle, courants) : un panneau s\'ouvre sur la carte ; fermé, une pastille indique l\'heure de la prévision.','Geanimeerd weer (wind, golven, deining, stroming): een paneel opent op de kaart; gesloten toont een label het prognose-uur.','Animated weather (wind, waves, swell, currents): a panel opens on the chart; when closed, a tag shows the forecast time.','Animiertes Wetter (Wind, Wellen, Dünung, Strömung): ein Panel öffnet sich auf der Karte; geschlossen zeigt ein Label die Prognosezeit.','Meteo animada (viento, olas, mar de fondo, corrientes): se abre un panel en el mapa; cerrado, una etiqueta indica la hora.'],
+   ['Rechargement automatique : avec « Météo de la zone affichée », quand tu sors de la zone chargée ou que tu zoomes beaucoup, la zone est rechargée seule avec une grille plus fine (environ une seconde après ton geste). Les données ne sont pas rechargées à chaque zoom : l\'affichage est interpolé entre les points de la grille.','Automatisch herladen: met «Weer van het getoonde gebied» wordt het gebied vanzelf opnieuw geladen met een fijner raster wanneer je het geladen gebied verlaat of sterk inzoomt (ongeveer een seconde na je gebaar). De gegevens worden niet bij elke zoom herladen: de weergave wordt geïnterpoleerd tussen de rasterpunten.','Automatic reload: with «Weather of the displayed area», when you leave the loaded area or zoom in a lot, the area reloads by itself with a finer grid (about a second after your gesture). Data is not reloaded at every zoom: the display is interpolated between grid points.','Automatisches Neuladen: Mit «Wetter des angezeigten Gebiets» wird das Gebiet von selbst mit feinerem Raster neu geladen, wenn du es verlässt oder stark zoomst (etwa eine Sekunde nach deiner Geste). Die Daten werden nicht bei jedem Zoom neu geladen: die Anzeige wird zwischen den Rasterpunkten interpoliert.','Recarga automática: con «Meteo de la zona mostrada», al salir de la zona cargada o al ampliar mucho, la zona se recarga sola con una malla más fina (un segundo después de tu gesto). Los datos no se recargan en cada zoom: la vista se interpola entre los puntos de la malla.'],
    ['Cibles AIS : afficher ou masquer (grisé = masqué).','AIS-doelen tonen of verbergen (grijs = verborgen).','AIS targets: show or hide (dimmed = hidden).','AIS-Ziele ein-/ausblenden (grau = aus).','Objetivos AIS: mostrar u ocultar (atenuado = oculto).'],
    ['Vue 3D inclinée qui suit le bateau.','Gekantelde 3D-weergave die de boot volgt.','Tilted 3D view following the boat.','Geneigte 3D-Ansicht, folgt dem Boot.','Vista 3D inclinada que sigue al barco.']]],
  [['Infos sur les bouées, balises, épaves','Info over tonnen, bakens, wrakken','Info on buoys, beacons, wrecks','Infos zu Tonnen, Baken, Wracks','Info sobre boyas, balizas, naufragios'],
