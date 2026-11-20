@@ -68,7 +68,7 @@ jobs:
         working-directory: pi
         run: |
           node scripts/build.js
-          node test/run.js && node test/influx.js
+          node test/run.js && node test/influx.js && node test/mirror.js
           npm pack
 
       - name: Assembler les 2 packages

@@ -39,3 +39,14 @@ API : `GET /influx/status`, `GET /influx/probe`, `POST /influx/import {from,to}`
 
 Toute évolution du noyau `www/index.html` doit fonctionner **sans Raspberry et sans Signal K** : les fonctions propres au Pi vivent
 uniquement derrière `window.PIBOX` (défini par `pi-adapter.js`, absent sur Android). `test/regression.js` (workflow `regression.yml`) le vérifie à chaque push.
+
+
+## Architecture des données (v2.2) : un seul enregistreur, Signal K → InfluxDB
+
+- **Live** : le plugin lit Signal K. **Historique / journal passé** : lu dans InfluxDB (lecture seule, bucket de Signal K).
+- Le plugin **n'enregistre plus les trajets en parallèle** (option « Enregistrement automatique », désactivée par défaut) : Signal K écrit déjà tout dans InfluxDB.
+- **Notes, journal, trajets, réglages** sont copiés dans un **bucket dédié** InfluxDB 2.x (`carnet`, mesure `carnet_doc`), avec un jeton qui n'a le droit d'écrire que dans ce bucket. Les données de Signal K ne sont jamais modifiées.
+  Créer le bucket et le jeton : `influx bucket create -n carnet -o <org>` puis un jeton « write + read » limité à ce bucket.
+- Les fichiers du Pi restent le cache local. Sur un Pi neuf (dossier vide), le carnet est **reconstruit automatiquement** depuis InfluxDB.
+- Photos : l'image reste sur le Pi (incluse dans la sauvegarde JSON), seules ses informations sont copiées.
+- **L'appli Android reste autonome** : sans Pi ni Signal K, elle lit le YDWG-02 en direct et garde son carnet sur le téléphone (règle de compatibilité inchangée).

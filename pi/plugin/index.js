@@ -4,6 +4,7 @@ const { Collector } = require('./collector');
 const { Store } = require('./store');
 const { Recorder, DEFAULTS } = require('./recorder');
 const { Influx, importTrips } = require('./influx');
+const { Mirror } = require('./mirror');
 const pkg = require('../package.json');
 
 const MAX_BODY = 80 * 1024 * 1024;
@@ -19,15 +20,15 @@ function readBody(req) {
 }
 
 module.exports = function (app) {
-  const plugin = { id: 'carnet-de-bord', name: 'Carnet de bord (enregistrement 24 h/24)' };
-  let col = null, rec = null, store = null, timer = null, unsub = [], opts = {};
+  const plugin = { id: 'carnet-de-bord', name: 'Carnet de bord' };
+  let col = null, rec = null, store = null, mirror = null, timer = null, unsub = [], opts = {};
   const dbg = m => { try { app.debug(m); } catch (e) {} };
 
-  plugin.description = 'Enregistre les trajets et le journal de bord sur le Raspberry Pi, même sans téléphone connecté, et les partage avec tous les appareils.';
+  plugin.description = 'Journal de bord partagé entre tous les appareils : live lu sur Signal K, historique lu dans InfluxDB, notes et journal copiés dans un bucket InfluxDB dédié.';
   plugin.schema = {
     type: 'object',
     properties: {
-      enabled: { type: 'boolean', title: 'Enregistrement automatique des trajets', default: true },
+      enabled: { type: 'boolean', title: 'Enregistrement automatique des trajets par le Pi (inutile si Signal K écrit déjà dans InfluxDB)', default: false },
       startKn: { type: 'number', title: 'Démarrage : vitesse fond (nœuds)', default: DEFAULTS.startKn },
       startSec: { type: 'number', title: 'Démarrage : durée au-dessus du seuil (s)', default: DEFAULTS.startSec },
       stopKn: { type: 'number', title: 'Arrêt : vitesse fond sous (nœuds)', default: DEFAULTS.stopKn },
@@ -36,7 +37,7 @@ module.exports = function (app) {
       logMin: { type: 'number', title: 'Entrée de journal automatique toutes les (min)', default: DEFAULTS.logMin },
       lang: { type: 'string', title: 'Langue du nom des trajets (fr-FR, en-GB…)', default: DEFAULTS.lang },
       influx: {
-        type: 'object', title: 'Historique InfluxDB (lecture seule, facultatif)',
+        type: 'object', title: 'InfluxDB (historique en lecture seule ; notes et journal dans un bucket dédié)',
         properties: {
           enabled: { type: 'boolean', title: 'Activer la lecture de l’historique', default: false },
           version: { type: 'string', title: 'Version d’InfluxDB', enum: ['1', '2'], default: '1' },
@@ -47,6 +48,9 @@ module.exports = function (app) {
           org: { type: 'string', title: 'Organisation (InfluxDB 2.x)' },
           bucket: { type: 'string', title: 'Bucket (InfluxDB 2.x)' },
           token: { type: 'string', title: 'Jeton en lecture (InfluxDB 2.x)' },
+          mirror: { type: 'boolean', title: 'Copier notes, journal et réglages dans InfluxDB 2.x (bucket dédié)', default: true },
+          carnetBucket: { type: 'string', title: 'Bucket du carnet (distinct de celui de Signal K)', default: 'carnet' },
+          carnetToken: { type: 'string', title: 'Jeton avec droit d’écriture sur ce bucket seulement' },
           latField: { type: 'string', title: 'Champ latitude de navigation.position', default: 'lat' },
           lonField: { type: 'string', title: 'Champ longitude de navigation.position', default: 'lon' }
         }
@@ -58,6 +62,17 @@ module.exports = function (app) {
     options = options || {}; opts = options;
     const dir = app.getDataDirPath();
     store = new Store(path.join(dir, 'data'));
+    mirror = new Mirror(options.influx, dbg);
+    const empty = !['trips', 'notes', 'photos', 'audit'].some(n => store.all(n).length) && !Object.keys(store.kvAll()).length;
+    const sp = store.put.bind(store), sd = store.del.bind(store), ks = store.kvSet.bind(store), kd = store.kvDel.bind(store);
+    store.put = (n, o) => { sp(n, o); mirror.put(n, o.id, o); };
+    store.del = (n, id) => { sd(n, id); mirror.del(n, id); };
+    store.kvSet = (k, v) => { ks(k, v); mirror.put('kv', k, { v: String(v) }); };
+    store.kvDel = k => { kd(k); mirror.del('kv', k); };
+    if (empty && mirror.enabled) mirror.restore().then(docs => {   // Pi neuf : le carnet est reconstruit depuis InfluxDB
+      for (const d of docs) { if (d.kind === 'kv') ks(d.id, d.doc.v); else if (store.has(d.kind)) sp(d.kind, d.doc); }
+      if (docs.length) dbg('carnet restauré depuis InfluxDB : ' + docs.length + ' éléments');
+    }).catch(e => dbg('restauration InfluxDB : ' + e.message));
     col = new Collector();
     rec = new Recorder(options, col, store, path.join(dir, 'data'), Date.now, dbg);
     const cmd = { context: 'vessels.self', subscribe: [{ path: '*', policy: 'instant', minPeriod: 200 }] };
@@ -68,13 +83,13 @@ module.exports = function (app) {
     });
     timer = setInterval(() => {
       try {
-        if (options.enabled !== false) rec.tick();
+        if (options.enabled === true) rec.tick();
         app.setPluginStatus && app.setPluginStatus(rec.cur ? 'Trajet en cours : ' + rec.cur.points.length + ' points' : 'En veille');
       } catch (e) { app.error && app.error('tick : ' + e.message); }
     }, 1000);
   };
   plugin.stop = function () {
-    clearInterval(timer); timer = null;
+    clearInterval(timer); timer = null; if (mirror) mirror.flush();
     unsub.forEach(f => { try { f(); } catch (e) {} }); unsub = [];
   };
 
@@ -145,6 +160,7 @@ module.exports = function (app) {
       try { const m = await i.measurements(); res.json({ enabled: true, ok: true, measurements: m.length, navigation: m.filter(x => /^navigation\./.test(x)).slice(0, 40), sample: m.slice(0, 15) }); }
       catch (e) { res.json({ enabled: true, ok: false, error: e.message }); }
     }));
+    router.get('/influx/mirror', wrap((req, res) => res.json(mirror.status())));
     router.post('/influx/import', wrap(async (req, res) => {
       let b = {}; try { b = JSON.parse(await text(req) || '{}'); } catch (e) {}
       try { res.json({ ok: true, ...(await importTrips(influx(), store, +b.from, +b.to, { ...DEFAULTS, ...opts })) }); }

@@ -16,7 +16,7 @@ function start({ dir, publicDir, options } = {}) {
     subscriptionmanager: { subscribe(cmd, unsub, err, cb) { onDelta = cb; unsub.push(() => { onDelta = null; }); } }
   };
   const p = plugin(app), router = makeRouter();
-  p.start(options || {}); p.registerWithRouter(router);
+  p.start({ enabled: true, ...(options || {}) }); p.registerWithRouter(router);
   const server = http.createServer((req, res) => {
     const u = new URL(req.url, 'http://x'); let path_ = u.pathname;
     res.status = c => { res.statusCode = c; return res; };
