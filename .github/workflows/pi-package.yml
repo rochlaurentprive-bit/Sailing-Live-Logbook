@@ -19,7 +19,7 @@ jobs:
         run: node scripts/build.js
       - name: Tests du plugin
         working-directory: pi
-        run: node test/run.js
+        run: node test/run.js && node test/influx.js
       - name: Créer le paquet
         working-directory: pi
         run: npm pack

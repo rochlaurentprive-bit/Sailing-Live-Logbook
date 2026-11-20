@@ -144,6 +144,12 @@ nav{bottom:calc(16px + env(safe-area-inset-bottom))!important}
 .dots button{background:none;border:0;padding:12px 6px;cursor:pointer}
 .dots button i{display:block;width:9px;height:9px;border-radius:50%;background:var(--line)}
 .dots button.on i{background:var(--acc);width:22px;border-radius:5px}
+.prov{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:4px 12px;font-size:12px;color:var(--mut);margin:0 0 8px}
+.prov .pc{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.prov .pc i,.tile[data-src] small::before{width:9px;height:9px;border-radius:50%;background:var(--pc,var(--mut));display:inline-block}
+.tile[data-src] small::before{content:'';margin-right:6px;vertical-align:1px}
+.prov .pl{flex-basis:100%;display:flex;flex-wrap:wrap;justify-content:center;gap:2px 12px;font-size:11px;opacity:.75}
+.s-boat,.tile[data-src=boat]{--pc:var(--ok)}.s-sk,.tile[data-src=sk]{--pc:var(--wind)}.s-calc,.tile[data-src=calc]{--pc:var(--warn)}.s-phone,.tile[data-src=phone]{--pc:#B07CF2}
 .dname{text-align:center;font:600 15px var(--num);color:var(--tx);margin-bottom:2px}
 .dial .gt{fill:none;stroke:var(--line);stroke-width:14;stroke-linecap:round}
 .dial .gv{fill:none;stroke:var(--acc);stroke-width:14;stroke-linecap:round}
@@ -289,11 +295,13 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
         <div class="row" style="flex-wrap:nowrap;gap:6px"><b style="color:var(--warn);flex:1;font-size:14px">DÉMO · données fictives</b>
           <button class="b sec" data-ds="1">×1</button><button class="b sec" data-ds="5">×5</button><button class="b sec" data-ds="20">×20</button></div>
       </div>
+      <div id="noBoat" class="card hide" style="padding:10px 12px;border-color:var(--bad);margin-bottom:8px"><b id="nbT" style="color:var(--bad);display:block"></b><span id="nbS" style="font-size:13px;color:var(--mut)"></span></div>
       <div id="dialTop" class="dtop" data-notr></div>
       <div class="stage" id="dialStage" aria-label="Cadrans : glisser à gauche ou à droite pour changer"></div>
       <div class="dots" id="dialDots"></div>
       <div class="dname" id="dialName"></div>
       <div class="legend" id="dialLegend"></div>
+      <div class="prov hide" id="provBar"></div>
       <button class="mobbtn" id="mobBtn"><i></i><b>MOB</b><span>Homme à la mer</span><em>Maintenir 1 seconde</em></button>
       <button class="recbtn" id="btnRec">Démarrer un trajet</button>
       <div id="recInfo"></div>
@@ -442,6 +450,15 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
     <label>Source du GPS (position, vitesse et cap fond)</label>
     <select id="sGps"><option value="auto">Automatique (bateau, sinon téléphone)</option><option value="nmea">GPS du bateau uniquement (NMEA 2000)</option><option value="phone">GPS du téléphone uniquement</option></select>
     <div class="mut" id="gpsTest" style="margin:6px 0"></div>
+    <label>Référence du vent vrai</label>
+    <select id="sWind"><option value="auto">Automatique (surface, sinon fond)</option><option value="water">Surface (vitesse surface)</option><option value="ground">Fond (vitesse fond)</option></select>
+    <div id="histBox" style="display:none;margin-top:12px;padding-top:10px;border-top:1px solid var(--line,#2a4658)">
+      <label>Historique InfluxDB (Raspberry Pi, lecture seule)</label>
+      <div class="mut" id="histSt" style="margin:4px 0"></div>
+      <div class="row"><input id="histFrom" type="date" style="flex:1"><input id="histTo" type="date" style="flex:1"></div>
+      <button class="b sec" id="histGo" style="margin-top:6px">Reconstruire les trajets depuis InfluxDB</button>
+      <div class="mut" id="histRes" style="margin:6px 0"></div>
+    </div>
     <button class="b sec" id="gpsAsk">Autoriser / tester le GPS du téléphone</button>
     <label>Adresse Signal K (hôte:port)</label><input id="sHost" placeholder="192.168.1.50:3000">
     <label>YDWG-02 : adresse (Wi-Fi du boîtier) et port TCP</label>
@@ -966,6 +983,37 @@ Vent {1} {2} nds · {3}|Wind {1} {2} kn · {3}|Wind {1} {2} kn · {3}|Wind {1} {
 soleil {1}°|zon {1}°|sun {1}°|Sonne {1}°|sol {1}°
 nuages {1} %|wolken {1} %|clouds {1} %|Wolken {1} %|nubes {1} %
 Source de données|Gegevensbron|Data source|Datenquelle|Fuente de datos
+Pas de signal bateau|Geen boatsignaal|No boat signal|Kein Bootssignal|Sin señal del barco
+Le carnet, les notes et la carte restent disponibles.|Het logboek, de notities en de kaart blijven beschikbaar.|The logbook, notes and map remain available.|Logbuch, Notizen und Karte bleiben verfügbar.|El cuaderno, las notas y el mapa siguen disponibles.
+Historique InfluxDB (Raspberry Pi, lecture seule)|InfluxDB-historie (Raspberry Pi, alleen lezen)|InfluxDB history (Raspberry Pi, read-only)|InfluxDB-Verlauf (Raspberry Pi, nur lesen)|Historial InfluxDB (Raspberry Pi, solo lectura)
+Reconstruire les trajets depuis InfluxDB|Trajecten opnieuw opbouwen uit InfluxDB|Rebuild trips from InfluxDB|Fahrten aus InfluxDB rekonstruieren|Reconstruir los trayectos desde InfluxDB
+InfluxDB non configuré dans le plugin Signal K|InfluxDB niet ingesteld in de Signal K-plugin|InfluxDB not configured in the Signal K plugin|InfluxDB im Signal-K-Plugin nicht konfiguriert|InfluxDB no configurado en el plugin Signal K
+InfluxDB connecté|InfluxDB verbonden|InfluxDB connected|InfluxDB verbunden|InfluxDB conectado
+mesures|metingen|measurements|Messwerte|medidas
+InfluxDB injoignable|InfluxDB onbereikbaar|InfluxDB unreachable|InfluxDB nicht erreichbar|InfluxDB inaccesible
+trajet(s) créé(s)|traject(en) aangemaakt|trip(s) created|Fahrt(en) erstellt|trayecto(s) creado(s)
+déjà présent(s)|al aanwezig|already present|bereits vorhanden|ya presente(s)
+Référence du vent vrai|Referentie ware wind|True wind reference|Bezug des wahren Windes|Referencia del viento real
+Automatique (surface, sinon fond)|Automatisch (water, anders grond)|Automatic (water, else ground)|Automatisch (Wasser, sonst Grund)|Automática (superficie, si no fondo)
+Surface (vitesse surface)|Water (snelheid door water)|Water (speed through water)|Wasser (Fahrt durchs Wasser)|Superficie (velocidad en el agua)
+Fond (vitesse fond)|Grond (snelheid over grond)|Ground (speed over ground)|Grund (Fahrt über Grund)|Fondo (velocidad sobre el fondo)
+réf. surface|ref. water|water ref.|Wasserbezug|ref. agua
+réf. fond|ref. grond|ground ref.|Grundbezug|ref. fondo
+mesuré (bateau)|gemeten (boot)|measured (boat)|gemessen (Boot)|medido (barco)
+calculé par Signal K|berekend door Signal K|calculated by Signal K|von Signal K berechnet|calculado por Signal K
+calculé par l’appli|berekend door de app|calculated by the app|von der App berechnet|calculado por la app
+téléphone|telefoon|phone|Handy|teléfono
+Roulis|Rolbeweging|Roll|Rollen|Alabeo
+Tangage|Stampen|Pitch|Stampfen|Cabeceo
+Prof.|Diepte|Depth|Tiefe|Prof.
+Régime|Toerental|Engine speed|Drehzahl|Régimen
+T° moteur|Motortemp.|Engine temp.|Motortemp.|T.ª motor
+Huile|Olie|Oil|Öl|Aceite
+Batteries|Accu’s|Batteries|Batterien|Baterías
+Réservoirs|Tanks|Tanks|Tanks|Depósitos
+Eau|Water|Water|Wasser|Agua
+Air|Lucht|Air|Luft|Aire
+Cap|Koers|Heading|Kurs|Rumbo
 Signal K (WebSocket)|Signal K (WebSocket)|Signal K (WebSocket)|Signal K (WebSocket)|Signal K (WebSocket)
 YDWG-02 direct (appli Android)|YDWG-02 direct (Android-app)|YDWG-02 direct (Android app)|YDWG-02 direkt (Android-App)|YDWG-02 directo (app Android)
 YDWG-02 : adresse (Wi-Fi du boîtier) et port TCP|YDWG-02: adres (wifi van de gateway) en TCP-poort|YDWG-02: address (gateway Wi-Fi) and TCP port|YDWG-02: Adresse (WLAN des Gateways) und TCP-Port|YDWG-02: dirección (Wi-Fi de la pasarela) y puerto TCP
@@ -1636,7 +1684,8 @@ const db={h:null,
 /* ---------- Données instantanées ---------- */
 const D={bats:{},tanks:{}}, T={}; // valeurs et horodatages
 const fresh=k=>T[k]&&NOW()-T[k]<15000;
-function set(k,v){if(v==null||isNaN(v)&&typeof v==='number')return;D[k]=v;T[k]=NOW()}
+const SRC={};let PSRC='boat',LASTBOAT=0;const APP_T0=Date.now();   // provenance de chaque valeur : boat (mesuré) | sk (calculé par Signal K) | calc (calculé par l'appli) | phone
+function set(k,v){if(v==null||isNaN(v)&&typeof v==='number')return;D[k]=v;T[k]=NOW();SRC[k]=PSRC;if(PSRC==='boat'||PSRC==='sk')LASTBOAT=NOW()}
 /* ---------- Source du GPS : réseau NMEA 2000 du bateau et / ou téléphone ---------- */
 const GPS={diag:'',nmeaT:0,phone:null,watch:null,err:'',asked:false};
 let GEO=null;
@@ -1670,11 +1719,12 @@ function onPhoneFix(pos){
   GPS.phone={lat:c.latitude,lon:c.longitude,acc:c.accuracy,t:Date.now()};GPS.err='';GPS.testing=false;
   const useIt=cfg.src!=='demo'&&(cfg.gpsSrc==='phone'||(cfg.gpsSrc==='auto'&&NOW()-GPS.nmeaT>6000))&&!(c.accuracy>150);
   if(useIt){
+    PSRC='phone';
     set('lat',c.latitude);set('lon',c.longitude);
     let v=c.speed;if((v==null||isNaN(v))&&prev){const dt=(Date.now()-prev.t)/1000;if(dt>0.5)v=hav(prev,GPS.phone)*1852/dt}
     if(v!=null&&!isNaN(v)&&v>=0)set('sog',v*MS2KN);
     if(c.heading!=null&&!isNaN(c.heading)&&(v||0)>0.7)set('cog',(c.heading+360)%360);
-    onBoatData();
+    PSRC='boat';onBoatData();
   }
   updGpsPill();
 }
@@ -1717,13 +1767,17 @@ setInterval(()=>{updGpsPill();updDiag()},2000);updDiag();
 
 
 function computeTrueWind(){
-  // vent vrai calculé depuis le vent apparent si absent
-  if(fresh('tws')&&fresh('twa'))return;
+  // vent vrai calculé depuis le vent apparent, seulement si Signal K / le bus ne le donne pas
+  if(fresh('tws')&&fresh('twa')&&SRC.tws!=='calc')return;
   if(!fresh('aws')||!fresh('awa'))return;
-  const v=fresh('stw')?D.stw:(fresh('sog')?D.sog:0);
+  const ref=cfg.windRef||'auto';let v,r;
+  if(ref==='ground'){if(!fresh('sog'))return;v=D.sog;r='ground'}
+  else if(fresh('stw')){v=D.stw;r='water'}
+  else if(ref==='water')return;
+  else{v=fresh('sog')?D.sog:0;r='ground'}
   const ax=D.aws*Math.cos(D.awa*D2R), ay=D.aws*Math.sin(D.awa*D2R);
   const tx=ax-v, ty=ay;
-  D.tws=Math.hypot(tx,ty); D.twa=Math.atan2(ty,tx)*R2D; T.tws=T.twa=NOW();
+  D.tws=Math.hypot(tx,ty); D.twa=Math.atan2(ty,tx)*R2D; T.tws=T.twa=NOW();SRC.tws=SRC.twa='calc';D.twRef=r;
 }
 const vmg=()=>(fresh('sog')&&D.twa!=null)?D.sog*Math.cos(D.twa*D2R):null;
 
@@ -1745,7 +1799,8 @@ function skValue(path,v){
     case'environment.wind.speedApparent':set('aws',v*MS2KN);return;
     case'environment.wind.angleApparent':set('awa',sdeg(v));return;
     case'environment.wind.speedTrue':set('tws',v*MS2KN);return;
-    case'environment.wind.angleTrueWater':case'environment.wind.angleTrueGround':set('twa',sdeg(v));return;
+    case'environment.wind.angleTrueWater':if(cfg.windRef==='ground')return;set('twa',sdeg(v));D.twRef='water';return;
+    case'environment.wind.angleTrueGround':if(cfg.windRef==='water'||(cfg.windRef!=='ground'&&D.twRef==='water'&&NOW()-(T.twa||0)<5000))return;set('twa',sdeg(v));D.twRef='ground';return;
     case'environment.depth.belowTransducer':case'environment.depth.belowKeel':case'environment.depth.belowSurface':set('depth',v);return;
     case'environment.water.temperature':set('wTemp',v-273.15);return;
     case'environment.outside.temperature':set('airT',v-273.15);return;
@@ -1759,9 +1814,9 @@ function skValue(path,v){
   else if((m=path.match(/^propulsion\.([^.]+)\.oilPressure$/)))set('oilP',v/100000);
   else if((m=path.match(/^propulsion\.([^.]+)\.runTime$/)))set('engHours',v/3600);
   else if((m=path.match(/^propulsion\.([^.]+)\.fuel\.rate$/)))set('fuelRate',v*3.6e6);
-  else if((m=path.match(/^tanks\.([^.]+)\.([^.]+)\.currentLevel$/)))D.tanks[m[1]+'.'+m[2]]={type:m[1],lvl:v*100,t:NOW()};
-  else if((m=path.match(/^electrical\.batteries\.([^.]+)\.voltage$/))){(D.bats[m[1]]=D.bats[m[1]]||{}).v=v;D.bats[m[1]].t=NOW()}
-  else if((m=path.match(/^electrical\.batteries\.([^.]+)\.capacity\.stateOfCharge$/))){(D.bats[m[1]]=D.bats[m[1]]||{}).soc=v*100;D.bats[m[1]].t=NOW()}
+  else if((m=path.match(/^tanks\.([^.]+)\.([^.]+)\.currentLevel$/))){D.tanks[m[1]+'.'+m[2]]={type:m[1],lvl:v*100,t:NOW()};SRC.tank=PSRC}
+  else if((m=path.match(/^electrical\.batteries\.([^.]+)\.voltage$/))){(D.bats[m[1]]=D.bats[m[1]]||{}).v=v;D.bats[m[1]].t=NOW();SRC.bat=PSRC}
+  else if((m=path.match(/^electrical\.batteries\.([^.]+)\.capacity\.stateOfCharge$/))){(D.bats[m[1]]=D.bats[m[1]]||{}).soc=v*100;D.bats[m[1]].t=NOW();SRC.bat=PSRC}
 }
 let ws=null, wsTimer=null;
 function connectSK(){
@@ -1770,7 +1825,7 @@ function connectSK(){
   setSrc('connexion…','');
   try{ws=new WebSocket(url)}catch(e){setSrc('erreur','bad');return}
   ws.onopen=()=>setSrc('Signal K','ok');
-  ws.onmessage=ev=>{try{const m=JSON.parse(ev.data);(m.updates||[]).forEach(u=>(u.values||[]).forEach(x=>skValue(x.path,x.value)))}catch(e){}};
+  ws.onmessage=ev=>{try{const m=JSON.parse(ev.data);(m.updates||[]).forEach(u=>{const lb=String(u.$source||(u.source&&(u.source.label||u.source.src))||'');PSRC=/derived|calc|comput/i.test(lb)?'sk':'boat';(u.values||[]).forEach(x=>skValue(x.path,x.value))})}catch(e){}PSRC='boat'};
   ws.onclose=()=>{setSrc('déconnecté','bad');if(cfg.src==='signalk')wsTimer=setTimeout(connectSK,4000)};
   ws.onerror=()=>{try{ws.close()}catch(e){}};
 }
@@ -1928,9 +1983,10 @@ function fmtPos(lat,lon){
 }
 
 /* ---------- Vue Direct ---------- */
+const twRefTxt=()=>D.twRef==='water'?tr('réf. surface'):D.twRef==='ground'?tr('réf. fond'):'';
 const TILES=[
-  ['tws','Vent vrai','nds',D=>fresh('tws')?num(D.tws):'--'],
-  ['twa','Angle vent vrai','°',D=>fresh('twa')?num(D.twa,0):'--'],
+  ['tws','Vent vrai','nds',D=>fresh('tws')?num(D.tws):'--',D=>fresh('tws')?twRefTxt():''],
+  ['twa','Angle vent vrai','°',D=>fresh('twa')?num(D.twa,0):'--',D=>fresh('twa')?twRefTxt():''],
   ['aws','Vent apparent','nds',D=>fresh('aws')?num(D.aws):'--',D=>fresh('awa')?'angle '+num(D.awa,0)+'°':''],
   ['vmg','VMG vent','nds',()=>{const v=vmg();return v==null?'--':num(Math.abs(v))},()=>{const v=vmg();return v==null?'':(v>=0?'↑ au près':'↓ portant')}],
   ['stw','Vitesse surface','nds',D=>fresh('stw')?num(D.stw):'--'],
@@ -2605,10 +2661,11 @@ $('#dcDone').onclick=closeDialCfg;
 $('#sDials').onclick=openDialCfg;
 
 function renderLive(){
-  updDials();
+  updDials();try{updNoBoat();updProv()}catch(e){}
   TILES.forEach(t=>{
     const el=$('#t-'+t[0]);const v=t[3](D);
     el.className='tile'+(v==='--'?' stale':'');
+    const pk=t[0]==='vmg'?'calc':SRC[t[0]];if(pk&&v!=='--'&&cfg.src!=='demo')el.dataset.src=pk;else delete el.dataset.src;
     el.querySelector('b').innerHTML=v+'<i>'+t[2]+'</i>';
     el.querySelector('.sub').textContent=t[4]?t[4](D):'';
   });
@@ -2618,6 +2675,25 @@ function renderLive(){
   $('#posTxt').textContent=fresh('lat')?fmtPos(D.lat,D.lon):'--';
   if(cur){const s=tripStats(cur);$('#recInfo').textContent=`${num(s.dist)} NM · ${fmtDur((NOW()-cur.start)/1000)}`}
   else $('#recInfo').textContent=moveCnt>0?`Mouvement détecté… (${Math.round(moveCnt)}/${cfg.startSec}s)`:'Démarrage auto dès que le bateau avance';
+}
+
+/* ---------- Signal bateau et provenance des valeurs ---------- */
+function updNoBoat(){
+  const e=$('#noBoat');if(!e)return;
+  const lost=cfg.src!=='demo'&&Date.now()-APP_T0>8000&&NOW()-LASTBOAT>15000;
+  e.classList.toggle('hide',!lost);
+  if(lost){$('#nbT').textContent=tr('Pas de signal bateau');$('#nbS').textContent=tr('Le carnet, les notes et la carte restent disponibles.')+' · '+(($('#src')||{}).textContent||'')}
+}
+const PKEYS={wind:['aws','awa','tws','twa'],speed:['sog','stw','lat'],compass:['hdg','cog','lat'],attitude:['roll','pitch'],meteo3d:['roll','pitch','baro','airT','wTemp'],depth:['depth'],engine:['rpm','engT','oilP'],energy:['bat','tank']};
+const PLBL={aws:'AWS',awa:'AWA',tws:'TWS',twa:'TWA',sog:'SOG',stw:'STW',hdg:'Cap',cog:'COG',lat:'GPS',roll:'Roulis',pitch:'Tangage',baro:'Baro',airT:'Air',wTemp:'Eau',depth:'Prof.',rpm:'Régime',engT:'T° moteur',oilP:'Huile',bat:'Batteries',tank:'Réservoirs'};
+function updProv(){
+  const e=$('#provBar');if(!e)return;
+  const ks=(PKEYS[DS.ids[DS.idx]]||[]).filter(k=>k==='bat'?Object.keys(D.bats).length:k==='tank'?Object.keys(D.tanks).length:fresh(k));
+  if(cfg.src==='demo'||!ks.length){e.classList.add('hide');return}
+  e.classList.remove('hide');
+  const NM={boat:tr('mesuré (bateau)'),sk:tr('calculé par Signal K'),calc:tr('calculé par l’appli'),phone:tr('téléphone')};
+  e.innerHTML=ks.map(k=>{const s=SRC[k]||'boat';return`<span class="pc s-${s}" title="${esc(NM[s])}"><i></i>${esc(tr(PLBL[k]||k))}</span>`}).join('')+
+   '<span class="pl">'+['boat','sk','calc','phone'].map(s=>`<span class="pc s-${s}"><i></i>${esc(NM[s])}</span>`).join('')+'</span>';
 }
 
 let openTrip=null;
@@ -3181,7 +3257,7 @@ $('#fxPlay').onclick=()=>{
 };
 
 
-const APP_VERSION='2.0';
+const APP_VERSION='2.1';
 (()=>{const e=document.getElementById('appVer');if(e)e.textContent='Carnet de bord · v'+APP_VERSION})();
 /* ---------- Météo du parcours : vent, vagues, houle et courant le long du tracé (routage, tracé modifié, depuis ma position) ---------- */
 const RWL={wind:{n:'Vent',u:'nds',lim:'maxW',def:22,to:false},waves:{n:'Vagues',u:'m',lim:'maxH',def:2,to:false},swell:{n:'Houle',u:'m',lim:'maxH',def:2,to:false},cur:{n:'Courant',u:'nds',lim:null,to:true}};
@@ -3667,9 +3743,30 @@ const blobToData=b=>new Promise(r=>{const f=new FileReader();f.onload=()=>r(f.re
 const dataToBlob=async d=>(await fetch(d)).blob();
 
 /* ---------- Réglages / sauvegarde ---------- */
+
+/* Historique InfluxDB : uniquement quand l'appli est servie par le Raspberry Pi (window.PIBOX). Inactif sur Android. */
+function initHist(){
+  const box=$('#histBox');if(!box)return;
+  if(!(window.PIBOX&&PIBOX.influx)){box.style.display='none';return}
+  box.style.display='';
+  PIBOX.influx.probe().then(r=>{
+    $('#histSt').textContent=!r.enabled?tr('InfluxDB non configuré dans le plugin Signal K'):r.ok?tr('InfluxDB connecté')+' · '+r.measurements+' '+tr('mesures'):tr('InfluxDB injoignable')+' : '+(r.error||'');
+    $('#histGo').disabled=!(r.enabled&&r.ok);
+  }).catch(()=>{$('#histSt').textContent=tr('InfluxDB injoignable')});
+  const d=new Date(),f=new Date(Date.now()-7*864e5),iso=x=>x.toISOString().slice(0,10);
+  if(!$('#histTo').value){$('#histTo').value=iso(d);$('#histFrom').value=iso(f)}
+  $('#histGo').onclick=()=>{
+    const a=Date.parse($('#histFrom').value+'T00:00:00'),b=Date.parse($('#histTo').value+'T00:00:00')+864e5;
+    $('#histRes').textContent='…';
+    PIBOX.influx.import(a,b).then(r=>{
+      $('#histRes').textContent=r.ok?(r.created.length+' '+tr('trajet(s) créé(s)')+(r.skipped.length?' · '+r.skipped.length+' '+tr('déjà présent(s)'):'')+(r.note?' · '+r.note:'')):r.error;
+      if(r.ok&&r.created.length)try{renderTrips()}catch(e){}
+    }).catch(e=>{$('#histRes').textContent=String(e.message||e)});
+  };
+}
 function loadSettings(){
   $('#boat').textContent=cfg.boat;
-  $('#sBoat').value=cfg.boat;$('#sSrc').value=cfg.src;$('#sGps').value=cfg.gpsSrc||'auto';$('#sHost').value=cfg.host;
+  $('#sBoat').value=cfg.boat;$('#sSrc').value=cfg.src;$('#sGps').value=cfg.gpsSrc||'auto';$('#sWind').value=cfg.windRef||'auto';try{initHist()}catch(e){}$('#sHost').value=cfg.host;
   $('#sDemoSpd').value=String(cfg.demoSpeed||1);buildLogCfg();updDemoBar();
   $('#sNoGo').value=cfg.noGo;$('#sYdHost').value=cfg.ydHost;$('#sYdPort').value=cfg.ydPort;$('#sAwake').checked=!!cfg.awake;['lnHdg','lnCog','lnLay'].forEach(k=>$('#'+k).checked=cfg[k]!==false);$('#lnMin').value=cfg.lnMin||30;$('#map3dCb').checked=M3D;$('#sAvoid').checked=cfg.avoidLand!==false;$('#sMinDepth').value=cfg.minDepth??3;$('#sHapLvl').value=String(cfg.hapLvl!=null?cfg.hapLvl:(cfg.haptic===false?0:2));$('#sCruise').value=cfg.cruise;$('#sHeel').value=cfg.heelAlert||25;$('#sKPoint').value=cfg.kPoint;$('#sKMap').value=cfg.kMap;
   $('#sStartKn').value=cfg.startKn;$('#sStartSec').value=cfg.startSec;$('#sStopKn').value=cfg.stopKn;$('#sStopMin').value=cfg.stopMin;$('#sInt').value=cfg.interval;
@@ -3682,7 +3779,7 @@ $('#lnMin').onchange=e=>{cfg.lnMin=Math.max(5,+e.target.value||30);saveCfg();sch
 $('#hapTest').onclick=()=>{const w=cfg.haptic,l=cfg.hapLvl;cfg.haptic=true;if(!cfg.hapLvl)cfg.hapLvl=2;hap('strong');cfg.haptic=w;cfg.hapLvl=l;setTimeout(()=>{alert(tr('Vibration : ')+HAP.msg)},400)};
 $('#sHapLvl').onchange=e=>{cfg.hapLvl=+e.target.value;cfg.haptic=cfg.hapLvl>0;saveCfg();if(cfg.hapLvl>0)hap('strong')};
 $('#sSave').onclick=()=>{
-  cfg={...cfg,boat:$('#sBoat').value||DEF.boat,src:$('#sSrc').value,gpsSrc:$('#sGps').value,host:$('#sHost').value.trim(),
+  cfg={...cfg,boat:$('#sBoat').value||DEF.boat,src:$('#sSrc').value,gpsSrc:$('#sGps').value,windRef:$('#sWind').value,host:$('#sHost').value.trim(),
    ydHost:$('#sYdHost').value.trim()||DEF.ydHost,ydPort:+$('#sYdPort').value||DEF.ydPort,awake:$('#sAwake').checked,avoidLand:$('#sAvoid').checked,minDepth:Math.max(0,+$('#sMinDepth').value||0),
    cruise:+$('#sCruise').value||DEF.cruise,heelAlert:Math.max(10,Math.min(45,+$('#sHeel').value||25)),kPoint:$('#sKPoint').value.trim(),kMap:$('#sKMap').value.trim(),
    startKn:+$('#sStartKn').value||DEF.startKn,startSec:+$('#sStartSec').value||DEF.startSec,

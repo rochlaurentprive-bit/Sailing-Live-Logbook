@@ -119,6 +119,10 @@
       }).catch(function () {});
     }
   };
+  PIBOX.influx = {
+    probe: function () { return getJSON('/influx/probe'); },
+    import: function (from, to) { return fetch(BASE + '/influx/import', { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ from: from, to: to }) }).then(function (r) { return r.json(); }); }
+  };
   flush();
   window.addEventListener('load', function () { setInterval(PIBOX.pull, 5000); });
 })();

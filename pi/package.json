@@ -1,13 +1,28 @@
 {
   "name": "signalk-carnet-de-bord",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Carnet de bord de navigation pour Signal K / OpenPlotter : application web, enregistrement 24 h/24 des trajets et stockage partagé sur le Raspberry Pi.",
   "main": "plugin/index.js",
-  "keywords": ["signalk-node-server-plugin", "signalk-webapp", "signalk-category-utility"],
+  "keywords": [
+    "signalk-node-server-plugin",
+    "signalk-webapp",
+    "signalk-category-utility"
+  ],
   "license": "MIT",
-  "signalk": { "displayName": "Carnet de bord", "appIcon": "./public/icon.png" },
+  "signalk": {
+    "displayName": "Carnet de bord",
+    "appIcon": "./public/icon.png"
+  },
   "signalk-plugin-enabled-by-default": true,
-  "files": ["plugin", "public"],
-  "scripts": { "build": "node scripts/build.js", "test": "node test/run.js" },
-  "engines": { "node": ">=18" }
+  "files": [
+    "plugin",
+    "public"
+  ],
+  "scripts": {
+    "build": "node scripts/build.js",
+    "test": "node test/run.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
 }

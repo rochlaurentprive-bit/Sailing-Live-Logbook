@@ -14,7 +14,7 @@ class Collector {
   fresh(k) { return this.T[k] && this.now() - this.T[k] < FRESH_MS; }
   set(k, v) {
     if (v == null || (typeof v === 'number' && isNaN(v))) return;
-    this.D[k] = v; this.T[k] = this.now();
+    this.D[k] = v; this.T[k] = this.now(); if (k === 'tws' || k === 'twa') this.calc = false;
   }
   ingest(path, v) {
     if (v == null || (typeof v === 'number' && isNaN(v))) return;
@@ -53,12 +53,12 @@ class Collector {
   }
   computeTrueWind() {
     const D = this.D, f = k => this.fresh(k);
-    if (f('tws') && f('twa')) return;
+    if (f('tws') && f('twa') && !this.calc) return;
     if (!f('aws') || !f('awa')) return;
     const v = f('stw') ? D.stw : (f('sog') ? D.sog : 0);
     const ax = D.aws * Math.cos(D.awa * D2R), ay = D.aws * Math.sin(D.awa * D2R);
     const tx = ax - v, ty = ay;
-    D.tws = Math.hypot(tx, ty); D.twa = Math.atan2(ty, tx) * R2D; this.T.tws = this.T.twa = this.now();
+    D.tws = Math.hypot(tx, ty); D.twa = Math.atan2(ty, tx) * R2D; this.T.tws = this.T.twa = this.now(); this.calc = true;
   }
   snapshot() {
     const D = this.D, f = k => this.fresh(k) ? D[k] : null, b0 = Object.values(D.bats)[0];

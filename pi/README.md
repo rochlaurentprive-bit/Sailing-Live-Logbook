@@ -27,3 +27,15 @@ Si la sécurité Signal K est activée, se connecter à Signal K dans le navigat
 - `node test/run.js` : tests du collecteur, de l'enregistreur et de l'API.
 - `NODE_PATH=$(npm root -g) node test/browser.js` : tests navigateur (version Pi branchée sur le plugin + non-régression de la version sans Pi).
 - Les crochets de la version commune sont repérables par `window.PIBOX` dans `www/index.html` ; ils sont inactifs sans l'adaptateur (Android).
+
+## Historique InfluxDB (lecture seule, facultatif)
+
+Dans la configuration du plugin, section « Historique InfluxDB » : version (1.x InfluxQL / 2.x Flux), adresse, base ou bucket, identifiants.
+Le plugin **lit uniquement** InfluxDB (jamais d'écriture ni de suppression). Réglages de l'appli → « Reconstruire les trajets depuis InfluxDB » :
+les trajets sont reconstruits avec les mêmes règles que l'enregistreur (départ 1,5 nd / 30 s, arrêt 0,5 nd / 5 min), sans doublon avec les trajets existants.
+API : `GET /influx/status`, `GET /influx/probe`, `POST /influx/import {from,to}` (62 jours max par appel).
+
+## Règle de compatibilité (obligatoire)
+
+Toute évolution du noyau `www/index.html` doit fonctionner **sans Raspberry et sans Signal K** : les fonctions propres au Pi vivent
+uniquement derrière `window.PIBOX` (défini par `pi-adapter.js`, absent sur Android). `test/regression.js` (workflow `regression.yml`) le vérifie à chaque push.

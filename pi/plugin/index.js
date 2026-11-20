@@ -3,6 +3,7 @@ const path = require('path');
 const { Collector } = require('./collector');
 const { Store } = require('./store');
 const { Recorder, DEFAULTS } = require('./recorder');
+const { Influx, importTrips } = require('./influx');
 const pkg = require('../package.json');
 
 const MAX_BODY = 80 * 1024 * 1024;
@@ -19,7 +20,7 @@ function readBody(req) {
 
 module.exports = function (app) {
   const plugin = { id: 'carnet-de-bord', name: 'Carnet de bord (enregistrement 24 h/24)' };
-  let col = null, rec = null, store = null, timer = null, unsub = [];
+  let col = null, rec = null, store = null, timer = null, unsub = [], opts = {};
   const dbg = m => { try { app.debug(m); } catch (e) {} };
 
   plugin.description = 'Enregistre les trajets et le journal de bord sur le Raspberry Pi, même sans téléphone connecté, et les partage avec tous les appareils.';
@@ -33,12 +34,28 @@ module.exports = function (app) {
       stopMin: { type: 'number', title: 'Arrêt : durée d’immobilité (min)', default: DEFAULTS.stopMin },
       interval: { type: 'number', title: 'Point de trace toutes les (s)', default: DEFAULTS.interval },
       logMin: { type: 'number', title: 'Entrée de journal automatique toutes les (min)', default: DEFAULTS.logMin },
-      lang: { type: 'string', title: 'Langue du nom des trajets (fr-FR, en-GB…)', default: DEFAULTS.lang }
+      lang: { type: 'string', title: 'Langue du nom des trajets (fr-FR, en-GB…)', default: DEFAULTS.lang },
+      influx: {
+        type: 'object', title: 'Historique InfluxDB (lecture seule, facultatif)',
+        properties: {
+          enabled: { type: 'boolean', title: 'Activer la lecture de l’historique', default: false },
+          version: { type: 'string', title: 'Version d’InfluxDB', enum: ['1', '2'], default: '1' },
+          url: { type: 'string', title: 'Adresse (ex. http://localhost:8086)', default: 'http://localhost:8086' },
+          database: { type: 'string', title: 'Base (InfluxDB 1.x)' },
+          username: { type: 'string', title: 'Utilisateur (1.x, facultatif)' },
+          password: { type: 'string', title: 'Mot de passe (1.x, facultatif)' },
+          org: { type: 'string', title: 'Organisation (InfluxDB 2.x)' },
+          bucket: { type: 'string', title: 'Bucket (InfluxDB 2.x)' },
+          token: { type: 'string', title: 'Jeton en lecture (InfluxDB 2.x)' },
+          latField: { type: 'string', title: 'Champ latitude de navigation.position', default: 'lat' },
+          lonField: { type: 'string', title: 'Champ longitude de navigation.position', default: 'lon' }
+        }
+      }
     }
   };
 
   plugin.start = function (options) {
-    options = options || {};
+    options = options || {}; opts = options;
     const dir = app.getDataDirPath();
     store = new Store(path.join(dir, 'data'));
     col = new Collector();
@@ -121,6 +138,18 @@ module.exports = function (app) {
       res.set('Content-Type', 'application/octet-stream'); res.send(b);
     }));
 
+    const influx = () => new Influx(opts.influx);
+    router.get('/influx/status', wrap((req, res) => res.json({ enabled: influx().enabled, version: (opts.influx || {}).version || '1' })));
+    router.get('/influx/probe', wrap(async (req, res) => {
+      const i = influx(); if (!i.enabled) return res.json({ enabled: false });
+      try { const m = await i.measurements(); res.json({ enabled: true, ok: true, measurements: m.length, navigation: m.filter(x => /^navigation\./.test(x)).slice(0, 40), sample: m.slice(0, 15) }); }
+      catch (e) { res.json({ enabled: true, ok: false, error: e.message }); }
+    }));
+    router.post('/influx/import', wrap(async (req, res) => {
+      let b = {}; try { b = JSON.parse(await text(req) || '{}'); } catch (e) {}
+      try { res.json({ ok: true, ...(await importTrips(influx(), store, +b.from, +b.to, { ...DEFAULTS, ...opts })) }); }
+      catch (e) { res.status(400).json({ ok: false, error: e.message }); }
+    }));
     router.get('/status', wrap((req, res) => res.json({ open: rec.summary(), data: col.fullData(), trips: store.all('trips').length, notes: store.all('notes').length })));
     router.get('/backup', wrap((req, res) => {
       const photos = store.all('photos').map(p => ({ ...p, blob64: (store.getBlob(p.id) || Buffer.alloc(0)).toString('base64') }));
