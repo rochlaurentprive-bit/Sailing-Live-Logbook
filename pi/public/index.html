@@ -2350,7 +2350,7 @@ function mkAtt3D(root,opts){
     const g=cv.getContext('2d'),cs=getComputedStyle(document.documentElement),acc=hexRGB(cs.getPropertyValue('--acc')),wnd=hexRGB(cs.getPropertyValue('--wind')),tx=hexRGB(cs.getPropertyValue('--tx')),mut=cs.getPropertyValue('--mut').trim(),font=cs.getPropertyValue('--num');
     const k=1-Math.exp(-dt*5);
     S.roll+=(S.tr-S.roll)*k;S.pitch+=(S.tp-S.pitch)*k;
-    {const sv=typeof fresh==='function'?(fresh('awa')?D.awa:fresh('twa')?D.twa:null):null,st=sailTarget(sv,t),ks=1-Math.exp(-dt*2.2);const mot=(fresh('rpm')&&D.rpm>=300)?1:0,kf=1-Math.exp(-dt*1.1);S.sf=(S.sf||0)+(mot-(S.sf||0))*kf;   // moteur en marche : voiles rangées
+    {const sv=typeof fresh==='function'?(fresh('awa')?D.awa:fresh('twa')?D.twa:null):null,st=sailTarget(sv,t),ks=1-Math.exp(-dt*2.2);const stopd=fresh('sog')&&D.sog<0.4,mot=((fresh('rpm')&&D.rpm>=300)||stopd)?1:0,kf=1-Math.exp(-dt*1.1);S.sf=(S.sf||0)+(mot-(S.sf||0))*kf;   // moteur en marche : voiles rangées
     S.sm=(S.sm||0)+(st.m*(1-S.sf)-(S.sm||0))*ks;S.sj=(S.sj||0)+(st.j*(1-S.sf)-(S.sj||0))*ks}
     const dpsi=((S.tpsi-S.psi+540)%360)-180;S.psi+=dpsi*k;S.e+=(S.te-S.e)*k;S.dist+=(S.td-S.dist)*k;
     const psi=(S.psi+3*Math.sin(t*0.35))*D2R,el=(S.e+1.2*Math.sin(t*0.5))*D2R;
@@ -2425,7 +2425,8 @@ function mkAtt3D(root,opts){
     if(!MO)g.drawImage(wc,0,0);
     // remous léger de l'hélice quand le moteur tourne : mousse qui part derrière la poupe puis s'efface
     {const rp=fresh('rpm')?D.rpm:0,WK=S.wk||(S.wk=[]),eng=rp>=300?Math.min(1,(rp-300)/2700):0;
-      if(rp>=300){S.wa=(S.wa||0)+(10+34*eng)*dt;while(S.wa>=1&&WK.length<110){S.wa--;WK.push({x:(Math.random()-.5)*.35,z:-5.15+Math.random()*.3,a:0,vx:(Math.random()-.5)*.4,r:.05+Math.random()*.06})}}
+      const still=fresh('sog')&&D.sog<0.4;   // à l'arrêt : pas de remous
+      if(rp>=300&&!still){S.wa=(S.wa||0)+(10+34*eng)*dt;while(S.wa>=1&&WK.length<110){S.wa--;WK.push({x:(Math.random()-.5)*.35,z:-5.15+Math.random()*.3,a:0,vx:(Math.random()-.5)*.4,r:.05+Math.random()*.06})}}
       const vz=1.6+(fresh('sog')?Math.min(12,D.sog)*0.25:0);
       for(let i=WK.length-1;i>=0;i--){const q=WK[i];q.a+=dt;q.z-=vz*dt;q.x+=q.vx*dt;if(q.a>2.6)WK.splice(i,1)}
       g.fillStyle='rgb(238,246,255)';
