@@ -64,6 +64,9 @@ jobs:
       - name: Nommer l'APK
         run: cp android/app/build/outputs/apk/debug/app-debug.apk "carnet-de-bord-${{ steps.v.outputs.ver }}.apk"
 
+      - name: Playwright (test de synchro dans un navigateur)
+        run: npm install --no-save playwright && npx playwright install --with-deps chromium
+
       - name: Construire, tester et empaqueter la version Raspberry Pi
         working-directory: pi
         run: |

@@ -17,6 +17,8 @@ jobs:
       - name: Construire la version Pi
         working-directory: pi
         run: node scripts/build.js
+      - name: Playwright (test de synchro dans un navigateur)
+        run: npm install --no-save playwright && npx playwright install --with-deps chromium
       - name: Tests du plugin
         working-directory: pi
         run: node test/run.js && node test/influx.js && node test/mirror.js && node test/sync.js

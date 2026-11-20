@@ -5,7 +5,7 @@ const { start } = require('./harness');
 let n = 0; const ok = m => { n++; console.log('  ✓ ' + m); };
 const pause = ms => new Promise(r => setTimeout(r, ms));
 (async () => {
-  const browser = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: ['--no-sandbox'] });
+  const browser = await chromium.launch({ ...(fs.existsSync('/usr/bin/google-chrome') ? { executablePath: '/usr/bin/google-chrome' } : {}), args: ['--no-sandbox'] });
   const S = await start({ options: { enabled: false } }); const PI = S.url.replace('http://', ''), API = S.url + '/plugins/carnet-de-bord';
   const srv = http.createServer((q, r) => { const f = path.join(__dirname, '..', '..', 'www', q.url === '/' ? 'index.html' : q.url.split('?')[0]); if (!fs.existsSync(f)) { r.statusCode = 404; return r.end(); } r.setHeader('Content-Type', f.endsWith('.html') ? 'text/html; charset=utf-8' : 'text/plain'); r.end(fs.readFileSync(f)); });
   await new Promise(r => srv.listen(0, '127.0.0.1', r)); const U = 'http://127.0.0.1:' + srv.address().port + '/';
