@@ -5791,8 +5791,12 @@ async function anchSearch(c,rNM,kinds){
   if(navigator.onLine===false)throw new Error('hors ligne : la recherche de mouillages demande Internet');
   const ql='[out:json][timeout:25];('+kinds.map(k=>ANCH_KINDS[k].q(b)).join('')+');out center tags 120;';
   let j=null,err=null;
-  for(const u of['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter']){
-    try{const r=await fetch(u,{method:'POST',body:'data='+encodeURIComponent(ql),headers:{'Content-Type':'application/x-www-form-urlencoded'}});if(r.ok){j=await r.json();break}err=new Error('service saturé ('+r.status+')')}catch(e){err=new Error('service injoignable (Internet ?)')}
+  for(const u of['https://overpass-api.de/api/interpreter','https://overpass.private.coffee/api/interpreter','https://overpass.kumi.systems/api/interpreter']){
+    const ac=new AbortController(),tm=setTimeout(()=>ac.abort(),15000);
+    try{const r=await fetch(u,{method:'POST',body:'data='+encodeURIComponent(ql),headers:{'Content-Type':'application/x-www-form-urlencoded'},signal:ac.signal});
+      if(r.ok){j=await r.json();clearTimeout(tm);break}err=new Error('service saturé ('+r.status+'), réessaie dans un instant')}
+    catch(e){err=new Error(e.name==='AbortError'?'le service ne répond pas (délai dépassé), réessaie avec un rayon plus petit':'service injoignable (Internet ?)')}
+    clearTimeout(tm);
   }
   if(!j)throw err||new Error('recherche impossible');
   const seen=new Set(),out=[];
