@@ -224,6 +224,8 @@ nav{bottom:calc(16px + env(safe-area-inset-bottom))!important}
 .tcard{padding:0;overflow:hidden}.tcard .in{padding:12px 14px}
 .tcard svg.mm{display:block;width:100%;height:92px;background:var(--surf2)}
 .fab{position:fixed;right:max(env(safe-area-inset-right),18px);bottom:calc(96px + env(safe-area-inset-bottom));width:56px;height:56px;border-radius:50%;border:0;background:var(--acc);color:var(--on-acc);font-size:28px;z-index:6;box-shadow:0 6px 18px rgba(0,0,0,.45)}
+.modal:focus-within,#plcDlg:focus-within{align-items:flex-start!important;padding-top:max(env(safe-area-inset-top),16px)!important}
+.modal:focus-within>*,#plcDlg:focus-within>*{max-height:55vh!important;overflow:auto!important;border-radius:20px!important}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:40;display:flex;align-items:flex-end;justify-content:center}
 .modal>div{background:var(--card);border-radius:20px 20px 0 0;border:1px solid var(--line);width:min(560px,100%);max-height:90vh;overflow:auto;padding:16px max(env(safe-area-inset-right),20px) calc(18px + env(safe-area-inset-bottom)) max(env(safe-area-inset-left),20px)}
 .ed2{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
@@ -3763,8 +3765,8 @@ $('#fxPlay').onclick=()=>{
 };
 
 
-const APP_VERSION='2.6.1';
-(()=>{const e=document.getElementById('appVer');if(e)e.textContent='Carnet de bord · v'+APP_VERSION})();
+const APP_VERSION='2.6.1',APP_BUILD='21.11-d';
+(()=>{const e=document.getElementById('appVer');if(e)e.textContent='Carnet de bord · v'+APP_VERSION+' ('+APP_BUILD+')'})();
 /* ---------- Météo du parcours : vent, vagues, houle et courant le long du tracé (routage, tracé modifié, depuis ma position) ---------- */
 const RWL={wind:{n:'Vent',u:'nds',lim:'maxW',def:22,to:false},waves:{n:'Vagues',u:'m',lim:'maxH',def:2,to:false},swell:{n:'Houle',u:'m',lim:'maxH',def:2,to:false},cur:{n:'Courant',u:'nds',lim:null,to:true}};
 const rwV=(s,L)=>s?(L==='wind'?s.tws:L==='waves'?s.hs:L==='swell'?s.sh:s.cm):null;
@@ -5793,13 +5795,13 @@ async function anchSearch(c,rNM,kinds){
   const wait=Math.ceil((PLC.cool||0)-Date.now())/1000;if(wait>0)throw new Error('trop de requêtes : patiente encore '+Math.ceil(wait)+' s avant de relancer');
   if(PLC.busy)PLC.busy.abort();const ac=new AbortController();PLC.busy=ac;
   const ql='[out:json][timeout:12];('+kinds.map(k=>ANCH_KINDS[k].q(b)).join('')+');out center tags 60;';
-  let j=null,err=null,n429=0;const t0=Date.now();
+  let j=null,err=null,n429=0;const codes=[];const t0=Date.now();
   for(const u of['https://overpass-api.de/api/interpreter','https://overpass.private.coffee/api/interpreter','https://overpass.kumi.systems/api/interpreter']){
     if(Date.now()-t0>30000||ac.signal.aborted)break;
     const tmo=new AbortController(),tm=setTimeout(()=>tmo.abort(),12000),onab=()=>tmo.abort();ac.signal.addEventListener('abort',onab);
     try{const r=await fetch(u,{method:'POST',body:'data='+encodeURIComponent(ql),headers:{'Content-Type':'application/x-www-form-urlencoded'},signal:tmo.signal});
       if(r.ok){j=await r.json();break}
-      if(r.status===429){n429++;err=new Error('trop de requêtes (429)')}else err=new Error('service saturé ('+r.status+')')}
+      if(r.status===429){n429++;err=new Error('trop de requêtes (429)')}else{codes.push(r.status);err=new Error('service saturé (HTTP '+codes.join(', ')+') : réessaie dans une minute ou réduis le rayon')}}
     catch(e){err=new Error(ac.signal.aborted?'recherche annulée':e.name==='AbortError'?'le service ne répond pas (délai dépassé)':'service injoignable (Internet ?)')}
     clearTimeout(tm);ac.signal.removeEventListener('abort',onab);
   }
