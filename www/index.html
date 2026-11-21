@@ -474,6 +474,11 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
     <button class="b sec" id="gpsAsk">Autoriser / tester le GPS du téléphone</button>
     <label>Adresse Signal K (hôte:port)</label><input id="sHost" placeholder="192.168.1.50:3000">
     <label>YDWG-02 : adresse (Wi-Fi du boîtier) et port TCP</label>
+    <div style="margin:6px 0 10px"><b>Saison de navigation (statistiques)</b>
+    <div class="row" style="margin-top:6px"><div style="flex:1"><label>Début : jour</label><input id="seaD1" type="number" min="1" max="31" inputmode="numeric" placeholder="1"></div><div style="flex:2"><label>mois</label><select id="seaM1"><option value="1">janvier</option><option value="2">février</option><option value="3">mars</option><option value="4">avril</option><option value="5">mai</option><option value="6">juin</option><option value="7">juillet</option><option value="8">août</option><option value="9">septembre</option><option value="10">octobre</option><option value="11">novembre</option><option value="12">décembre</option></select></div></div>
+    <div class="row"><div style="flex:1"><label>Fin : jour</label><input id="seaD2" type="number" min="1" max="31" inputmode="numeric" placeholder="31"></div><div style="flex:2"><label>mois</label><select id="seaM2"><option value="1">janvier</option><option value="2">février</option><option value="3">mars</option><option value="4">avril</option><option value="5">mai</option><option value="6">juin</option><option value="7">juillet</option><option value="8">août</option><option value="9">septembre</option><option value="10">octobre</option><option value="11">novembre</option><option value="12">décembre</option></select></div></div>
+    <label style="display:flex;gap:8px;align-items:center;color:var(--tx);margin-top:6px"><input type="checkbox" id="seaAuto" style="width:auto"> Passage automatique à la saison suivante</label>
+    <div class="muted" style="font-size:12px">Par défaut : du 1er avril au 31 octobre. Décoché, les statistiques restent sur la saison choisie jusqu'à ce que tu passes à la suivante toi-même.</div></div>
     <div style="margin:6px 0 10px"><label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="alOn" style="width:auto"> Alarmes installation (bandeau + vibration + bip)</label>
     <div class="row" style="margin-top:6px"><div style="flex:1"><label>Batterie sous (%)</label><input id="alSoc" type="number" inputmode="numeric" placeholder="25"></div><div style="flex:1"><label>Gasoil sous (%)</label><input id="alFuel" type="number" inputmode="numeric" placeholder="15"></div></div>
     <div class="row"><div style="flex:1"><label>Eau douce sous (%)</label><input id="alWater" type="number" inputmode="numeric" placeholder="10"></div><div style="flex:1"><label>Frigo au-dessus de (°C)</label><input id="alTemp" type="number" inputmode="decimal" placeholder="vide = pas d'alarme"></div></div></div>
@@ -3796,18 +3801,93 @@ $('#nAdd').onclick=async()=>{
 };
 
 /* ---------- Statistiques ---------- */
+/* ---------- Statistiques : total, saison, mois, semaine, jour ---------- */
+const STAT={mode:null,anchor:null,sy:null,f:{type:'all',crew:'',demo:false}};
+const MONTHS_FR=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+const sCfg=()=>({m1:(cfg.seaM1||4)-1,d1:cfg.seaD1||1,m2:(cfg.seaM2||10)-1,d2:cfg.seaD2||31});
+function seasonRange(y){const c=sCfg(),a=new Date(y,c.m1,c.d1),b=new Date(y,c.m2,c.d2,23,59,59,999);if(b<a)b.setFullYear(y+1);return{y,a:+a,b:+b}}
+function seasonLabel(y){const r=seasonRange(y);return new Date(r.b).getFullYear()===y?`Saison ${y}`:`Saison ${y}-${String((y+1)%100).padStart(2,'0')}`}
+function seasonYearOf(ts){for(const y of[new Date(ts).getFullYear()-1,new Date(ts).getFullYear(),new Date(ts).getFullYear()+1]){const r=seasonRange(y);if(ts>=r.a&&ts<=r.b)return y}return null}
+function seasonCurrent(){const now=NOW(),y=seasonYearOf(now);if(y!=null)return y;let k=new Date(now).getFullYear()+1;while(seasonRange(k).b>now&&k>2000)k--;return k}   // hors saison : la dernière saison terminée, jusqu'à ce que la suivante commence
+function seasonEff(){return STAT.sy!=null?STAT.sy:(cfg.seasonAuto!==false?seasonCurrent():(cfg.seasonPin!=null?cfg.seasonPin:seasonCurrent()))}
+const wkStart=ts=>{const d=new Date(ts);d.setHours(0,0,0,0);d.setDate(d.getDate()-((d.getDay()+6)%7));return+d};
+function isoWeek(ts){const d=new Date(ts);d.setHours(0,0,0,0);d.setDate(d.getDate()+3-((d.getDay()+6)%7));const w=new Date(d.getFullYear(),0,4);return 1+Math.round(((d-w)/864e5-3+((w.getDay()+6)%7))/7)}
+function statPeriod(mode,off){   // off = décalage de période (0 = courante, -1 = précédente)
+  const A=new Date(STAT.anchor||NOW());
+  if(mode==='total')return{a:-Infinity,b:Infinity,label:'Toutes les navigations',sub:''};
+  if(mode==='season'){const y=seasonEff()+(off||0),r=seasonRange(y),f=t=>new Date(t).toLocaleDateString(LOC(),{day:'numeric',month:'short',year:'numeric'});
+    return{a:r.a,b:r.b,label:seasonLabel(y),sub:f(r.a)+' → '+f(r.b),y}}
+  if(mode==='month'){const a=new Date(A.getFullYear(),A.getMonth()+(off||0),1),b=new Date(a.getFullYear(),a.getMonth()+1,1);return{a:+a,b:+b-1,label:MONTHS_FR[a.getMonth()]+' '+a.getFullYear(),sub:''}}
+  if(mode==='week'){const a=wkStart(A)+(off||0)*7*864e5,b=new Date(a);b.setDate(b.getDate()+7);const f=t=>new Date(t).toLocaleDateString(LOC(),{day:'numeric',month:'short'});return{a,b:+b-1,label:'Semaine '+isoWeek(a),sub:f(a)+' → '+f(+b-1)}}
+  const a=new Date(A.getFullYear(),A.getMonth(),A.getDate()+(off||0)),b=new Date(a.getFullYear(),a.getMonth(),a.getDate()+1);
+  return{a:+a,b:+b-1,label:a.toLocaleDateString(LOC(),{weekday:'long',day:'numeric',month:'long',year:'numeric'}),sub:''};
+}
+function statAgg(trips){
+  const o={n:trips.length,dist:0,dur:0,eng:0,maxS:0,maxW:0,sumS:0,pts:0,longest:0,ah:0,wh:0,fuel:0,fuelN:0};
+  trips.forEach(t=>{const s=tripStats(t);o.dist+=s.dist;o.dur+=s.dur;o.eng+=s.eng;o.maxS=Math.max(o.maxS,s.maxS);o.maxW=Math.max(o.maxW,s.maxW);o.sumS+=s.avg*s.n;o.pts+=s.n;o.longest=Math.max(o.longest,s.dist);
+    const e=enStats(t);if(e){o.ah+=e.ahOut;o.wh+=e.wh;if(e.f0!=null){o.fuel+=Math.max(0,e.f0-e.f1);o.fuelN++}}});
+  return o;
+}
+function statFilter(trips,p){
+  const f=STAT.f,q=f.crew.trim().toLowerCase();
+  return trips.filter(t=>{if(t.start<p.a||t.start>p.b)return false;if(t.demo&&!f.demo)return false;
+    if(q&&!((t.crew||'')+' '+(t.name||'')).toLowerCase().includes(q))return false;
+    if(f.type!=='all'){const s=tripStats(t),r=s.dur>0?s.eng/s.dur:0,k=r<0.25?'sail':r<0.75?'mix':'motor';if(k!==f.type)return false}
+    return true});
+}
 async function renderStats(){
-  const trips=await db.all('trips');
-  if(!trips.length){$('#statsBox').innerHTML='<div class="card mut">Pas encore de données.</div>';return}
-  let dist=0,dur=0,eng=0,maxS=0,maxW=0;const byMonth={};
-  trips.forEach(t=>{const s=tripStats(t);dist+=s.dist;dur+=s.dur;eng+=s.eng;maxS=Math.max(maxS,s.maxS);maxW=Math.max(maxW,s.maxW);
-    const k=new Date(t.start).toISOString().slice(0,7);byMonth[k]=(byMonth[k]||0)+s.dist});
-  const ks=Object.keys(byMonth).sort(),mx=Math.max(...Object.values(byMonth));
-  $('#statsBox').innerHTML=`<div class="card"><div class="stats">
-   <div><span class="mut">Trajets</span><b>${trips.length}</b></div><div><span class="mut">Distance totale</span><b>${num(dist,0)} NM</b></div>
-   <div><span class="mut">Temps en mer</span><b>${fmtDur(dur)}</b></div><div><span class="mut">Heures moteur</span><b>${(eng/3600).toFixed(1)} h</b></div>
-   <div><span class="mut">Vitesse max</span><b>${num(maxS)} nds</b></div><div><span class="mut">Vent max</span><b>${maxW?num(maxW)+' nds':'--'}</b></div></div></div>
-   <div class="card"><b>Milles par mois</b>${ks.map(k=>`<div style="margin-top:8px"><div class="mut">${k} · ${num(byMonth[k],0)} NM</div><div class="bar" style="width:${Math.max(2,byMonth[k]/mx*100)}%"></div></div>`).join('')}</div>`;
+  const all=await db.all('trips'),box=$('#statsBox');
+  if(!STAT.mode)STAT.mode=cfg.statMode||'season';
+  const mode=STAT.mode,p=statPeriod(mode,0),pp=mode==='total'?null:statPeriod(mode,-1);
+  const real=all.filter(t=>t.demo?STAT.f.demo:true);
+  if(!real.length&&!all.length){box.innerHTML='<div class="card mut">Pas encore de données.</div>';return}
+  const L=statFilter(all,p).sort((a,b)=>a.start-b.start),g=statAgg(L),gp=pp?statAgg(statFilter(all,pp)):null;
+  const btn=(on,attr,txt)=>`<button type="button" ${attr} class="spb${on?' on':''}">${txt}</button>`;
+  const modes=[['total','Total'],['season','Saison'],['month','Mois'],['week','Semaine'],['day','Jour']];
+  const auto=cfg.seasonAuto!==false,cs=seasonCurrent(),isCur=mode==='season'&&p.y===cs;
+  let tag='';if(mode==='season'){const now=NOW(),r=seasonRange(p.y);tag=now>r.b?'terminée':now<r.a?'à venir':'en cours'}
+  const dlt=gp&&gp.dist>0||gp&&g.dist>0?(()=>{const d=g.dist-gp.dist;return`<div class="mut" style="margin-top:4px">${d>=0?'▲ +':'▼ '}${num(Math.abs(d),0)} NM par rapport à ${mode==='season'?'la saison précédente':mode==='month'?'au mois précédent':mode==='week'?'la semaine précédente':'au jour précédent'}</div>`})():'';
+  // histogramme
+  let bars=[];
+  if(mode==='total'){const m={};all.forEach(t=>{if(!statFilter([t],{a:-Infinity,b:Infinity}).length)return;const y=seasonYearOf(t.start),k=y!=null?seasonLabel(y):'Hors saison';m[k]=(m[k]||0)+tripStats(t).dist});bars=Object.entries(m).sort((a,b)=>a[0]<b[0]?-1:1).map(([l,v])=>[l,v])}
+  else if(mode==='season'){const r=seasonRange(p.y);let d=new Date(r.a);d=new Date(d.getFullYear(),d.getMonth(),1);const m={};L.forEach(t=>{const k=new Date(t.start).getFullYear()*12+new Date(t.start).getMonth();m[k]=(m[k]||0)+tripStats(t).dist});
+    for(;+d<=r.b;d=new Date(d.getFullYear(),d.getMonth()+1,1)){const k=d.getFullYear()*12+d.getMonth();bars.push([MONTHS_FR[d.getMonth()].slice(0,3),m[k]||0])}}
+  else if(mode==='month'||mode==='week'){const m={};L.forEach(t=>{const k=new Date(t.start).getDate()+'/'+new Date(t.start).getMonth();m[k]=(m[k]||0)+tripStats(t).dist});
+    for(let t=p.a;t<=p.b;t+=864e5){const d=new Date(t);bars.push([mode==='week'?d.toLocaleDateString(LOC(),{weekday:'short'}).slice(0,2):String(d.getDate()),m[d.getDate()+'/'+d.getMonth()]||0])}}
+  else bars=L.map(t=>[fmtT(t.start),tripStats(t).dist]);
+  const mx=Math.max(1e-9,...bars.map(b=>b[1])),step=Math.ceil(bars.length/12);
+  const chart=bars.length?`<div style="display:flex;align-items:flex-end;gap:3px;height:120px;margin-top:10px">${bars.map(([l,v],i)=>`<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;min-width:0"><span class="mut" style="font-size:10px;height:14px">${v>0&&bars.length<=14?num(v,0):''}</span><div class="bar" style="width:100%;height:${v>0?Math.max(3,v/mx*86):1}px;border-radius:3px 3px 0 0;opacity:${v>0?1:.25}"></div><span class="mut" style="font-size:10px;margin-top:3px;white-space:nowrap">${i%step===0?esc(l):'&nbsp;'}</span></div>`).join('')}</div>`:'';
+  const pct=g.dur>0?Math.round(g.eng/g.dur*100):0,avg=g.pts?g.sumS/g.pts:0;
+  box.innerHTML=`<style>.spb{padding:6px 12px;border-radius:99px;border:1px solid var(--line);background:transparent;color:var(--tx);font:600 13px system-ui}.spb.on{background:var(--acc);border-color:var(--acc);color:#fff}.spn{display:flex;align-items:center;justify-content:space-between;gap:8px}.spn button{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--tx);font-size:20px}</style>
+  <div class="card"><div style="display:flex;gap:6px;flex-wrap:wrap">${modes.map(([k,l])=>btn(mode===k,`data-sm="${k}"`,l)).join('')}</div>
+   ${mode!=='total'?`<div class="spn" style="margin-top:12px"><button type="button" data-sn="-1" aria-label="Période précédente">‹</button><div style="text-align:center;flex:1"><b style="font:600 20px var(--num);text-transform:capitalize">${esc(p.label)}</b>${tag?` <span class="pill">${tag}</span>`:''}<div class="mut" style="font-size:13px">${esc(p.sub)}</div></div><button type="button" data-sn="1" aria-label="Période suivante">›</button></div>
+   <div style="display:flex;gap:8px;justify-content:center;margin-top:8px;flex-wrap:wrap">${mode==='season'?(isCur&&auto?'':btn(0,'data-sc="1"',auto?'Saison en cours':'Revenir à la saison choisie'))+(!auto?btn(0,'data-snext="1"','Passer à la saison suivante'):''):btn(0,'data-sc="1"',mode==='day'?'Aujourd’hui':mode==='week'?'Cette semaine':'Ce mois-ci')}</div>
+   ${mode==='season'?`<div class="mut" style="font-size:12px;text-align:center;margin-top:6px">${auto?'Passage automatique à la saison suivante (Réglages).':'Passage automatique désactivé : la saison ne change que sur ta demande.'}</div>`:''}`:`<div class="mut" style="margin-top:10px">${esc(p.label)}</div>`}
+  </div>
+  <div class="card"><b>Filtres</b><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">${[['all','Tous'],['sail','À la voile'],['mix','Mixtes'],['motor','Au moteur']].map(([k,l])=>btn(STAT.f.type===k,`data-st="${k}"`,l)).join('')}</div>
+   <input id="stCrew" value="${esc(STAT.f.crew)}" placeholder="Équipage ou nom du trajet contient…" style="margin-top:8px" autocapitalize="off">
+   <label style="display:flex;gap:8px;align-items:center;margin-top:8px;color:var(--tx)"><input type="checkbox" id="stDemo" style="width:auto" ${STAT.f.demo?'checked':''}> Inclure les navigations de démonstration</label>
+   <div class="mut" style="font-size:12px;margin-top:4px">« À la voile » : moteur moins de 25 % du temps ; « Au moteur » : plus de 75 %.</div></div>
+  ${g.n?`<div class="card"><div class="stats">
+   <div><span class="mut">Trajets</span><b>${g.n}</b></div><div><span class="mut">Distance</span><b>${num(g.dist,g.dist<100?1:0)} NM</b></div>
+   <div><span class="mut">Temps en mer</span><b>${fmtDur(g.dur)}</b></div><div><span class="mut">Moteur</span><b>${(g.eng/3600).toFixed(1)} h · ${pct} %</b></div>
+   <div><span class="mut">Vitesse moyenne</span><b>${num(avg)} nds</b></div><div><span class="mut">Vitesse max</span><b>${num(g.maxS)} nds</b></div>
+   <div><span class="mut">Vent max</span><b>${g.maxW?num(g.maxW)+' nds':'--'}</b></div><div><span class="mut">Plus long trajet</span><b>${num(g.longest,0)} NM</b></div>
+   ${g.ah||g.wh||g.fuelN?`<div><span class="mut">Batterie consommée</span><b>${g.ah?num(g.ah,0)+' Ah':'--'}</b></div><div><span class="mut">Solaire</span><b>${g.wh?num(g.wh/1000,1)+' kWh':'--'}</b></div>`:''}</div>${dlt}</div>
+  <div class="card"><b>${mode==='total'?'Milles par saison':mode==='season'?'Milles par mois':mode==='day'?'Milles par trajet':'Milles par jour'}</b>${chart}</div>
+  <div class="card"><b>Trajets de la période</b>${L.slice().reverse().map(t=>{const s=tripStats(t);return`<div class="statTrip" data-id="${t.id}" style="padding:10px 0;border-top:1px solid var(--line);cursor:pointer"><div style="display:flex;justify-content:space-between;gap:8px"><span>${esc(t.name)}${t.demo?' <span class="pill">démo</span>':''}</span><b>${num(s.dist)} NM</b></div><div class="mut" style="font-size:13px">${fmtDT(t.start)} · ${fmtDur(s.dur)}${t.crew?' · '+esc(t.crew):''}</div></div>`}).join('')}</div>`
+  :`<div class="card mut">Aucune navigation pour cette période avec ces filtres.</div>`}`;
+  const go2=fn=>{fn();renderStats()};
+  $$('#statsBox [data-sm]').forEach(b=>b.onclick=()=>go2(()=>{STAT.mode=b.dataset.sm;cfg.statMode=STAT.mode;saveCfg()}));
+  $$('#statsBox [data-sn]').forEach(b=>b.onclick=()=>go2(()=>{const d=+b.dataset.sn;
+    if(mode==='season'){STAT.sy=seasonEff()+d;if(cfg.seasonAuto===false){cfg.seasonPin=STAT.sy;saveCfg()}}
+    else{const A=new Date(STAT.anchor||NOW());if(mode==='month')A.setMonth(A.getMonth()+d);else A.setDate(A.getDate()+d*(mode==='week'?7:1));STAT.anchor=+A}}));
+  $$('#statsBox [data-sc]').forEach(b=>b.onclick=()=>go2(()=>{STAT.anchor=null;STAT.sy=null}));
+  $$('#statsBox [data-snext]').forEach(b=>b.onclick=()=>go2(()=>{cfg.seasonPin=seasonEff()+1;STAT.sy=null;saveCfg()}));
+  $$('#statsBox [data-st]').forEach(b=>b.onclick=()=>go2(()=>{STAT.f.type=b.dataset.st}));
+  const cw=$('#stCrew');if(cw)cw.onchange=()=>go2(()=>{STAT.f.crew=cw.value});
+  const dm=$('#stDemo');if(dm)dm.onchange=()=>go2(()=>{STAT.f.demo=dm.checked});
+  $$('#statsBox .statTrip').forEach(e=>e.onclick=()=>{go('trips');showTrip(e.dataset.id)});
 }
 
 /* ---------- Audit : journal inviolable (chaîné par empreintes) de toutes les modifications du carnet ---------- */
@@ -4037,7 +4117,7 @@ function loadSettings(){
   $('#boat').textContent=cfg.boat;
   $('#sBoat').value=cfg.boat;$('#sSrc').value=cfg.src;$('#sGps').value=cfg.gpsSrc||'auto';$('#sWind').value=cfg.windRef||'auto';try{initHist()}catch(e){}try{initSync()}catch(e){}$('#sHost').value=cfg.host;
   $('#sDemoSpd').value=String(cfg.demoSpeed||1);buildLogCfg();updDemoBar();
-  $('#sNoGo').value=cfg.noGo;$('#sYdHost').value=cfg.ydHost;$('#sYdPort').value=cfg.ydPort;$('#sAwake').checked=!!cfg.awake;$('#sCerbo').value=cfg.cerbo||'';$('#alOn').checked=cfg.alOn!==false;$('#alSoc').value=cfg.alSoc!=null?cfg.alSoc:'';$('#alFuel').value=cfg.alFuel!=null?cfg.alFuel:'';$('#alWater').value=cfg.alWater!=null?cfg.alWater:'';$('#alTemp').value=cfg.alTemp!=null?cfg.alTemp:'';$('#b3Sail').checked=cfg.b3sail!==false;$('#b3Wake').checked=cfg.b3wake!==false;['lnHdg','lnCog','lnLay'].forEach(k=>$('#'+k).checked=cfg[k]!==false);$('#lnMin').value=cfg.lnMin||30;$('#map3dCb').checked=M3D;$('#sAvoid').checked=cfg.avoidLand!==false;$('#sMinDepth').value=cfg.minDepth??3;$('#sHapLvl').value=String(cfg.hapLvl!=null?cfg.hapLvl:(cfg.haptic===false?0:2));$('#sCruise').value=cfg.cruise;$('#sHeel').value=cfg.heelAlert||25;$('#sKPoint').value=cfg.kPoint;$('#sKMap').value=cfg.kMap;
+  $('#sNoGo').value=cfg.noGo;$('#sYdHost').value=cfg.ydHost;$('#sYdPort').value=cfg.ydPort;$('#sAwake').checked=!!cfg.awake;$('#sCerbo').value=cfg.cerbo||'';$('#alOn').checked=cfg.alOn!==false;$('#seaD1').value=cfg.seaD1||1;$('#seaM1').value=cfg.seaM1||4;$('#seaD2').value=cfg.seaD2||31;$('#seaM2').value=cfg.seaM2||10;$('#seaAuto').checked=cfg.seasonAuto!==false;$('#alSoc').value=cfg.alSoc!=null?cfg.alSoc:'';$('#alFuel').value=cfg.alFuel!=null?cfg.alFuel:'';$('#alWater').value=cfg.alWater!=null?cfg.alWater:'';$('#alTemp').value=cfg.alTemp!=null?cfg.alTemp:'';$('#b3Sail').checked=cfg.b3sail!==false;$('#b3Wake').checked=cfg.b3wake!==false;['lnHdg','lnCog','lnLay'].forEach(k=>$('#'+k).checked=cfg[k]!==false);$('#lnMin').value=cfg.lnMin||30;$('#map3dCb').checked=M3D;$('#sAvoid').checked=cfg.avoidLand!==false;$('#sMinDepth').value=cfg.minDepth??3;$('#sHapLvl').value=String(cfg.hapLvl!=null?cfg.hapLvl:(cfg.haptic===false?0:2));$('#sCruise').value=cfg.cruise;$('#sHeel').value=cfg.heelAlert||25;$('#sKPoint').value=cfg.kPoint;$('#sKMap').value=cfg.kMap;
   $('#sStartKn').value=cfg.startKn;$('#sStartSec').value=cfg.startSec;$('#sStopKn').value=cfg.stopKn;$('#sStopMin').value=cfg.stopMin;$('#sInt').value=cfg.interval;
 }
 ['lnHdg','lnCog','lnLay'].forEach(k=>$('#'+k).onchange=e=>{cfg[k]=e.target.checked;saveCfg();scheduleDraw()});$('#sNoGo').onchange=e=>{cfg.noGo=Math.max(0,Math.min(80,+e.target.value||0));e.target.value=cfg.noGo;saveCfg();try{updDials()}catch(_){}};
@@ -4049,7 +4129,7 @@ $('#hapTest').onclick=()=>{const w=cfg.haptic,l=cfg.hapLvl;cfg.haptic=true;if(!c
 $('#sHapLvl').onchange=e=>{cfg.hapLvl=+e.target.value;cfg.haptic=cfg.hapLvl>0;saveCfg();if(cfg.hapLvl>0)hap('strong')};
 $('#sSave').onclick=()=>{
   cfg={...cfg,boat:$('#sBoat').value||DEF.boat,src:$('#sSrc').value,gpsSrc:$('#sGps').value,windRef:$('#sWind').value,host:$('#sHost').value.trim(),
-   ydHost:$('#sYdHost').value.trim()||DEF.ydHost,ydPort:+$('#sYdPort').value||DEF.ydPort,awake:$('#sAwake').checked,cerbo:$('#sCerbo').value.trim(),alOn:$('#alOn').checked,alSoc:$('#alSoc').value===''?null:+$('#alSoc').value,alFuel:$('#alFuel').value===''?null:+$('#alFuel').value,alWater:$('#alWater').value===''?null:+$('#alWater').value,alTemp:$('#alTemp').value===''?null:+$('#alTemp').value,b3sail:$('#b3Sail').checked,b3wake:$('#b3Wake').checked,avoidLand:$('#sAvoid').checked,minDepth:Math.max(0,+$('#sMinDepth').value||0),
+   ydHost:$('#sYdHost').value.trim()||DEF.ydHost,ydPort:+$('#sYdPort').value||DEF.ydPort,awake:$('#sAwake').checked,cerbo:$('#sCerbo').value.trim(),alOn:$('#alOn').checked,seaD1:Math.min(31,Math.max(1,+$('#seaD1').value||1)),seaM1:+$('#seaM1').value||4,seaD2:Math.min(31,Math.max(1,+$('#seaD2').value||31)),seaM2:+$('#seaM2').value||10,seasonAuto:$('#seaAuto').checked,alSoc:$('#alSoc').value===''?null:+$('#alSoc').value,alFuel:$('#alFuel').value===''?null:+$('#alFuel').value,alWater:$('#alWater').value===''?null:+$('#alWater').value,alTemp:$('#alTemp').value===''?null:+$('#alTemp').value,b3sail:$('#b3Sail').checked,b3wake:$('#b3Wake').checked,avoidLand:$('#sAvoid').checked,minDepth:Math.max(0,+$('#sMinDepth').value||0),
    cruise:+$('#sCruise').value||DEF.cruise,heelAlert:Math.max(10,Math.min(45,+$('#sHeel').value||25)),kPoint:$('#sKPoint').value.trim(),kMap:$('#sKMap').value.trim(),
    startKn:+$('#sStartKn').value||DEF.startKn,startSec:+$('#sStartSec').value||DEF.startSec,
    stopKn:+$('#sStopKn').value||DEF.stopKn,stopMin:+$('#sStopMin').value||DEF.stopMin,interval:Math.max(1,+$('#sInt').value||DEF.interval)};
