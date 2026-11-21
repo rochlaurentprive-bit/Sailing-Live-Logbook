@@ -7612,5 +7612,36 @@ $('#mapIso').addEventListener('change',()=>{ISO.G=null;ISO.segs=null;if(!$('#map
 
 I18N.start();
 </script>
+<script>
+/* Clavier virtuel : le champ en cours de saisie reste toujours visible au-dessus du clavier */
+(()=>{
+const vv=window.visualViewport;let kb=0,t=null;
+const isTxt=e=>e&&(e.tagName==='TEXTAREA'||(e.tagName==='INPUT'&&!/^(checkbox|radio|range|button|submit|file|color)$/i.test(e.type))||e.isContentEditable);
+function kbH(){return vv?Math.max(0,Math.round(window.innerHeight-vv.height-vv.offsetTop)):0}
+function reveal(){
+  const e=document.activeElement;if(!isTxt(e))return;
+  const h=kbH();
+  const r=e.getBoundingClientRect();
+  const vh=vv?vv.height:window.innerHeight,top=vv?vv.offsetTop:0;
+  const margin=24;
+  /* si le clavier ne réduit pas la fenêtre (Android sans resize), on suppose ~42 % de l'écran */
+  const visBottom=top+vh-(h>50?0:Math.round(window.innerHeight*.42))-margin;
+  if(r.bottom>visBottom||r.top<top+margin){
+    try{e.scrollIntoView({block:'center',behavior:'smooth'})}catch(_){e.scrollIntoView()}
+    /* dernier recours : décaler le conteneur défilant le plus proche */
+    setTimeout(()=>{const r2=e.getBoundingClientRect();if(r2.bottom>visBottom+margin){let n=e.parentElement;while(n&&n!==document.body){if(n.scrollHeight>n.clientHeight+4&&/(auto|scroll)/.test(getComputedStyle(n).overflowY)){n.scrollTop+=r2.bottom-visBottom;break}n=n.parentElement}window.scrollBy(0,Math.max(0,r2.bottom-visBottom))}},350);
+  }
+}
+function later(d){clearTimeout(t);t=setTimeout(reveal,d)}
+function setKb(){kb=kbH();document.documentElement.style.setProperty('--kb',kb+'px');document.body.classList.toggle('kbopen',kb>50)}
+document.addEventListener('focusin',e=>{if(isTxt(e.target)){later(120);later(350);setTimeout(reveal,700)}});
+document.addEventListener('input',e=>{if(isTxt(e.target))later(60)},true);
+if(vv){vv.addEventListener('resize',()=>{setKb();later(80)});vv.addEventListener('scroll',()=>later(80))}
+window.addEventListener('resize',()=>{setKb();later(120)});
+const st=document.createElement('style');
+st.textContent='body.kbopen{padding-bottom:var(--kb,0px)}input,textarea{scroll-margin:30vh 0}';
+document.head.appendChild(st);
+})();
+</script>
 </body>
 </html>
