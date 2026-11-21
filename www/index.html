@@ -4127,6 +4127,7 @@ $('#lnMin').onchange=e=>{cfg.lnMin=Math.max(5,+e.target.value||30);saveCfg();sch
   $$('#v-set .saveb').forEach(b=>b.onclick=()=>$('#sSave').click())}
 $('#hapTest').onclick=()=>{const w=cfg.haptic,l=cfg.hapLvl;cfg.haptic=true;if(!cfg.hapLvl)cfg.hapLvl=2;hap('strong');cfg.haptic=w;cfg.hapLvl=l;setTimeout(()=>{alert(tr('Vibration : ')+HAP.msg)},400)};
 $('#sHapLvl').onchange=e=>{cfg.hapLvl=+e.target.value;cfg.haptic=cfg.hapLvl>0;saveCfg();if(cfg.hapLvl>0)hap('strong')};
+$('#sBoat').oninput=()=>{cfg.boat=$('#sBoat').value.trim()||DEF.boat;$('#boat').textContent=cfg.boat;saveCfg()};   // le nom change tout de suite en haut à gauche, sans attendre « Enregistrer »
 $('#sSave').onclick=()=>{
   cfg={...cfg,boat:$('#sBoat').value||DEF.boat,src:$('#sSrc').value,gpsSrc:$('#sGps').value,windRef:$('#sWind').value,host:$('#sHost').value.trim(),
    ydHost:$('#sYdHost').value.trim()||DEF.ydHost,ydPort:+$('#sYdPort').value||DEF.ydPort,awake:$('#sAwake').checked,cerbo:$('#sCerbo').value.trim(),alOn:$('#alOn').checked,seaD1:Math.min(31,Math.max(1,+$('#seaD1').value||1)),seaM1:+$('#seaM1').value||4,seaD2:Math.min(31,Math.max(1,+$('#seaD2').value||31)),seaM2:+$('#seaM2').value||10,seasonAuto:$('#seaAuto').checked,alSoc:$('#alSoc').value===''?null:+$('#alSoc').value,alFuel:$('#alFuel').value===''?null:+$('#alFuel').value,alWater:$('#alWater').value===''?null:+$('#alWater').value,alTemp:$('#alTemp').value===''?null:+$('#alTemp').value,b3sail:$('#b3Sail').checked,b3wake:$('#b3Wake').checked,avoidLand:$('#sAvoid').checked,minDepth:Math.max(0,+$('#sMinDepth').value||0),
