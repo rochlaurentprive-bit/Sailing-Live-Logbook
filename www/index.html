@@ -3766,7 +3766,7 @@ $('#fxPlay').onclick=()=>{
 };
 
 
-const APP_VERSION='2.6.1',APP_BUILD='21.11-m';
+const APP_VERSION='2.6.1',APP_BUILD='21.11-n';
 (()=>{const e=document.getElementById('appVer');if(e)e.textContent='Carnet de bord · v'+APP_VERSION+' ('+APP_BUILD+')'})();
 /* ---------- Météo du parcours : vent, vagues, houle et courant le long du tracé (routage, tracé modifié, depuis ma position) ---------- */
 const RWL={wind:{n:'Vent',u:'nds',lim:'maxW',def:22,to:false},waves:{n:'Vagues',u:'m',lim:'maxH',def:2,to:false},swell:{n:'Houle',u:'m',lim:'maxH',def:2,to:false},cur:{n:'Courant',u:'nds',lim:null,to:true}};
@@ -5770,7 +5770,7 @@ async function geoSearch(q){
   const ll=parseLL(q);if(ll&&/[-\d.]+\s*[,; ]\s*[-\d.]+/.test(q))return[{name:'Coordonnées '+ll.lat.toFixed(4)+', '+ll.lon.toFixed(4),sub:'',lat:ll.lat,lon:ll.lon}];
   if(PLC.cache[q])return PLC.cache[q];
   if(navigator.onLine===false)throw new Error('hors ligne : la recherche par nom demande Internet');
-  let r;try{r=await fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=8&accept-language='+encodeURIComponent((cfg.lang||'fr'))+'&q='+encodeURIComponent(q))}
+  let r;try{r=await fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=8&accept-language='+encodeURIComponent((cfg.lang||'fr'))+'&q='+encodeURIComponent(q),{headers:{'User-Agent':OSM_UA,'Accept':'application/json'}})}
   catch(e){throw new Error('recherche impossible (Internet ?)')}
   if(!r.ok)throw new Error('recherche refusée ('+r.status+')');
   const j=await r.json();
@@ -5812,7 +5812,7 @@ async function anchSearch(c,rNM,kinds,prog){
   for(const u of SRV){
     if(Date.now()-t0>40000||ac.signal.aborted)break;
     const tmo=new AbortController(),tm=setTimeout(()=>tmo.abort(),9000),onab=()=>tmo.abort();ac.signal.addEventListener('abort',onab);
-    try{prog&&prog('Serveur '+(codes.length+1)+'/'+SRV.length+' : '+host(u)+(codes.length?' (précédents : '+codes.join(' · ')+')':'')+'…');const r=await fetch(u,{method:'POST',body:'data='+encodeURIComponent(ql),headers:{'Content-Type':'application/x-www-form-urlencoded','Accept':'*/*'},signal:tmo.signal});
+    try{prog&&prog('Serveur '+(codes.length+1)+'/'+SRV.length+' : '+host(u)+(codes.length?' (précédents : '+codes.join(' · ')+')':'')+'…');const r=await fetch(u,{method:'POST',body:'data='+encodeURIComponent(ql),headers:{'Content-Type':'application/x-www-form-urlencoded','Accept':'*/*','User-Agent':OSM_UA},signal:tmo.signal});
       if(r.ok){j=await r.json();try{localStorage.setItem('ovLast',u)}catch(e){}clearTimeout(tm);break}
       codes.push(host(u)+' '+r.status);if(r.status===429)n429++;err=new Error('service saturé')}
     catch(e){codes.push(host(u)+' '+(ac.signal.aborted?'annulé':e.name==='AbortError'?'délai':'injoignable'));err=new Error(ac.signal.aborted?'recherche annulée':'service injoignable')}
@@ -7454,6 +7454,7 @@ function seaDescribe(el){
   const la=el.lat!=null?el.lat:el.center&&el.center.lat,lo=el.lon!=null?el.lon:el.center&&el.center.lon;
   return{lines:L,lat:la,lon:lo};
 }
+const OSM_UA='CarnetDeBord/'+APP_VERSION+' (journal de bord voilier; https://github.com/rochlaurentprive-bit/Sailing-Live-Logbook)';
 const SEAQ={};
 async function seaQuery(g,x,y){
   const mpp=156543.03*Math.cos(g.lat*D2R)/2**MV.z,R=Math.round(Math.min(3000,Math.max(15,30*mpp)));
@@ -7464,7 +7465,7 @@ async function seaQuery(g,x,y){
   let r=null,codes=[];const t0=Date.now();
   for(const u of SRV){if(Date.now()-t0>20000)break;
     const ac=new AbortController(),to=setTimeout(()=>ac.abort(),7000);
-    try{const rr=await fetch(u,{method:'POST',body:'data='+encodeURIComponent(q),headers:{'Content-Type':'application/x-www-form-urlencoded'},signal:ac.signal});
+    try{const rr=await fetch(u,{method:'POST',body:'data='+encodeURIComponent(q),headers:{'Content-Type':'application/x-www-form-urlencoded','Accept':'*/*','User-Agent':OSM_UA},signal:ac.signal});
       if(rr.ok){r=rr;try{localStorage.setItem('ovLast',u)}catch(e){}clearTimeout(to);break}codes.push(rr.status)}
     catch(e){codes.push(e.name==='AbortError'?'délai':'réseau')}
     clearTimeout(to)}
