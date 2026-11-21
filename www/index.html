@@ -3766,7 +3766,7 @@ $('#fxPlay').onclick=()=>{
 };
 
 
-const APP_VERSION='2.6.1',APP_BUILD='21.11-n';
+const APP_VERSION='2.6.1',APP_BUILD='21.11-p';
 (()=>{const e=document.getElementById('appVer');if(e)e.textContent='Carnet de bord · v'+APP_VERSION+' ('+APP_BUILD+')'})();
 /* ---------- Météo du parcours : vent, vagues, houle et courant le long du tracé (routage, tracé modifié, depuis ma position) ---------- */
 const RWL={wind:{n:'Vent',u:'nds',lim:'maxW',def:22,to:false},waves:{n:'Vagues',u:'m',lim:'maxH',def:2,to:false},swell:{n:'Houle',u:'m',lim:'maxH',def:2,to:false},cur:{n:'Courant',u:'nds',lim:null,to:true}};
@@ -5811,11 +5811,11 @@ async function anchSearch(c,rNM,kinds,prog){
   const host=u=>u.split('/')[2].replace(/^overpass\.|^maps\./,'');
   for(const u of SRV){
     if(Date.now()-t0>40000||ac.signal.aborted)break;
-    const tmo=new AbortController(),tm=setTimeout(()=>tmo.abort(),9000),onab=()=>tmo.abort();ac.signal.addEventListener('abort',onab);
-    try{prog&&prog('Serveur '+(codes.length+1)+'/'+SRV.length+' : '+host(u)+(codes.length?' (précédents : '+codes.join(' · ')+')':'')+'…');const r=await fetch(u,{method:'POST',body:'data='+encodeURIComponent(ql),headers:{'Content-Type':'application/x-www-form-urlencoded','Accept':'*/*','User-Agent':OSM_UA},signal:tmo.signal});
-      if(r.ok){j=await r.json();try{localStorage.setItem('ovLast',u)}catch(e){}clearTimeout(tm);break}
+    const tmo=new AbortController(),onab=()=>tmo.abort();let tm;const dl=new Promise((_,rej)=>{tm=setTimeout(()=>{tmo.abort();rej(Object.assign(new Error('t'),{name:'AbortError'}))},9000)});dl.catch(()=>{});ac.signal.addEventListener('abort',onab);
+    try{prog&&prog('Serveur '+(codes.length+1)+'/'+SRV.length+' : '+host(u)+(codes.length?' (précédents : '+codes.join(' · ')+')':'')+'…');const r=await Promise.race([fetch(u,{method:'POST',body:'data='+encodeURIComponent(ql),headers:{'Content-Type':'application/x-www-form-urlencoded','Accept':'*/*','User-Agent':OSM_UA},signal:tmo.signal}),dl]);
+      if(r.ok){j=await Promise.race([r.json(),dl]);if(j&&j.remark&&/error|timed out|memory|rate/i.test(j.remark)){codes.push(host(u)+' surcharge');j=null;throw new Error('remark')}try{localStorage.setItem('ovLast',u)}catch(e){}clearTimeout(tm);break}
       codes.push(host(u)+' '+r.status);if(r.status===429)n429++;err=new Error('service saturé')}
-    catch(e){codes.push(host(u)+' '+(ac.signal.aborted?'annulé':e.name==='AbortError'?'délai':'injoignable'));err=new Error(ac.signal.aborted?'recherche annulée':'service injoignable')}
+    catch(e){if(e.message!=='remark')codes.push(host(u)+' '+(ac.signal.aborted?'annulé':e.name==='AbortError'?'délai':'injoignable'));err=new Error(ac.signal.aborted?'recherche annulée':'service injoignable')}
     clearTimeout(tm);ac.signal.removeEventListener('abort',onab);
   }
   if(PLC.busy===ac)PLC.busy=null;
@@ -7464,14 +7464,14 @@ async function seaQuery(g,x,y){
   let last=-1;try{last=SRV.indexOf(localStorage.getItem('ovLast'))}catch(e){}if(last>0)SRV.unshift(SRV.splice(last,1)[0]);
   let r=null,codes=[];const t0=Date.now();
   for(const u of SRV){if(Date.now()-t0>20000)break;
-    const ac=new AbortController(),to=setTimeout(()=>ac.abort(),7000);
-    try{const rr=await fetch(u,{method:'POST',body:'data='+encodeURIComponent(q),headers:{'Content-Type':'application/x-www-form-urlencoded','Accept':'*/*','User-Agent':OSM_UA},signal:ac.signal});
-      if(rr.ok){r=rr;try{localStorage.setItem('ovLast',u)}catch(e){}clearTimeout(to);break}codes.push(rr.status)}
+    const ac=new AbortController();let to;const dl=new Promise((_,rej)=>{to=setTimeout(()=>{ac.abort();rej(Object.assign(new Error('t'),{name:'AbortError'}))},7000)});dl.catch(()=>{});
+    try{const rr=await Promise.race([fetch(u,{method:'POST',body:'data='+encodeURIComponent(q),headers:{'Content-Type':'application/x-www-form-urlencoded','Accept':'*/*','User-Agent':OSM_UA},signal:ac.signal}),dl]);
+      if(rr.ok){r=await Promise.race([rr.json(),dl]);if(r&&r.remark&&/error|timed out|memory|rate/i.test(r.remark)){codes.push('surcharge');r=null;clearTimeout(to);continue}try{localStorage.setItem('ovLast',u)}catch(e){}clearTimeout(to);break}codes.push(rr.status)}
     catch(e){codes.push(e.name==='AbortError'?'délai':'réseau')}
     clearTimeout(to)}
   if(!r){const e=new Error('seaq '+codes.join(','));e.codes=codes;throw e}
   {
-    const j=await r.json();const seen=new Set(),out=[];
+    const j=r;const seen=new Set(),out=[];
     (j.elements||[]).forEach(e=>{const d=seaDescribe(e);if(d.lat==null)return;const k=d.lines.join('|');if(seen.has(k))return;seen.add(k);d.dist=Math.hypot((d.lat-g.lat)*111320,(d.lon-g.lon)*111320*Math.cos(g.lat*D2R));out.push(d)});
     out.sort((a,b)=>a.dist-b.dist);return SEAQ[ck]=out.slice(0,3);
   }
