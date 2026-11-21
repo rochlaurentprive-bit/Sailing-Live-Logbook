@@ -2856,6 +2856,9 @@ function alCheck(){
     Object.entries(D.tanks).forEach(([k,t])=>{if(now-t.t>120000)return;
       if(t.type==='fuel')chk('fuel:'+k,`Gasoil bas : ${Math.round(t.lvl)} % (seuil ${fu} %)`,t.lvl<fu,t.lvl>fu+3);
       else if(t.type==='freshWater')chk('wat:'+k,`Eau douce basse : ${Math.round(t.lvl)} % (seuil ${wa} %)`,t.lvl<wa,t.lvl>wa+3)});
+    const w=cfg.enWatch;if(w&&w.t0+w.h*3600e3>now&&cfg.batAh){const e=enNow(),rem=(w.t0+w.h*3600e3-now)/3600e3,res=cfg.reserve!=null?cfg.reserve:30,nt=EN.net||[];
+      if(e.b&&e.b.soc!=null&&nt.length>=3&&now-nt[0].t>10*60e3){const avg=nt.reduce((a,x)=>a+x.w,0)/nt.length,proj=e.b.soc-avg*rem/(cfg.batAh*12.8)*100;
+        chk('enwatch',`Passage : à ce rythme la charge tombera à ${Math.max(0,Math.round(proj))} % avant l'arrivée (réserve ${res} %). Réduis la conso ou prévois le moteur.`,proj<res,proj>res+3)}}
     if(tm!=null&&tm!==''&&!isNaN(+tm))Object.entries(D.temps).forEach(([n,x])=>{if(now-x.t>300000||x.c==null||!/frigo|fridge|koel|cong|freez|vries/i.test(n))return;chk('tmp:'+n,`${n} : ${x.c.toFixed(1)} °C (max ${tm} °C)`,x.c>+tm,x.c<+tm-1)});
   }
   Object.keys(AL.act).forEach(id=>{if(!cond.find(c=>c.id===id))delete AL.act[id]});
@@ -3931,6 +3934,7 @@ async function enSample(){
     if(e.b.soc!=null){k.socMin=k.socMin==null?e.b.soc:Math.min(k.socMin,e.b.soc);k.socMax=k.socMax==null?e.b.soc:Math.max(k.socMax,e.b.soc);k.socS+=e.b.soc}}
   if(e.fuel){if(k.fu0==null)k.fu0=e.fuel.lvl;k.fu1=e.fuel.lvl}if(e.water){if(k.wa0==null)k.wa0=e.water.lvl;k.wa1=e.water.lvl}
   if(WX.src&&WX.cloud!=null){k.cl+=WX.cloud;k.clN++}if(fresh('tws')){k.tw+=D.tws;k.twN++}
+  (EN.net||(EN.net=[])).push({t:now,w:(e.cons||0)-(e.solW||0)-(e.alt||0)});while(EN.net.length&&now-EN.net[0].t>40*60e3)EN.net.shift();
   if(fresh('rpm')&&D.rpm>=300)k.mot+=dt;if(fresh('sog')&&D.sog>1.5)k.nav+=dt;
   if(now-EN.saved>60000){EN.saved=now;try{await db.put('energy',EN.rec)}catch(x){}}
 }
@@ -4047,25 +4051,74 @@ function enInsights(days,tot){
 async function enAnalyse(){
   const p=statPeriod(EN.mode,0,EN),days0=await enLoad(p.a===-Infinity?0:p.a,p.b===Infinity?NOW():p.b),ser=enSeries(days0,p,EN.mode);
   const dd=days0.map(r=>({t:r.day,s:enSum(r.h)}));
+  EN.last_=({p,ser,dd});
   const tot=enSum(days0.flatMap(r=>r.h)),fmt=v=>Math.abs(v)>=1000?(v/1000).toFixed(2)+' kWh':Math.round(v)+' Wh';
   const modes=[['day','Jour'],['week','Semaine'],['month','Mois'],['quarter','Trimestre'],['year','Année'],['season','Saison']];
   const hrs=tot.dt/3600,prod=tot.sol+tot.alt+tot.shore,fu=tot.fu0!=null&&tot.fu1!=null?tot.fu0-tot.fu1:null,wa=tot.wa0!=null&&tot.wa1!=null?tot.wa0-tot.wa1:null;
   const kpi=(l,v,c)=>`<div><span class="mut">${l}</span><b style="${c?'color:'+c:''}">${v}</b></div>`;
   const ins=enInsights(dd,tot);
+  let cmpHtml='';
+  if(EN.cmp&&EN.cmp!=='off'&&EN.mode!=='total'){
+    const offs={day:[-1,-365],week:[-1,-52],month:[-1,-12],quarter:[-1,-4],year:[-1,-1],season:[-1,-1]}[EN.mode],off=EN.cmp==='year'?offs[1]:offs[0],p2=statPeriod(EN.mode,off,EN),d2=await enLoad(p2.a,p2.b),ser2=enSeries(d2,p2,EN.mode),t2=enSum(d2.flatMap(r=>r.h)),pr2=t2.sol+t2.alt+t2.shore;
+    const row=(l,a,b,f,good)=>{const d=b?((a-b)/Math.abs(b)*100):null;return`<tr><td>${l}</td><td>${f(a)}</td><td>${f(b)}</td><td style="color:${d==null||Math.abs(d)<1?'var(--mut)':(d>0)===good?'var(--ok)':'var(--bad)'}">${d==null?'–':(d>0?'+':'')+Math.round(d)+' %'}</td></tr>`};
+    const cum=sr=>{let c=0;return sr.map(x=>c+=x.s.sol+x.s.alt+x.s.shore-x.s.cons)},c1=cum(ser),c2=cum(ser2),n=Math.max(c1.length,c2.length,2),all=[...c1,...c2,0],mn=Math.min(...all),mx=Math.max(...all),rg=(mx-mn)||1,X=i=>20+i/(n-1)*310,Y=v=>120-(v-mn)/rg*105;
+    const ln=(c,col,dash)=>c.length>1?`<polyline points="${c.map((v,i)=>X(i).toFixed(1)+','+Y(v).toFixed(1)).join(' ')}" fill="none" stroke="${col}" stroke-width="2.5" ${dash?'stroke-dasharray="5 4"':''} stroke-linejoin="round"/>`:'';
+    cmpHtml=`<div class="card"><b>Comparaison avec ${esc(p2.label)}</b><div style="overflow:auto"><table style="width:100%;font-size:13px;margin-top:6px"><tr><th></th><th>${esc(p.label)}</th><th>${esc(p2.label)}</th><th>Écart</th></tr>
+     ${row('Production',prod,pr2,fmt,true)}${row('Consommation',tot.cons,t2.cons,fmt,false)}${row('Solaire',tot.sol,t2.sol,fmt,true)}${row('Moteur (h)',tot.mot/3600,t2.mot/3600,v=>v.toFixed(1),false)}${row('Navigation (h)',tot.nav/3600,t2.nav/3600,v=>v.toFixed(1),true)}${t2.socMin!=null&&tot.socMin!=null?row('Charge mini (%)',tot.socMin,t2.socMin,v=>Math.round(v),true):''}</table></div>
+     <svg viewBox="0 0 340 134" width="100%" style="margin-top:8px"><line x1="20" y1="${Y(0).toFixed(1)}" x2="330" y2="${Y(0).toFixed(1)}" stroke="var(--line)"/>${ln(c2,'var(--mut)',1)}${ln(c1,'#F2994A')}</svg>
+     <div class="mut" style="font-size:12px">Bilan cumulé (production − consommation) : <span style="color:#F2994A">― ${esc(p.label)}</span> · <span>- - ${esc(p2.label)}</span></div></div>`}
   return `<div class="card"><div style="display:flex;gap:6px;flex-wrap:wrap">${modes.map(([k,l])=>`<button type="button" data-em="${k}" class="spb${EN.mode===k?' on':''}">${l}</button>`).join('')}</div>
    <div class="spn" style="margin-top:12px"><button type="button" data-en="-1" aria-label="Période précédente">‹</button><div style="text-align:center;flex:1"><b style="font:600 20px var(--num);text-transform:capitalize">${esc(p.label)}</b><div class="mut" style="font-size:13px">${esc(p.sub)}</div></div><button type="button" data-en="1" aria-label="Période suivante">›</button></div>
-   <div style="text-align:center;margin-top:8px"><button type="button" data-ec="1" class="spb">Période en cours</button></div>${cfg.src==='demo'?'<div class="mut" style="font-size:12px;text-align:center;margin-top:6px">Données de démonstration (non enregistrées).</div>':''}</div>
+   <div style="text-align:center;margin-top:8px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap"><button type="button" data-ec="1" class="spb">Période en cours</button><button type="button" data-ex="csv" class="spb">CSV</button><button type="button" data-ex="pdf" class="spb">PDF</button></div><div style="display:flex;gap:6px;justify-content:center;align-items:center;margin-top:8px;flex-wrap:wrap"><span class="mut" style="font-size:13px">Comparer :</span>${[['off','Non'],['prev','Précédente'],['year','Un an avant']].map(([k,l])=>`<button type="button" data-cmp="${k}" class="spb${(EN.cmp||'off')===k?' on':''}">${l}</button>`).join('')}</div>${cfg.src==='demo'?'<div class="mut" style="font-size:12px;text-align:center;margin-top:6px">Données de démonstration (non enregistrées).</div>':''}</div>
   ${hrs<.05?`<div class="card mut">Pas encore de mesures d'énergie sur cette période. L'historique s'enregistre tout seul dès que l'appli reçoit des données de batterie, de solaire ou de consommation (Cerbo GX, Signal K ou NMEA 2000), même sans trajet en cours.</div>`:`
   <div class="card"><div class="stats">${kpi('Production',fmt(prod),'#F2994A')}${kpi('Consommation',fmt(tot.cons),'#B07CF2')}${kpi('Bilan',(prod-tot.cons>=0?'+':'−')+fmt(Math.abs(prod-tot.cons)),prod>=tot.cons?'var(--ok)':'var(--bad)')}${kpi('Solaire',fmt(tot.sol),'#F2994A')}${kpi('Alternateur · quai',fmt(tot.alt)+' · '+fmt(tot.shore))}
    ${kpi('Charge mini',tot.socMin!=null?Math.round(tot.socMin)+' %':'--')}${kpi('Charge moyenne',tot.socN?Math.round(tot.socS/tot.socN)+' %':'--')}${kpi('En navigation',(tot.nav/3600).toFixed(1)+' h')}${kpi('Au mouillage',Math.max(0,hrs-tot.nav/3600).toFixed(0)+' h')}${kpi('Moteur',(tot.mot/3600).toFixed(1)+' h')}
    ${fu!=null?kpi('Gasoil utilisé',(fu>0?Math.round(fu):0)+' pts'+(cfg.fuelL?' ≈ '+Math.round(cfg.fuelL*Math.max(0,fu)/100)+' L':'')):''}${wa!=null?kpi('Eau douce utilisée',(wa>0?Math.round(wa):0)+' pts'+(cfg.waterL?' ≈ '+Math.round(cfg.waterL*Math.max(0,wa)/100)+' L':'')):''}</div></div>
   <div class="card"><b>Production et consommation</b>${enBarChart(ser,EN.mode)}</div>
+  ${cmpHtml}
   ${ins.length?`<div class="card"><b>Ce que disent tes données</b><ul style="margin:8px 0 0 18px;padding:0;line-height:1.5">${ins.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}
   ${EN.mode!=='day'&&dd.length>=5?`<div class="card"><b>Soleil contre ciel couvert</b>${enScatter(dd)}</div>`:''}
   ${EN.mode!=='day'&&dd.length?`<div class="card"><b>Jour par jour</b><div class="scroll"><table style="width:100%;font-size:12px"><tr><th>Jour</th><th>Prod.</th><th>Conso</th><th>Bilan</th><th>Ciel</th><th>Nav.</th><th>Moteur</th><th>Mini</th></tr>${dd.slice(-60).reverse().map(d=>{const pr=d.s.sol+d.s.alt+d.s.shore,bl=pr-d.s.cons;return`<tr><td>${new Date(d.t).toLocaleDateString(LOC(),{day:'2-digit',month:'2-digit'})}</td><td>${Math.round(pr)}</td><td>${Math.round(d.s.cons)}</td><td style="color:${bl>=0?'var(--ok)':'var(--bad)'}">${bl>=0?'+':''}${Math.round(bl)}</td><td>${d.s.clN?Math.round(d.s.cl/d.s.clN*100)+'%':'–'}</td><td>${(d.s.nav/3600).toFixed(1)} h</td><td>${(d.s.mot/3600).toFixed(1)} h</td><td>${d.s.socMin!=null?Math.round(d.s.socMin)+'%':'–'}</td></tr>`}).join('')}</table></div><div class="mut" style="font-size:11px">Wh par jour. Ciel : nébulosité moyenne (prévision Windy ou démo).</div></div>`:''}`}`;
 }
+
+function enRows(){
+  const L=EN.last_;if(!L)return[];
+  return L.ser.map(x=>{const s=x.s;return{l:EN.mode==='day'?x.l+' h':(EN.mode==='year'||EN.mode==='total')?x.l:new Date(x.t).toLocaleDateString(LOC(),{day:'2-digit',month:'2-digit',year:'2-digit'}),prod:s.sol+s.alt+s.shore,sol:s.sol,alt:s.alt,shore:s.shore,cons:s.cons,soc:s.socMin,nav:s.nav/3600,mot:s.mot/3600,cl:s.clN?s.cl/s.clN*100:null}})
+}
+function enExport(kind){
+  const L=EN.last_;if(!L)return;const rows=enRows(),name='energie-'+(L.p.label||'periode').replace(/[^\wÀ-ÿ-]+/g,'_');
+  if(kind==='csv'){
+    const h='periode;production_wh;solaire_wh;alternateur_wh;quai_wh;consommation_wh;bilan_wh;charge_mini_pct;navigation_h;moteur_h;nebulosite_pct';
+    download(name+'.csv',h+'\n'+rows.map(r=>[r.l,r.prod,r.sol,r.alt,r.shore,r.cons,r.prod-r.cons,r.soc,r.nav,r.mot,r.cl].map(v=>v==null?'':(typeof v==='number'?+v.toFixed(2):v)).join(';')).join('\n'),'text/csv');return}
+  downloadBin(name+'.pdf',enPdf(L.p,rows),'application/pdf');
+}
+function enPdf(p,rows){
+  const PW=842,PH=595,M=30,pages=[];let cs,y;const newPage=()=>{cs=[];pages.push(cs);y=PH-M};
+  const text=(x,yy,str,sz,bold,col)=>{const b=pdfBytes(str).map(c=>c===40||c===41||c===92?'\\'+String.fromCharCode(c):c<128?String.fromCharCode(c):'\\'+c.toString(8).padStart(3,'0')).join('');cs.push(`BT ${col||'0 g'} /${bold?'F2':'F1'} ${sz} Tf ${x.toFixed(1)} ${yy.toFixed(1)} Td (${b}) Tj ET`)};
+  const rect=(x,yy,w,h,col)=>cs.push(`${col} rg ${x.toFixed(1)} ${yy.toFixed(1)} ${w.toFixed(1)} ${h.toFixed(1)} re f 0 g`);
+  newPage();text(M,y-16,'Energie du bord - '+p.label,18,true);y-=26;if(p.sub){text(M,y-9,p.sub,9,false,'0.3 g');y-=14}
+  const tp=rows.reduce((a,r)=>a+r.prod,0),tc=rows.reduce((a,r)=>a+r.cons,0),f=v=>Math.abs(v)>=1000?(v/1000).toFixed(2)+' kWh':Math.round(v)+' Wh';
+  text(M,y-9,`Production ${f(tp)}   Consommation ${f(tc)}   Bilan ${tp-tc>=0?'+':'-'}${f(Math.abs(tp-tc))}   Moteur ${rows.reduce((a,r)=>a+r.mot,0).toFixed(1)} h   Navigation ${rows.reduce((a,r)=>a+r.nav,0).toFixed(1)} h`,10,true);y-=22;
+  // histogramme production / consommation
+  const CH=130,mx=Math.max(1,...rows.map(r=>Math.max(r.prod,r.cons))),bw=(PW-2*M)/Math.max(1,rows.length),base=y-CH;
+  rows.forEach((r,i)=>{const w=Math.max(1,bw*.38),x=M+i*bw+bw*.08;rect(x,base,w,r.prod/mx*(CH-14),'0.95 0.6 0.16');rect(x+w+1,base,w,r.cons/mx*(CH-14),'0.69 0.49 0.95');if(rows.length<=40||i%Math.ceil(rows.length/40)===0)text(x,base-9,String(r.l).slice(0,6),6,false,'0.4 g')});
+  rect(M,y-CH-22,8,8,'0.95 0.6 0.16');text(M+12,y-CH-21,'Production',8,false);rect(M+70,y-CH-22,8,8,'0.69 0.49 0.95');text(M+82,y-CH-21,'Consommation',8,false);y-=CH+34;
+  const cols=[['Periode',70],['Prod. Wh',60],['Solaire',55],['Alternat.',55],['Quai',50],['Conso Wh',60],['Bilan',55],['Charge mini',60],['Nav. h',45],['Moteur h',50],['Ciel %',45]],BOT=M+16;
+  const head=()=>{rect(M,y-13,PW-2*M,14,'0.86 0.91 0.96');let x=M;cols.forEach(c=>{text(x+3,y-9.5,c[0],7.5,true);x+=c[1]});y-=14};head();
+  rows.forEach(r=>{if(y-12<BOT){newPage();head()}const v=[r.l,r.prod,r.sol,r.alt,r.shore,r.cons,r.prod-r.cons,r.soc,r.nav,r.mot,r.cl];let x=M;v.forEach((c,i)=>{text(x+3,y-9,c==null?'':(typeof c==='number'?(i>=8?c.toFixed(1):Math.round(c)+''):String(c)),7.5,false,i===6&&c<0?'0.8 0 0 rg':'0 g');x+=cols[i][1]});y-=11});
+  const objs=[];const add=q=>{objs.push(q);return objs.length};add('<< /Type /Catalog /Pages 2 0 R >>');add(null);
+  const f1o=add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>'),f2o=add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>'),kids=[];
+  pages.forEach((c,i)=>{c.push(`BT 0.5 g /F1 7.5 Tf ${PW-M-40} ${M-4} Td (${i+1} / ${pages.length}) Tj ET`);const body=c.join('\n'),cid=add(`<< /Length ${body.length} >>\nstream\n${body}\nendstream`),pid=add(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PW} ${PH}] /Resources << /Font << /F1 ${f1o} 0 R /F2 ${f2o} 0 R >> >> /Contents ${cid} 0 R >>`);kids.push(pid+' 0 R')});
+  objs[1]=`<< /Type /Pages /Kids [${kids.join(' ')}] /Count ${kids.length} >>`;
+  let out='%PDF-1.4\n';const offs=[];objs.forEach((o,i)=>{offs.push(out.length);out+=`${i+1} 0 obj\n${o}\nendobj\n`});
+  const xr=out.length;out+=`xref\n0 ${objs.length+1}\n0000000000 65535 f \n`+offs.map(o=>String(o).padStart(10,'0')+' 00000 n \n').join('')+`trailer\n<< /Size ${objs.length+1} /Root 1 0 R >>\nstartxref\n${xr}\n%%EOF`;
+  const u=new Uint8Array(out.length);for(let i=0;i<out.length;i++)u[i]=out.charCodeAt(i)&255;return u;
+}
 /* ----- planificateur de passage ----- */
+function enCloudAt(ts){const r=WXS.raw;if(!r||!r.ts)return null;let k=0,bd=1e18;r.ts.forEach((x,i)=>{const d=Math.abs(x-ts);if(d<bd){bd=d;k=i}});if(bd>6*3600e3)return null;const g=a=>{const v=r[a+'-surface'];return v&&v[k]!=null?v[k]/100:0};return Math.round((1-(1-g('lclouds'))*(1-g('mclouds'))*(1-g('hclouds')))*100)}
+async function enFetchFc(){if(WXS.busy||!cfg.kPoint||!fresh('lat'))return;if(WXS.raw&&Date.now()-WXS.at<30*60e3)return;WXS.busy=true;WXS.at=Date.now();try{WXS.raw=await windyPoint(D.lat,D.lon,'gfs',['lclouds','mclouds','hclouds','precip','wind']);WXS.lat=D.lat;WXS.lon=D.lon;WXS.err=''}catch(e){WXS.raw=null;WXS.err=e.message}WXS.busy=false;if(EN.sub==='pas')renderEnergy()}
 async function enPassage(){
+  enFetchFc();
   const e=enNow(),P=EN.P||(EN.P=Object.assign({h:24,start:new Date(NOW()).getHours(),mot:0,cl:null,cons:null,soc:null},cfg.enP||{}));
   const rs=await enLoad(NOW()-60*864e5,NOW()),dd=rs.map(r=>({t:r.day,s:enSum(r.h)})).filter(d=>d.s.dt>3600*6);
   const navD=dd.filter(d=>d.s.nav>d.s.dt*.3),hrsN=navD.reduce((a,d)=>a+d.s.dt/3600,0),navW=hrsN>10?navD.reduce((a,d)=>a+d.s.cons,0)/hrsN:null;
@@ -4076,8 +4129,11 @@ async function enPassage(){
   else{daily=(cfg.solWc||400)*3.2*(1-.8*cl/100);src=cfg.solWc?'estimation à partir de ta puissance solaire (Wc)':'estimation prudente (renseigne ta puissance solaire dans les Réglages)'}
   const altW=(()=>{const m=dd.reduce((a,d)=>a+d.s.mot,0)/3600,al=dd.reduce((a,d)=>a+d.s.alt,0);return m>2&&al>0?al/m:350})(),capWh=(cfg.batAh||200)*12.8,res=cfg.reserve!=null?cfg.reserve:30;
   const sh=Array.from({length:24},(_,h)=>Math.max(0,Math.sin(Math.PI*(h-6)/14))),ss=sh.reduce((a,b)=>a+b,0)||1;
+  const fcOk=!!(WXS.raw&&WXS.raw.ts),useFc=fcOk&&P.fc!==false;
+  const dailyAt=c=>{if(pts.length>=6){const n=pts.length,sx=pts.reduce((a,p)=>a+p[0],0),sy=pts.reduce((a,p)=>a+p[1],0),sxx=pts.reduce((a,p)=>a+p[0]*p[0],0),sxy=pts.reduce((a,p)=>a+p[0]*p[1],0),b=(n*sxy-sx*sy)/(n*sxx-sx*sx||1),a=(sy-b*sx)/n;return Math.max(0,a+b*c)}return(cfg.solWc||400)*3.2*(1-.8*c/100)};
+  let t0=enMid(NOW())+P.start*3600e3;if(t0<NOW()-1800e3)t0+=864e5;let fcSum=0;
   const tr=[soc0];let s=soc0,min=soc0,cum=0;
-  for(let i=0;i<P.h;i++){const hh=(P.start+i)%24,sol=daily*sh[hh]/ss,al=i<P.mot?altW:0;s+=(sol+al-cons)/capWh*100;s=Math.min(100,s);min=Math.min(min,s);tr.push(s)}
+  for(let i=0;i<P.h;i++){const hh=(P.start+i)%24,c=useFc?enCloudAt(t0+i*3600e3):null,cc=c!=null?c:cl;if(c!=null)fcSum+=c;const sol=dailyAt(cc)*sh[hh]/ss,al=i<P.mot?altW:0;s+=(sol+al-cons)/capWh*100;s=Math.min(100,s);min=Math.min(min,s);tr.push(s)}
   const end=tr[tr.length-1],miss=Math.max(0,(res-min)/100*capWh),extra=miss>0?Math.ceil(miss/altW*10)/10:0,ok=min>=res;
   const W=340,H=150,X=i=>20+i/(tr.length-1||1)*310,Y=v=>H-8-Math.max(0,Math.min(100,v))/100*(H-24);
   const chart=`<svg viewBox="0 0 340 ${H+14}" width="100%"><rect x="20" y="${Y(res)}" width="310" height="${H-8-Y(res)}" fill="var(--bad)" fill-opacity=".08"/><line x1="20" y1="${Y(res)}" x2="330" y2="${Y(res)}" stroke="var(--bad)" stroke-dasharray="5 4"/><text x="326" y="${Y(res)-4}" text-anchor="end" style="font:9px system-ui;fill:var(--bad)">réserve ${res} %</text><polyline points="${tr.map((v,i)=>X(i).toFixed(1)+','+Y(v).toFixed(1)).join(' ')}" fill="none" stroke="${ok?'#2FB67C':'#E5484D'}" stroke-width="3" stroke-linejoin="round" style="filter:drop-shadow(0 0 3px ${ok?'#2FB67C':'#E5484D'})"/><text x="20" y="${H+8}" style="font:9px system-ui;fill:var(--mut)">départ ${String(P.start).padStart(2,'0')} h</text><text x="330" y="${H+8}" text-anchor="end" style="font:9px system-ui;fill:var(--mut)">+${P.h} h</text><text x="2" y="${Y(100)+3}" style="font:9px system-ui;fill:var(--mut)">100</text><text x="2" y="${Y(0)+3}" style="font:9px system-ui;fill:var(--mut)">0</text></svg>`;
@@ -4086,7 +4142,9 @@ async function enPassage(){
    <div style="display:flex;gap:10px;flex-wrap:wrap">${inp('h','Durée',P.h,'heures')}${inp('start','Heure de départ',P.start,'0 à 23 h')}${inp('soc','Charge au départ',soc0,'%')}${inp('cons','Consommation moyenne',cons,navW?'W (ton historique en navigation : '+Math.round(navW)+' W)':'W')}${inp('cl','Nébulosité prévue',cl,cl0!=null?'% (prévision : '+cl0+' %)':'% de ciel couvert')}${inp('mot','Moteur prévu',P.mot,'heures (recharge ≈ '+Math.round(altW)+' W)')}</div></div>
   <div class="card" style="border-color:${ok?'var(--ok)':'var(--bad)'}"><b style="font-size:18px;color:${ok?'var(--ok)':'var(--bad)'}">${ok?'✔ Passage tenable':'✖ Réserve non tenue'}</b>
    <div style="margin-top:6px;line-height:1.5">Arrivée avec <b>${Math.round(Math.max(0,end))} %</b> · point bas <b>${Math.round(Math.max(0,min))} %</b> (réserve ${res} %).${min<=0?' <b>Batteries vides avant l’arrivée.</b>':''}${ok?'':` Il manque environ <b>${Math.round(miss)} Wh</b> : prévois <b>${extra.toFixed(1)} h de moteur</b> en plus, ou réduis la consommation d'environ <b>${Math.round(miss/Math.max(1,P.h))} W</b>.`}</div>
-   ${chart}<div class="mut" style="font-size:12px">Production solaire attendue : ${Math.round(daily)} Wh par jour (${src}). Batteries : ${cfg.batAh||200} Ah (réglable dans les Réglages).</div></div>`;
+   ${chart}<div class="mut" style="font-size:12px">Production solaire attendue : ${Math.round(daily)} Wh par jour (${src}).${useFc?` Prévision Windy utilisée heure par heure (nébulosité moyenne ${Math.round(fcSum/Math.max(1,P.h))} %).`:''} Batteries : ${cfg.batAh||200} Ah (réglable dans les Réglages).</div>
+   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><label style="display:flex;gap:6px;align-items:center;color:var(--tx);font-size:13px"><input type="checkbox" id="pa_fc" style="width:auto" ${useFc?'checked':''} ${fcOk?'':'disabled'}> Utiliser la prévision Windy${fcOk?'':' (indisponible : clé Windy Point Forecast et position GPS requises)'}</label></div>
+   <div style="margin-top:10px">${cfg.enWatch&&cfg.enWatch.t0+cfg.enWatch.h*3600e3>NOW()?`<button type="button" class="b sec" id="pa_unw">Arrêter la surveillance (reste ${((cfg.enWatch.t0+cfg.enWatch.h*3600e3-NOW())/3600e3).toFixed(1)} h)</button>`:`<button type="button" class="b" id="pa_watch">Surveiller ce passage</button><div class="mut" style="font-size:12px;margin-top:4px">Pendant le passage, une alarme te prévient si, au rythme réel, la charge doit passer sous ta réserve avant l'arrivée.</div>`}</div></div>`;
 }
 async function renderEnergy(){
   const box=$('#enBox');if(!box)return;
@@ -4100,8 +4158,13 @@ async function renderEnergy(){
   $$('#enBox [data-es]').forEach(b=>b.onclick=()=>{EN.sub=b.dataset.es;renderEnergy()});
   $$('#enBox [data-em]').forEach(b=>b.onclick=()=>{EN.mode=b.dataset.em;EN.anchor=null;EN.sy=null;renderEnergy()});
   $$('#enBox [data-en]').forEach(b=>b.onclick=()=>{const d=+b.dataset.en,m=EN.mode;if(m==='season')EN.sy=seasonEff(EN)+d;else{const A=new Date(EN.anchor||NOW());if(m==='month')A.setMonth(A.getMonth()+d);else if(m==='quarter')A.setMonth(A.getMonth()+3*d);else if(m==='year')A.setFullYear(A.getFullYear()+d);else A.setDate(A.getDate()+d*(m==='week'?7:1));EN.anchor=+A}renderEnergy()});
+  $$('#enBox [data-cmp]').forEach(b=>b.onclick=()=>{EN.cmp=b.dataset.cmp;renderEnergy()});
+  $$('#enBox [data-ex]').forEach(b=>b.onclick=()=>enExport(b.dataset.ex));
   $$('#enBox [data-ec]').forEach(b=>b.onclick=()=>{EN.anchor=null;EN.sy=null;renderEnergy()});
-  $$('#enBox input[id^=pa_]').forEach(i=>i.onchange=()=>{const P=EN.P;P[i.id.slice(3)]=+i.value;cfg.enP={h:P.h,start:P.start,mot:P.mot,cl:P.cl,cons:P.cons,soc:P.soc};saveCfg();renderEnergy()});
+  const wt=$('#pa_watch');if(wt)wt.onclick=()=>{cfg.enWatch={t0:NOW(),h:EN.P.h};saveCfg();renderEnergy()};
+  const uw=$('#pa_unw');if(uw)uw.onclick=()=>{cfg.enWatch=null;saveCfg();delete AL.act.enwatch;renderEnergy()};
+  const fcb=$('#pa_fc');if(fcb)fcb.onchange=()=>{EN.P.fc=fcb.checked;cfg.enP={...(cfg.enP||{}),fc:fcb.checked};saveCfg();renderEnergy()};
+  $$('#enBox input[id^=pa_]:not(#pa_fc)').forEach(i=>i.onchange=()=>{const P=EN.P;P[i.id.slice(3)]=+i.value;cfg.enP={h:P.h,start:P.start,mot:P.mot,cl:P.cl,cons:P.cons,soc:P.soc,fc:P.fc};saveCfg();renderEnergy()});
   if(EN.sub==='live')enLive();
 }
 function enLive(){const e=enNow();enSchemaUpd(e);const g=$('#enGrid');if(g)g.innerHTML=enGauges(e)}
