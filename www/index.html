@@ -3383,9 +3383,26 @@ function fxAt(f,x,y){
   }
   return sw>0.5?{u:su/sw,v:sv/sw,m:sm/sw}:null;
 }
+/* position prévue du bateau à l'heure affichée, sur le routage sélectionné (bateau + heure) */
+function fxBoatPos(tt){
+  const R=plan?.routes?.[plan.sel||0],r=R?.route;
+  if(!r||r.length<2||!(tt>=r[0].t&&tt<=r[r.length-1].t))return null;
+  let k=1;while(k<r.length-1&&r[k].t<tt)k++;
+  const a=r[k-1],b=r[k],w=b.t>a.t?(tt-a.t)/(b.t-a.t):0;
+  return{la:a.la+(b.la-a.la)*w,lo:a.lo+(b.lo-a.lo)*w,hdg:(Math.atan2((b.lo-a.lo)*Math.cos(a.la*D2R),b.la-a.la)/D2R+360)%360,col:R.color,t:tt,n:r.length}
+}
+function fxBoat(g,ox,oy,z){
+  if(!LAST||LAST.zone)return;const p=fxBoatPos(LAST.t0+FX.t*3600000);if(!p)return;
+  const x=wx(p.lo,z)-ox,y=wy(p.la,z)-oy;
+  g.save();g.translate(x,y);
+  g.beginPath();g.arc(0,0,17,0,7);g.fillStyle='rgba(255,255,255,.35)';g.fill();
+  g.rotate(p.hdg*D2R);g.fillStyle='#fff';g.strokeStyle=p.col||'#e8710a';g.lineWidth=3;g.beginPath();g.moveTo(0,-13);g.lineTo(8,10);g.lineTo(0,5);g.lineTo(-8,10);g.closePath();g.fill();g.stroke();g.restore();
+  g.font='bold 11px system-ui';g.textAlign='center';g.shadowColor='#000';g.shadowBlur=4;g.fillStyle='#fff';g.fillText('+'+FX.t+' h · '+fmtDT(p.t).slice(0,16),x,y-24);g.shadowBlur=0;g.textAlign='left';
+}
 function fxBase(g,W,H,ox,oy,z){   // flèches chiffrées + légende + position prévue (dessinées avec la carte)
-  if(FX.layer==='none'||!LAST)return;
-  const f=fxEnsure(W,H,ox,oy,z);if(!f)return;
+  if(!LAST)return;
+  if(FX.layer==='none'){fxBoat(g,ox,oy,z);return}
+  const f=fxEnsure(W,H,ox,oy,z);if(!f){fxBoat(g,ox,oy,z);return}
   const L=FX.layer,dec=L==='wind'?0:1;
   g.font='bold 12px system-ui';g.textAlign='center';
   for(let j=0;j<=f.ny;j++)for(let i=0;i<=f.nx;i++){
@@ -3400,13 +3417,7 @@ function fxBase(g,W,H,ox,oy,z){   // flèches chiffrées + légende + position p
   g.fillStyle='rgba(10,22,38,.75)';g.fillRect(lx-6,ly-16,122,40);g.fillStyle=gr;g.fillRect(lx,ly,110,8);
   g.fillStyle='#fff';g.font='11px system-ui';g.fillText(`${FXNAME[L]} ${lo}–${hi}+ ${FXUNIT[L]}`,lx,ly-4);
   g.fillText(lo,lx,ly+20);g.textAlign='right';g.fillText(hi,lx+110,ly+20);g.textAlign='left';
-  // position prévue du bateau à l'heure affichée, sur le routage sélectionné
-  const r=plan?.routes?.[plan.sel||0]?.route,tt=LAST.t0+FX.t*3600000;
-  if(r&&!LAST.zone&&tt>=r[0].t&&tt<=r[r.length-1].t){
-    let k=1;while(k<r.length-1&&r[k].t<tt)k++;
-    const a=r[k-1],b=r[k],w=b.t>a.t?(tt-a.t)/(b.t-a.t):0,la=a.la+(b.la-a.la)*w,lo2=a.lo+(b.lo-a.lo)*w;
-    g.fillStyle='#fff';g.strokeStyle=plan.routes[plan.sel||0].color;g.lineWidth=4;g.beginPath();g.arc(wx(lo2,z)-ox,wy(la,z)-oy,6,0,7);g.fill();g.stroke();
-  }
+  fxBoat(g,ox,oy,z);
 }
 function fxLoop(){
   const c=$('#mapFx'),map=$('#map');
@@ -5013,7 +5024,8 @@ async function showWindy(){
         if(mode==='A')$('#rA').value=v;else if(mode==='B')$('#rB').value=v;else $('#rV').value=($('#rV').value?$('#rV').value+'\n':'')+v;
         wpFromFields();
       });
-      applyWindyLayers();drawPlanOnWindy();
+      wFillOverlays();applyWindyLayers();drawPlanOnWindy();
+      try{wm.store.on('timestamp',ts=>wBoatUpdate(ts));wm.store.on('overlay',()=>setTimeout(wFillOverlays,500))}catch(e){}
       setTimeout(()=>{try{wm.map.invalidateSize()}catch(e){}},300);
     });
   }catch(e){$('#windy').textContent='Carte Windy indisponible : '+e.message}
@@ -5026,23 +5038,52 @@ function wLegend(){
   $('#wLo').textContent=l[1];$('#wUn').textContent=l[2];$('#wHi').textContent=l[3];
   $('#wSrc').textContent='Échelle indicative (l’échelle exacte est celle de Windy). Données : Windy.com · modèle '+(WSRC[$('#wPr').value]||$('#wPr').value)+'.';
 }
+const WPNAME={ecmwf:'ECMWF',gfs:'GFS',icon:'ICON',iconEu:'ICON-EU',iconD2:'ICON-D2',ecmwfWaves:'ECMWF vagues',gfsWave:'GFS vagues',nems:'NEMS',namConus:'NAM USA',namHawaii:'NAM Hawaï',namAlaska:'NAM Alaska',hrrrConus:'HRRR USA',hrrrAlaska:'HRRR Alaska',arome:'AROME',aromeFrance:'AROME France',aromeAntilles:'AROME Antilles',ukv:'UKV (Royaume-Uni)',canHrdps:'HRDPS Canada',canRdps:'RDPS Canada',cams:'CAMS',camsEu:'CAMS Europe',bomAccess:'ACCESS (Australie)',jmaMsm:'MSM (Japon)',cmems:'CMEMS (courants)',cmemsCurrents:'CMEMS courants',gfsWaves:'GFS vagues',ecmwfAifs:'ECMWF AIFS',ecmwfWam:'ECMWF WAM',gfsWaveGlobal:'GFS vagues'};
+const WONAME={wind:'Vent',gust:'Rafales',waves:'Vagues',swell1:'Houle',swell2:'Houle 2',swell3:'Houle 3',wwaves:'Mer du vent',currents:'Courants',pressure:'Pression',rain:'Pluie',rainAccu:'Pluie cumulée',snowAccu:'Neige cumulée',temp:'Température',clouds:'Nuages',lclouds:'Nuages bas',mclouds:'Nuages moyens',hclouds:'Nuages hauts',cape:'CAPE (orages)',cloudtop:'Sommets nuageux',visibility:'Visibilité',fog:'Brouillard',waterTemp:'Eau (température)',sst:'Eau (température)',dewpoint:'Point de rosée',rh:'Humidité',cbase:'Base nuages',capAlerts:'Alertes météo',deg0:'Isotherme 0 °C',thunder:'Orages',wetbulb:'Température humide',solarpower:'Ensoleillement',uvindex:'UV',sealevel:'Niveau de la mer'};
+let wApplyT=0;
+function wFill(sel,list,names,cur){
+  list=list.filter(k=>typeof k==='string');if(!list.length)return;
+  sel.innerHTML=list.map(k=>'<option value="'+k+'">'+(names[k]||k)+'</option>').join('');
+  sel.value=list.includes(cur)?cur:list[0];
+}
 function applyWindyLayers(ev){
   if(!wm)return;
-  const ovS=$('#wOv'),prS=$('#wPr'),st=wm.store;
+  const ovS=$('#wOv'),prS=$('#wPr'),st=wm.store,byOv=ev&&ev.target===ovS;
   try{
-    st.set('overlay',ovS.value);
-    // produits réellement disponibles pour cette couche (ex. vagues : pas de GFS/ICON classiques)
-    let ok=null;try{ok=st.getAllowed('product')}catch(e){}
-    if(Array.isArray(ok)&&ok.length){
-      const want=prS.value,names={ecmwf:'ECMWF',gfs:'GFS',icon:'ICON',iconEu:'ICON-EU'};
-      if(ev&&ev.target===ovS||!ok.includes(want)){
-        prS.innerHTML=ok.map(k=>'<option value="'+k+'">'+(names[k]||k)+'</option>').join('');
-        prS.value=ok.includes(want)?want:(st.get('product')||ok[0]);
-      }
+    if(byOv){
+      st.set('overlay',ovS.value);
+      // Windy met à jour les produits (modèles) disponibles pour cette couche après un court délai
+      clearTimeout(wApplyT);wApplyT=setTimeout(()=>{
+        try{
+          let ok=st.getAllowed('product');
+          if(Array.isArray(ok)&&ok.length){
+            wFill(prS,ok,WPNAME,st.get('product'));
+            // le produit courant est valide pour la nouvelle couche ; sinon on garde celui que Windy a choisi
+            if(ok.includes(st.get('product')))prS.value=st.get('product');else st.set('product',prS.value);
+          }
+        }catch(e){console.warn('Windy',e)}
+        wLegend();
+      },500);
+    }else{
+      st.set('product',prS.value);
     }
-    if(!ok||ok.includes(prS.value))st.set('product',prS.value);
     wLegend();setTimeout(()=>{try{wm.map.invalidateSize()}catch(e){}},50);
   }catch(e){console.warn('Windy',e);$('#rStat').textContent='Windy : '+e.message}
+}
+function wFillOverlays(){
+  try{const ok=wm.store.getAllowed('overlay'),ovS=$('#wOv');if(Array.isArray(ok)&&ok.length>3)wFill(ovS,ok,WONAME,ovS.value)}catch(e){}
+  try{const ok=wm.store.getAllowed('product');if(Array.isArray(ok)&&ok.length)wFill($('#wPr'),ok,WPNAME,wm.store.get('product'))}catch(e){}
+}
+/* bateau qui avance sur la carte Windy quand on lance la lecture (▶) de Windy */
+let wBoat=null;
+function wBoatUpdate(ts){
+  try{
+    if(!wm||typeof L==='undefined')return;
+    const p=fxBoatPos(ts||wm.store.get('timestamp'));
+    if(!p){if(wBoat){wm.map.removeLayer(wBoat);wBoat=null}return}
+    const ico=L.divIcon({className:'',iconSize:[60,40],iconAnchor:[30,20],html:'<div style="text-align:center;transform:translateY(-4px)"><div style="width:26px;height:26px;margin:0 auto;border-radius:50%;background:#fff;border:3px solid '+p.col+';box-shadow:0 1px 6px #0008;display:flex;align-items:center;justify-content:center"><div style="font-size:14px;transform:rotate('+Math.round(p.hdg-45)+'deg)">➤</div></div><div style="font:bold 10px system-ui;color:#fff;text-shadow:0 0 4px #000,0 0 4px #000;white-space:nowrap">'+fmtDT(p.t).slice(5,16)+'</div></div>'});
+    if(wBoat)wBoat.setLatLng([p.la,p.lo]).setIcon(ico);else wBoat=L.marker([p.la,p.lo],{icon:ico,interactive:false,zIndexOffset:1000}).addTo(wm.map);
+  }catch(e){}
 }
 function drawPlanOnWindy(){
   if(!wm||!plan?.routes||typeof L==='undefined')return;
@@ -5052,7 +5093,7 @@ function drawPlanOnWindy(){
     layers.push(L.polyline(ll,{color:r.color,weight:i===(plan.sel||0)?5:3,opacity:i===(plan.sel||0)?1:0.7}))});
   if(all.length){layers.push(L.circleMarker(all[0],{radius:7,color:'#3ddc97'}));}
   const pr=planRoute();if(pr)layers.push(L.circleMarker([pr[pr.length-1].la,pr[pr.length-1].lo],{radius:7,color:'#ff5d6c'}));
-  wLayer=L.layerGroup(layers).addTo(wm.map);
+  wLayer=L.layerGroup(layers).addTo(wm.map);wBoatUpdate();
   try{wm.map.fitBounds(all)}catch(e){}
 }
 $('#rGo').onclick=()=>computePlan(false);
