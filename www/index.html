@@ -297,6 +297,7 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
         <div class="row" style="flex-wrap:nowrap;gap:6px"><b style="color:var(--warn);flex:1;font-size:14px">DÉMO · données fictives</b>
           <button class="b sec" data-ds="1">×1</button><button class="b sec" data-ds="5">×5</button><button class="b sec" data-ds="20">×20</button></div>
       </div>
+      <div id="alBar" class="hide"></div>
       <div id="noBoat" class="card hide" style="padding:10px 12px;border-color:var(--bad);margin-bottom:8px"><b id="nbT" style="color:var(--bad);display:block"></b><span id="nbS" style="font-size:13px;color:var(--mut)"></span></div>
       <div id="dialTop" class="dtop" data-notr></div>
       <div class="stage" id="dialStage" aria-label="Cadrans : glisser à gauche ou à droite pour changer"></div>
@@ -473,6 +474,9 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
     <button class="b sec" id="gpsAsk">Autoriser / tester le GPS du téléphone</button>
     <label>Adresse Signal K (hôte:port)</label><input id="sHost" placeholder="192.168.1.50:3000">
     <label>YDWG-02 : adresse (Wi-Fi du boîtier) et port TCP</label>
+    <div style="margin:6px 0 10px"><label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="alOn" style="width:auto"> Alarmes installation (bandeau + vibration + bip)</label>
+    <div class="row" style="margin-top:6px"><div style="flex:1"><label>Batterie sous (%)</label><input id="alSoc" type="number" inputmode="numeric" placeholder="25"></div><div style="flex:1"><label>Gasoil sous (%)</label><input id="alFuel" type="number" inputmode="numeric" placeholder="15"></div></div>
+    <div class="row"><div style="flex:1"><label>Eau douce sous (%)</label><input id="alWater" type="number" inputmode="numeric" placeholder="10"></div><div style="flex:1"><label>Frigo au-dessus de (°C)</label><input id="alTemp" type="number" inputmode="decimal" placeholder="vide = pas d'alarme"></div></div></div>
     <label>Cerbo GX Victron (optionnel : batteries, solaire, Ruuvi) · adresse IP ou IP:port (9001)</label><input id="sCerbo" placeholder="192.168.4.20" autocapitalize="off" autocorrect="off"><div class="muted" style="font-size:12px;margin:2px 0 8px">Sur le Cerbo : Réglages › Services › MQTT sur LAN (activé).</div>
     <div class="row"><input id="sYdHost" placeholder="192.168.4.1" style="flex:2"><input id="sYdPort" type="number" placeholder="1456" style="flex:1"></div>
     <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="b3Sail" style="width:auto"> Vues 3D : voiles animées (réglées selon le vent, rangées au moteur ou à l'arrêt)</label>
@@ -2806,6 +2810,31 @@ function renderLive(){
 }
 
 /* ---------- Signal bateau et provenance des valeurs ---------- */
+/* ---------- Alarmes d'installation : batterie, gasoil, eau, frigo ---------- */
+const AL={act:{},snz:{},shown:{}};
+function alBeep(){try{const a=new(window.AudioContext||window.webkitAudioContext)(),o=a.createOscillator(),g=a.createGain();o.type='square';o.frequency.value=880;g.gain.value=.12;o.connect(g);g.connect(a.destination);o.start();g.gain.setValueAtTime(.12,a.currentTime+.18);g.gain.setValueAtTime(0,a.currentTime+.2);o.frequency.setValueAtTime(660,a.currentTime+.2);g.gain.setValueAtTime(.12,a.currentTime+.4);o.stop(a.currentTime+.6)}catch(e){}}
+function alCheck(){
+  const bar=$('#alBar');if(!bar)return;
+  const now=NOW(),cond=[];
+  const chk=(id,msg,bad,clr)=>{const was=AL.act[id];if(bad)AL.act[id]=true;else if(was&&clr)delete AL.act[id];
+    if(AL.act[id])cond.push({id,msg})};
+  if(cfg.alOn!==false){
+    const soc=cfg.alSoc!=null?cfg.alSoc:25,fu=cfg.alFuel!=null?cfg.alFuel:15,wa=cfg.alWater!=null?cfg.alWater:10,tm=cfg.alTemp;
+    Object.entries(D.bats).forEach(([n,b])=>{if(now-b.t>30000||b.soc==null)return;chk('soc:'+n,`Batterie ${n} : ${Math.round(b.soc)} % (seuil ${soc} %)`,b.soc<soc,b.soc>soc+3)});
+    Object.entries(D.tanks).forEach(([k,t])=>{if(now-t.t>120000)return;
+      if(t.type==='fuel')chk('fuel:'+k,`Gasoil bas : ${Math.round(t.lvl)} % (seuil ${fu} %)`,t.lvl<fu,t.lvl>fu+3);
+      else if(t.type==='freshWater')chk('wat:'+k,`Eau douce basse : ${Math.round(t.lvl)} % (seuil ${wa} %)`,t.lvl<wa,t.lvl>wa+3)});
+    if(tm!=null&&tm!==''&&!isNaN(+tm))Object.entries(D.temps).forEach(([n,x])=>{if(now-x.t>300000||x.c==null||!/frigo|fridge|koel|cong|freez|vries/i.test(n))return;chk('tmp:'+n,`${n} : ${x.c.toFixed(1)} °C (max ${tm} °C)`,x.c>+tm,x.c<+tm-1)});
+  }
+  Object.keys(AL.act).forEach(id=>{if(!cond.find(c=>c.id===id))delete AL.act[id]});
+  const vis=cond.filter(c=>!(AL.snz[c.id]>Date.now()));
+  vis.forEach(c=>{if(!AL.shown[c.id]){AL.shown[c.id]=1;hap('strong',[200,100,200,100,400]);alBeep()}});
+  Object.keys(AL.shown).forEach(id=>{if(!AL.act[id])delete AL.shown[id]});
+  bar.classList.toggle('hide',!vis.length);
+  bar.innerHTML=vis.map(c=>`<div class="card" style="padding:10px 12px;border-color:var(--bad);margin-bottom:8px;display:flex;gap:10px;align-items:center;justify-content:space-between"><b style="color:var(--bad);font-size:14px">⚠ ${esc(c.msg)}</b><button type="button" data-al="${esc(c.id)}" style="flex:none;padding:6px 10px;border-radius:99px;border:1px solid var(--line);background:transparent;color:var(--tx);font-size:12px">Silence 30 min</button></div>`).join('');
+}
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-al]');if(b){AL.snz[b.dataset.al]=Date.now()+30*60e3;delete AL.shown[b.dataset.al];alCheck()}});
+setInterval(()=>{try{alCheck()}catch(e){}},4000);
 function updNoBoat(){
   const e=$('#noBoat');if(!e)return;
   const lost=cfg.src!=='demo'&&Date.now()-APP_T0>8000&&NOW()-LASTBOAT>15000;
@@ -3991,7 +4020,7 @@ function loadSettings(){
   $('#boat').textContent=cfg.boat;
   $('#sBoat').value=cfg.boat;$('#sSrc').value=cfg.src;$('#sGps').value=cfg.gpsSrc||'auto';$('#sWind').value=cfg.windRef||'auto';try{initHist()}catch(e){}try{initSync()}catch(e){}$('#sHost').value=cfg.host;
   $('#sDemoSpd').value=String(cfg.demoSpeed||1);buildLogCfg();updDemoBar();
-  $('#sNoGo').value=cfg.noGo;$('#sYdHost').value=cfg.ydHost;$('#sYdPort').value=cfg.ydPort;$('#sAwake').checked=!!cfg.awake;$('#sCerbo').value=cfg.cerbo||'';$('#b3Sail').checked=cfg.b3sail!==false;$('#b3Wake').checked=cfg.b3wake!==false;['lnHdg','lnCog','lnLay'].forEach(k=>$('#'+k).checked=cfg[k]!==false);$('#lnMin').value=cfg.lnMin||30;$('#map3dCb').checked=M3D;$('#sAvoid').checked=cfg.avoidLand!==false;$('#sMinDepth').value=cfg.minDepth??3;$('#sHapLvl').value=String(cfg.hapLvl!=null?cfg.hapLvl:(cfg.haptic===false?0:2));$('#sCruise').value=cfg.cruise;$('#sHeel').value=cfg.heelAlert||25;$('#sKPoint').value=cfg.kPoint;$('#sKMap').value=cfg.kMap;
+  $('#sNoGo').value=cfg.noGo;$('#sYdHost').value=cfg.ydHost;$('#sYdPort').value=cfg.ydPort;$('#sAwake').checked=!!cfg.awake;$('#sCerbo').value=cfg.cerbo||'';$('#alOn').checked=cfg.alOn!==false;$('#alSoc').value=cfg.alSoc!=null?cfg.alSoc:'';$('#alFuel').value=cfg.alFuel!=null?cfg.alFuel:'';$('#alWater').value=cfg.alWater!=null?cfg.alWater:'';$('#alTemp').value=cfg.alTemp!=null?cfg.alTemp:'';$('#b3Sail').checked=cfg.b3sail!==false;$('#b3Wake').checked=cfg.b3wake!==false;['lnHdg','lnCog','lnLay'].forEach(k=>$('#'+k).checked=cfg[k]!==false);$('#lnMin').value=cfg.lnMin||30;$('#map3dCb').checked=M3D;$('#sAvoid').checked=cfg.avoidLand!==false;$('#sMinDepth').value=cfg.minDepth??3;$('#sHapLvl').value=String(cfg.hapLvl!=null?cfg.hapLvl:(cfg.haptic===false?0:2));$('#sCruise').value=cfg.cruise;$('#sHeel').value=cfg.heelAlert||25;$('#sKPoint').value=cfg.kPoint;$('#sKMap').value=cfg.kMap;
   $('#sStartKn').value=cfg.startKn;$('#sStartSec').value=cfg.startSec;$('#sStopKn').value=cfg.stopKn;$('#sStopMin').value=cfg.stopMin;$('#sInt').value=cfg.interval;
 }
 ['lnHdg','lnCog','lnLay'].forEach(k=>$('#'+k).onchange=e=>{cfg[k]=e.target.checked;saveCfg();scheduleDraw()});$('#sNoGo').onchange=e=>{cfg.noGo=Math.max(0,Math.min(80,+e.target.value||0));e.target.value=cfg.noGo;saveCfg();try{updDials()}catch(_){}};
@@ -4003,7 +4032,7 @@ $('#hapTest').onclick=()=>{const w=cfg.haptic,l=cfg.hapLvl;cfg.haptic=true;if(!c
 $('#sHapLvl').onchange=e=>{cfg.hapLvl=+e.target.value;cfg.haptic=cfg.hapLvl>0;saveCfg();if(cfg.hapLvl>0)hap('strong')};
 $('#sSave').onclick=()=>{
   cfg={...cfg,boat:$('#sBoat').value||DEF.boat,src:$('#sSrc').value,gpsSrc:$('#sGps').value,windRef:$('#sWind').value,host:$('#sHost').value.trim(),
-   ydHost:$('#sYdHost').value.trim()||DEF.ydHost,ydPort:+$('#sYdPort').value||DEF.ydPort,awake:$('#sAwake').checked,cerbo:$('#sCerbo').value.trim(),b3sail:$('#b3Sail').checked,b3wake:$('#b3Wake').checked,avoidLand:$('#sAvoid').checked,minDepth:Math.max(0,+$('#sMinDepth').value||0),
+   ydHost:$('#sYdHost').value.trim()||DEF.ydHost,ydPort:+$('#sYdPort').value||DEF.ydPort,awake:$('#sAwake').checked,cerbo:$('#sCerbo').value.trim(),alOn:$('#alOn').checked,alSoc:$('#alSoc').value===''?null:+$('#alSoc').value,alFuel:$('#alFuel').value===''?null:+$('#alFuel').value,alWater:$('#alWater').value===''?null:+$('#alWater').value,alTemp:$('#alTemp').value===''?null:+$('#alTemp').value,b3sail:$('#b3Sail').checked,b3wake:$('#b3Wake').checked,avoidLand:$('#sAvoid').checked,minDepth:Math.max(0,+$('#sMinDepth').value||0),
    cruise:+$('#sCruise').value||DEF.cruise,heelAlert:Math.max(10,Math.min(45,+$('#sHeel').value||25)),kPoint:$('#sKPoint').value.trim(),kMap:$('#sKMap').value.trim(),
    startKn:+$('#sStartKn').value||DEF.startKn,startSec:+$('#sStartSec').value||DEF.startSec,
    stopKn:+$('#sStopKn').value||DEF.stopKn,stopMin:+$('#sStopMin').value||DEF.stopMin,interval:Math.max(1,+$('#sInt').value||DEF.interval)};
