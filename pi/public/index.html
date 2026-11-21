@@ -297,6 +297,7 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
         <div class="row" style="flex-wrap:nowrap;gap:6px"><b style="color:var(--warn);flex:1;font-size:14px">DÉMO · données fictives</b>
           <button class="b sec" data-ds="1">×1</button><button class="b sec" data-ds="5">×5</button><button class="b sec" data-ds="20">×20</button></div>
       </div>
+      <div id="alBar" class="hide"></div>
       <div id="noBoat" class="card hide" style="padding:10px 12px;border-color:var(--bad);margin-bottom:8px"><b id="nbT" style="color:var(--bad);display:block"></b><span id="nbS" style="font-size:13px;color:var(--mut)"></span></div>
       <div id="dialTop" class="dtop" data-notr></div>
       <div class="stage" id="dialStage" aria-label="Cadrans : glisser à gauche ou à droite pour changer"></div>
@@ -440,6 +441,9 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
   <div id="nTabChk" class="hide"></div><div id="nTabMnt" class="hide"></div>
 </section>
 
+<section id="v-energy">
+  <div id="enBox"></div>
+</section>
 <section id="v-stats">
   <div id="statsBox"></div>
 </section>
@@ -473,7 +477,22 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
     <button class="b sec" id="gpsAsk">Autoriser / tester le GPS du téléphone</button>
     <label>Adresse Signal K (hôte:port)</label><input id="sHost" placeholder="192.168.1.50:3000">
     <label>YDWG-02 : adresse (Wi-Fi du boîtier) et port TCP</label>
+    <div style="margin:6px 0 10px"><b>Énergie du bord</b>
+    <div class="row" style="margin-top:6px"><div style="flex:1"><label>Batteries (Ah)</label><input id="enAh" type="number" inputmode="numeric" placeholder="200"></div><div style="flex:1"><label>Réserve mini (%)</label><input id="enRes" type="number" inputmode="numeric" placeholder="30"></div></div>
+    <div class="row"><div style="flex:1"><label>Panneaux (Wc)</label><input id="enWc" type="number" inputmode="numeric" placeholder="400"></div><div style="flex:1"><label>Réservoir gasoil (L)</label><input id="enFu" type="number" inputmode="numeric" placeholder="120"></div><div style="flex:1"><label>Réservoir eau (L)</label><input id="enWa" type="number" inputmode="numeric" placeholder="150"></div></div>
+    <div class="muted" style="font-size:12px">Sert aux cadrans, à l'autonomie et au planificateur de passage de l'onglet Énergie.</div></div>
+    <div style="margin:6px 0 10px"><b>Saison de navigation (statistiques)</b>
+    <div class="row" style="margin-top:6px"><div style="flex:1"><label>Début : jour</label><input id="seaD1" type="number" min="1" max="31" inputmode="numeric" placeholder="1"></div><div style="flex:2"><label>mois</label><select id="seaM1"><option value="1">janvier</option><option value="2">février</option><option value="3">mars</option><option value="4">avril</option><option value="5">mai</option><option value="6">juin</option><option value="7">juillet</option><option value="8">août</option><option value="9">septembre</option><option value="10">octobre</option><option value="11">novembre</option><option value="12">décembre</option></select></div></div>
+    <div class="row"><div style="flex:1"><label>Fin : jour</label><input id="seaD2" type="number" min="1" max="31" inputmode="numeric" placeholder="31"></div><div style="flex:2"><label>mois</label><select id="seaM2"><option value="1">janvier</option><option value="2">février</option><option value="3">mars</option><option value="4">avril</option><option value="5">mai</option><option value="6">juin</option><option value="7">juillet</option><option value="8">août</option><option value="9">septembre</option><option value="10">octobre</option><option value="11">novembre</option><option value="12">décembre</option></select></div></div>
+    <label style="display:flex;gap:8px;align-items:center;color:var(--tx);margin-top:6px"><input type="checkbox" id="seaAuto" style="width:auto"> Passage automatique à la saison suivante</label>
+    <div class="muted" style="font-size:12px">Par défaut : du 1er avril au 31 octobre. Décoché, les statistiques restent sur la saison choisie jusqu'à ce que tu passes à la suivante toi-même.</div></div>
+    <div style="margin:6px 0 10px"><label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="alOn" style="width:auto"> Alarmes installation (bandeau + vibration + bip)</label>
+    <div class="row" style="margin-top:6px"><div style="flex:1"><label>Batterie sous (%)</label><input id="alSoc" type="number" inputmode="numeric" placeholder="25"></div><div style="flex:1"><label>Gasoil sous (%)</label><input id="alFuel" type="number" inputmode="numeric" placeholder="15"></div></div>
+    <div class="row"><div style="flex:1"><label>Eau douce sous (%)</label><input id="alWater" type="number" inputmode="numeric" placeholder="10"></div><div style="flex:1"><label>Frigo au-dessus de (°C)</label><input id="alTemp" type="number" inputmode="decimal" placeholder="vide = pas d'alarme"></div></div></div>
+    <label>Cerbo GX Victron (optionnel : batteries, solaire, Ruuvi) · adresse IP ou IP:port (9001)</label><input id="sCerbo" placeholder="192.168.4.20" autocapitalize="off" autocorrect="off"><div class="muted" style="font-size:12px;margin:2px 0 8px">Sur le Cerbo : Réglages › Services › MQTT sur LAN (activé).</div>
     <div class="row"><input id="sYdHost" placeholder="192.168.4.1" style="flex:2"><input id="sYdPort" type="number" placeholder="1456" style="flex:1"></div>
+    <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="b3Sail" style="width:auto"> Vues 3D : voiles animées (réglées selon le vent, rangées au moteur ou à l'arrêt)</label>
+    <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="b3Wake" style="width:auto"> Vues 3D : remous de l'hélice quand le moteur tourne</label>
     <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="sAwake" style="width:auto"> Garder l'écran allumé (Android)</label>
     <label>Vitesse de croisière du bateau (nœuds)</label><input id="sCruise" type="number" step="0.1">
     <label>Seuil d'alerte de gîte (°)</label><input id="sHeel" type="number" min="10" max="45" step="1">
@@ -603,6 +622,7 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
   <button data-v="trips"><svg viewBox="0 0 24 24"><circle cx="5.5" cy="18.5" r="1.8"/><circle cx="18.5" cy="5.5" r="1.8"/><path d="M7 17.5c8 0 1-11 10-11"/></svg>Logbook</button>
   <button data-v="map"><svg viewBox="0 0 24 24"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg>Carte</button>
   <button data-v="route"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>Routage</button>
+  <button data-v="energy"><svg viewBox="0 0 24 24"><path d="M13 2L5 14h6l-1 8 8-12h-6z"/></svg>Énergie</button>
   <button data-v="notes"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M9 12h7M9 16h5"/></svg>Notes</button>
   <button data-v="stats"><svg viewBox="0 0 24 24"><path d="M5 20V11M12 20V4M19 20v-6"/></svg>Stats</button>
 </nav>
@@ -1684,8 +1704,8 @@ if(NATIVE)document.body.classList.add('native');
 /* ---------- Stockage IndexedDB ---------- */
 let SYNCING=false;   // vrai pendant une synchro avec le Pi : on garde alors l'horodatage d'origine
 const db={h:null,
-  open(){return new Promise((ok,ko)=>{const r=indexedDB.open('carnet',3);
-    r.onupgradeneeded=()=>{const d=r.result;['trips','notes','photos','audit','grib'].forEach(n=>{if(!d.objectStoreNames.contains(n))d.createObjectStore(n,{keyPath:'id'})})};
+  open(){return new Promise((ok,ko)=>{const r=indexedDB.open('carnet',4);
+    r.onupgradeneeded=()=>{const d=r.result;['trips','notes','photos','audit','grib','energy'].forEach(n=>{if(!d.objectStoreNames.contains(n))d.createObjectStore(n,{keyPath:'id'})})};
     r.onsuccess=()=>{this.h=r.result;ok()};r.onerror=()=>ko(r.error)})},
   st(s,m){return this.h.transaction(s,m||'readonly').objectStore(s)},
   req(q){return new Promise((ok,ko)=>{q.onsuccess=()=>ok(q.result);q.onerror=()=>ko(q.error)})},
@@ -1694,7 +1714,7 @@ const db={h:null,
   del(s,id){if(window.PIBOX&&PIBOX.has(s))return PIBOX.del(s,id);return this.req(this.st(s,'readwrite').delete(id))}};
 
 /* ---------- Données instantanées ---------- */
-const D={bats:{},tanks:{}}, T={}; // valeurs et horodatages
+const D={bats:{},tanks:{},sol:{},temps:{},sys:{}}, T={}; // valeurs et horodatages
 const fresh=k=>T[k]&&NOW()-T[k]<15000;
 const SRC={};let PSRC='boat',LASTBOAT=0;const APP_T0=Date.now();   // provenance de chaque valeur : boat (mesuré) | sk (calculé par Signal K) | calc (calculé par l'appli) | phone
 function set(k,v){if(v==null||isNaN(v)&&typeof v==='number')return;D[k]=v;T[k]=NOW();SRC[k]=PSRC;if(PSRC==='boat'||PSRC==='sk')LASTBOAT=NOW()}
@@ -1828,6 +1848,12 @@ function skValue(path,v){
   else if((m=path.match(/^propulsion\.([^.]+)\.fuel\.rate$/)))set('fuelRate',v*3.6e6);
   else if((m=path.match(/^tanks\.([^.]+)\.([^.]+)\.currentLevel$/))){D.tanks[m[1]+'.'+m[2]]={type:m[1],lvl:v*100,t:NOW()};SRC.tank=PSRC}
   else if((m=path.match(/^electrical\.batteries\.([^.]+)\.voltage$/))){(D.bats[m[1]]=D.bats[m[1]]||{}).v=v;D.bats[m[1]].t=NOW();SRC.bat=PSRC}
+  else if((m=path.match(/^electrical\.batteries\.([^.]+)\.current$/))){(D.bats[m[1]]=D.bats[m[1]]||{}).i=v;D.bats[m[1]].t=NOW();SRC.bat=PSRC}
+  else if((m=path.match(/^electrical\.batteries\.([^.]+)\.temperature$/))){(D.bats[m[1]]=D.bats[m[1]]||{}).tc=v-273.15;D.bats[m[1]].t=NOW()}
+  else if((m=path.match(/^electrical\.batteries\.([^.]+)\.capacity\.timeRemaining$/))){(D.bats[m[1]]=D.bats[m[1]]||{}).tr=v/3600;D.bats[m[1]].t=NOW()}
+  else if((m=path.match(/^electrical\.solar\.([^.]+)\.(panelPower|yieldToday)$/))){const o=D.sol[m[1]]=D.sol[m[1]]||{};if(m[2]==='panelPower')o.w=v;else o.y=v;o.t=NOW()}
+  else if((m=path.match(/^electrical\.system\.(consumption|solar|shore|alternator|acLoad)$/))){D.sys[m[1]]=v;D.sys.t=NOW()}
+  else if((m=path.match(/^environment\.inside\.([^.]+)\.(temperature|relativeHumidity)$/))){const o=D.temps[m[1]]=D.temps[m[1]]||{};if(m[2]==='temperature')o.c=v-273.15;else o.h=v*100;o.t=NOW()}
   else if((m=path.match(/^electrical\.batteries\.([^.]+)\.capacity\.stateOfCharge$/))){(D.bats[m[1]]=D.bats[m[1]]||{}).soc=v*100;D.bats[m[1]].t=NOW();SRC.bat=PSRC}
 }
 let ws=null, wsTimer=null;
@@ -1841,7 +1867,55 @@ function connectSK(){
   ws.onclose=()=>{setSrc('déconnecté','bad');if(cfg.src==='signalk')wsTimer=setTimeout(connectSK,4000)};
   ws.onerror=()=>{try{ws.close()}catch(e){}};
 }
-function closeSrc(){Object.keys(T).forEach(k=>delete T[k]);D.bats={};D.tanks={};if(typeof BL!=='undefined'&&BL){try{BL.disconnect().catch(()=>{})}catch(e){}}clearTimeout(wsTimer);if(ws){ws.onclose=null;try{ws.close()}catch(e){}ws=null}clearInterval(simT)}
+function closeSrc(){Object.keys(T).forEach(k=>delete T[k]);D.bats={};D.tanks={};D.sol={};D.temps={};D.sys={};if(typeof BL!=='undefined'&&BL){try{BL.disconnect().catch(()=>{})}catch(e){}}clearTimeout(wsTimer);if(ws){ws.onclose=null;try{ws.close()}catch(e){}ws=null}clearInterval(simT)}
+/* ---------- Cerbo GX Victron : MQTT sur WebSocket (réseau local), en parallèle de la source principale ---------- */
+let cws=null,cTimer=null,cPing=null,cKA=null,CER={id:'',st:'',names:{},ty:{}};
+function mqttStr(t){const u=new TextEncoder().encode(t);return[u.length>>8,u.length&255,...u]}
+function mqttPkt(h,body){const r=[];let n=body.length;do{let d=n%128;n=Math.floor(n/128);if(n)d|=128;r.push(d)}while(n);return new Uint8Array([h,...r,...body])}
+function stopCerbo(){clearTimeout(cTimer);clearInterval(cPing);clearInterval(cKA);if(cws){cws.onclose=null;try{cws.close()}catch(e){}cws=null}CER.st=''}
+function startCerbo(){
+  stopCerbo();const h=(cfg.cerbo||'').trim();if(!h||cfg.src==='demo')return;
+  const url='ws://'+(h.includes(':')?h:h+':9001');CER.st='connexion…';
+  try{cws=new WebSocket(url,'mqtt')}catch(e){CER.st='erreur';return}
+  cws.binaryType='arraybuffer';let buf=[];
+  cws.onopen=()=>{cws.send(mqttPkt(0x10,[...mqttStr('MQTT'),4,2,0,30,...mqttStr('carnet-'+Math.random().toString(16).slice(2,8))]))};
+  cws.onmessage=ev=>{buf.push(...new Uint8Array(ev.data));
+    while(buf.length>=2){let i=1,len=0,mul=1,b;do{if(i>=buf.length)return;b=buf[i++];len+=(b&127)*mul;mul*=128}while(b&128);
+      if(buf.length<i+len)return;const p=buf.splice(0,i+len),t=p[0]>>4,body=p.slice(i);
+      if(t===2){CER.st='connecté';cws.send(mqttPkt(0x82,[0,1,...mqttStr('N/#'),0]));
+        clearInterval(cPing);cPing=setInterval(()=>{try{cws.send(new Uint8Array([0xC0,0]))}catch(e){}},20000)}
+      else if(t===3){const tl=(body[0]<<8)|body[1],tp=new TextDecoder().decode(new Uint8Array(body.slice(2,2+tl)));let off=2+tl;if(((p[0]>>1)&3)>0)off+=2;
+        let v;try{v=JSON.parse(new TextDecoder().decode(new Uint8Array(body.slice(off)))).value}catch(e){continue}cerbo(tp,v)}}};
+  cws.onclose=()=>{CER.st='déconnecté';clearInterval(cPing);clearInterval(cKA);cTimer=setTimeout(startCerbo,5000)};
+  cws.onerror=()=>{try{cws.close()}catch(e){}};
+}
+function cerbo(tp,v){
+  const q=tp.split('/');if(q[0]!=='N')return;
+  if(!CER.id){CER.id=q[1];const ka=()=>{try{cws.send(mqttPkt(0x30,mqttStr('R/'+CER.id+'/keepalive')))}catch(e){}};ka();clearInterval(cKA);cKA=setInterval(ka,30000)}
+  const k=q.slice(2).join('/'),S=skValue,P=PSRC;PSRC='boat';
+  try{
+    let m;
+    if(v==null)return;
+    if(k==='system/0/Dc/Battery/Voltage')S('electrical.batteries.Servitude.voltage',v);
+    else if(k==='system/0/Dc/Battery/Current')S('electrical.batteries.Servitude.current',v);
+    else if(k==='system/0/Dc/Battery/Soc')S('electrical.batteries.Servitude.capacity.stateOfCharge',v/100);
+    else if(k==='system/0/Dc/Battery/TimeToGo')S('electrical.batteries.Servitude.capacity.timeRemaining',v);
+    else if(k==='system/0/Dc/Battery/Temperature')S('electrical.batteries.Servitude.temperature',v+273.15);
+    else if(k==='system/0/Dc/System/Power')S('electrical.system.consumption',v);
+    else if(k==='system/0/Dc/Pv/Power')S('electrical.system.solar',v);
+    else if(k==='system/0/Ac/Grid/L1/Power')S('electrical.system.shore',v);
+    else if(k==='system/0/Ac/Consumption/L1/Power')S('electrical.system.acLoad',v);
+    else if(k==='system/0/Dc/Alternator/Power')S('electrical.system.alternator',v);
+    else if((m=k.match(/^solarcharger\/(\d+)\/CustomName$/)))CER.names['s'+m[1]]=v;
+    else if((m=k.match(/^solarcharger\/(\d+)\/Yield\/Power$/)))S(`electrical.solar.${CER.names['s'+m[1]]||'MPPT '+m[1]}.panelPower`,v);
+    else if((m=k.match(/^solarcharger\/(\d+)\/History\/Daily\/0\/Yield$/)))S(`electrical.solar.${CER.names['s'+m[1]]||'MPPT '+m[1]}.yieldToday`,v);
+    else if((m=k.match(/^temperature\/(\d+)\/CustomName$/)))CER.names['t'+m[1]]=v;
+    else if((m=k.match(/^temperature\/(\d+)\/Temperature$/)))S(`environment.inside.${CER.names['t'+m[1]]||'Capteur '+m[1]}.temperature`,v+273.15);
+    else if((m=k.match(/^temperature\/(\d+)\/Humidity$/)))S(`environment.inside.${CER.names['t'+m[1]]||'Capteur '+m[1]}.relativeHumidity`,v/100);
+    else if((m=k.match(/^tank\/(\d+)\/FluidType$/)))CER.ty[m[1]]=['fuel','freshWater','wasteWater','liveWell','lubrication','blackWater'][v]||'fuel';
+    else if((m=k.match(/^tank\/(\d+)\/Level$/))){if(CER.ty[m[1]])S(`tanks.${CER.ty[m[1]]}.c${m[1]}.currentLevel`,v/100)}
+  }finally{PSRC=P}
+}
 function setSrc(t,c){const e=$('#src');e.textContent=t;e.className='pill '+c}
 
 
@@ -1876,7 +1950,7 @@ function n2kPgn(pgn,b){
     case 130310:sk('environment.water.temperature',sc(nU16(b,1),0.01));sk('environment.outside.temperature',sc(nU16(b,3),0.01));sk('environment.outside.pressure',sc(nU16(b,5),100));break;
     case 130311:{const s=b[1]&0x3F;sk(s===0?'environment.water.temperature':'environment.outside.temperature',s<=1?sc(nU16(b,2),0.01):null);sk('environment.outside.pressure',sc(nU16(b,6),100));break}
     case 130312:{const s=b[2];if(s===0)sk('environment.water.temperature',sc(nU16(b,3),0.01));else if(s===1)sk('environment.outside.temperature',sc(nU16(b,3),0.01));break}
-    case 127508:sk(`electrical.batteries.Batterie ${b[0]}.voltage`,sc(nU16(b,1),0.01));break;
+    case 127508:{const n=`Batterie ${b[0]}`;sk(`electrical.batteries.${n}.voltage`,sc(nU16(b,1),0.01));sk(`electrical.batteries.${n}.current`,sc(nS16(b,3),0.1));sk(`electrical.batteries.${n}.temperature`,sc(nU16(b,5),0.01));break}
     case 127506:if(b[3]!==0xFF&&b[3]<=100)sk(`electrical.batteries.Batterie ${b[1]}.capacity.stateOfCharge`,b[3]/100);break;
   }
 }
@@ -1918,10 +1992,26 @@ function startYdwg(){
 
 /* ---------- Enregistrement des trajets ---------- */
 let cur=null, moveCnt=0, idleCnt=0, lastPt=0, lastSave=0, lastLog=0;
+function enSnap(){
+  const now=NOW(),bs=Object.values(D.bats).filter(b=>now-b.t<30000),b=bs.find(x=>x.soc!=null&&x.i!=null)||bs.find(x=>x.soc!=null)||bs[0],o={};
+  if(b){if(b.soc!=null)o.soc=+b.soc.toFixed(1);if(b.i!=null)o.bi=+b.i.toFixed(2)}
+  const sol=Object.values(D.sol).filter(x=>now-x.t<60000);if(sol.length)o.sw=Math.round(sol.reduce((a,x)=>a+(x.w||0),0));
+  const fu=Object.values(D.tanks).find(k=>k.type==='fuel'&&now-k.t<120000);if(fu)o.fu=+fu.lvl.toFixed(1);
+  return o;
+}
+function enStats(t){
+  const p=t.points;let a0=null,a1=null,ahIn=0,ahOut=0,wh=0,f0=null,f1=null,n=0;
+  for(let i=0;i<p.length;i++){const q=p[i],dt=i?Math.min(600,(q.t-p[i-1].t)/1000):0;
+    if(q.soc!=null){if(a0==null)a0=q.soc;a1=q.soc;n++}
+    if(q.fu!=null){if(f0==null)f0=q.fu;f1=q.fu;n++}
+    if(i&&q.bi!=null&&p[i-1].bi!=null){const A=(q.bi+p[i-1].bi)/2;if(A>0)ahIn+=A*dt/3600;else ahOut-=A*dt/3600}
+    if(i&&q.sw!=null&&p[i-1].sw!=null)wh+=(q.sw+p[i-1].sw)/2*dt/3600}
+  return n?{a0,a1,ahIn,ahOut,wh,f0,f1}:null;
+}
 function snapshot(){
   return{t:NOW(),lat:D.lat,lon:D.lon,sog:D.sog,cog:D.cog,tws:fresh('tws')?D.tws:null,twa:fresh('twa')?D.twa:null,
     aws:fresh('aws')?D.aws:null,awa:fresh('awa')?D.awa:null,depth:fresh('depth')?D.depth:null,rpm:fresh('rpm')?D.rpm:null,
-    engT:fresh('engT')?D.engT:null,bat:Object.values(D.bats)[0]?.v??null,stw:fresh('stw')?D.stw:null,roll:fresh('roll')?D.roll:null};
+    engT:fresh('engT')?D.engT:null,bat:Object.values(D.bats)[0]?.v??null,stw:fresh('stw')?D.stw:null,roll:fresh('roll')?D.roll:null,...enSnap()};
 }
 function startTrip(auto){
   if(cur)return;
@@ -2350,7 +2440,7 @@ function mkAtt3D(root,opts){
     const g=cv.getContext('2d'),cs=getComputedStyle(document.documentElement),acc=hexRGB(cs.getPropertyValue('--acc')),wnd=hexRGB(cs.getPropertyValue('--wind')),tx=hexRGB(cs.getPropertyValue('--tx')),mut=cs.getPropertyValue('--mut').trim(),font=cs.getPropertyValue('--num');
     const k=1-Math.exp(-dt*5);
     S.roll+=(S.tr-S.roll)*k;S.pitch+=(S.tp-S.pitch)*k;
-    {const sv=typeof fresh==='function'?(fresh('awa')?D.awa:fresh('twa')?D.twa:null):null,st=sailTarget(sv,t),ks=1-Math.exp(-dt*2.2);const stopd=fresh('sog')&&D.sog<0.4,mot=((fresh('rpm')&&D.rpm>=300)||stopd)?1:0,kf=1-Math.exp(-dt*1.1);S.sf=(S.sf||0)+(mot-(S.sf||0))*kf;   // moteur en marche : voiles rangées
+    {const sv=typeof fresh==='function'?(fresh('awa')?D.awa:fresh('twa')?D.twa:null):null,SA=cfg.b3sail!==false,st=SA?sailTarget(sv,t):{m:12,j:10},ks=1-Math.exp(-dt*2.2);const stopd=fresh('sog')&&D.sog<0.4,mot=SA&&((fresh('rpm')&&D.rpm>=300)||stopd)?1:0,kf=1-Math.exp(-dt*1.1);S.sf=(S.sf||0)+(mot-(S.sf||0))*kf;   // moteur en marche : voiles rangées
     S.sm=(S.sm||0)+(st.m*(1-S.sf)-(S.sm||0))*ks;S.sj=(S.sj||0)+(st.j*(1-S.sf)-(S.sj||0))*ks}
     const dpsi=((S.tpsi-S.psi+540)%360)-180;S.psi+=dpsi*k;S.e+=(S.te-S.e)*k;S.dist+=(S.td-S.dist)*k;
     const psi=(S.psi+3*Math.sin(t*0.35))*D2R,el=(S.e+1.2*Math.sin(t*0.5))*D2R;
@@ -2424,7 +2514,7 @@ function mkAtt3D(root,opts){
     w2.globalCompositeOperation='destination-out';w2.fillStyle=mg;w2.fillRect(0,0,W,W);w2.globalCompositeOperation='source-over';
     if(!MO)g.drawImage(wc,0,0);
     // remous léger de l'hélice quand le moteur tourne : mousse qui part derrière la poupe puis s'efface
-    {const rp=fresh('rpm')?D.rpm:0,WK=S.wk||(S.wk=[]),eng=rp>=300?Math.min(1,(rp-300)/2700):0;
+    {const rp=fresh('rpm')&&cfg.b3wake!==false?D.rpm:0,WK=S.wk||(S.wk=[]),eng=rp>=300?Math.min(1,(rp-300)/2700):0;
       const still=fresh('sog')&&D.sog<0.4;   // à l'arrêt : pas de remous
       if(rp>=300&&!still){S.wa=(S.wa||0)+(10+34*eng)*dt;while(S.wa>=1&&WK.length<110){S.wa--;WK.push({x:(Math.random()-.5)*.35,z:-5.15+Math.random()*.3,a:0,vx:(Math.random()-.5)*.4,r:.05+Math.random()*.06})}}
       const vz=1.6+(fresh('sog')?Math.min(12,D.sog)*0.25:0);
@@ -2591,6 +2681,40 @@ function mkEngine(root){
 
 /* 7. Énergie & réservoirs */
 const TANKFR={fuel:'Gazole',freshWater:'Eau douce',wasteWater:'Eaux grises',blackWater:'Eaux noires',liveWell:'Vivier',lubrication:'Huile',ballast:'Ballast'};
+/* 7bis. Installation électrique : charge, courant, solaire, consommation, températures */
+function mkPower(root){
+  const C=2*Math.PI*80;
+  root.innerHTML=SVG('',`<rect x="6" y="6" width="288" height="288" rx="26" fill="url(#gFace)" stroke="url(#gRim)" stroke-width="3"/>
+  <g transform="rotate(135 150 118)"><circle cx="150" cy="118" r="80" fill="none" stroke="#000" opacity=".3" stroke-width="16" stroke-dasharray="${(C*0.75).toFixed(1)} ${C.toFixed(1)}" stroke-linecap="round"/>
+  <circle class="arc" cx="150" cy="118" r="80" fill="none" stroke="var(--ok)" stroke-width="16" stroke-dasharray="0 ${C.toFixed(1)}" stroke-linecap="round" style="filter:url(#fGlow)"/></g>
+  <text class="soc" x="150" y="130" text-anchor="middle" style="font:700 56px var(--num);fill:var(--tx)">--</text>
+  <text class="sm" x="150" y="152" text-anchor="middle">charge batterie</text>
+  <text class="vi" x="150" y="204" text-anchor="middle" style="font:600 19px var(--num);fill:var(--tx)"></text>
+  <text class="tr" x="150" y="224" text-anchor="middle" style="font-size:13px;fill:var(--mut)"></text>
+  <g class="fl"></g><text class="none sm" x="150" y="120" text-anchor="middle">en attente des données…</text>`);
+  const q=s=>root.querySelector(s);
+  return()=>{
+    const now=NOW(),bs=Object.entries(D.bats).filter(([,b])=>now-b.t<15000),b=(bs.find(([,x])=>x.i!=null&&x.soc!=null)||bs.find(([,x])=>x.soc!=null)||bs[0]||[])[1];
+    q('.none').setAttribute('opacity',b?0:1);
+    const soc=b&&b.soc!=null?b.soc:null,C2=2*Math.PI*80;
+    q('.soc').textContent=soc!=null?Math.round(soc)+'%':'--';
+    q('.arc').setAttribute('stroke-dasharray',`${(C2*0.75*Math.max(0,Math.min(100,soc||0))/100).toFixed(1)} ${C2.toFixed(1)}`);
+    q('.arc').setAttribute('stroke',soc==null?'var(--mut)':soc<20?'var(--bad)':soc<50?'var(--warn)':'var(--ok)');
+    q('.vi').textContent=b?[b.v!=null?b.v.toFixed(2)+' V':'',b.i!=null?(b.i>0?'+':'')+b.i.toFixed(1)+' A':''].filter(Boolean).join('   '):'';
+    q('.tr').textContent=b&&b.i!=null?(b.i>0.5?'en charge':b.tr!=null&&b.tr>0?'reste '+(b.tr>=48?Math.round(b.tr/24)+' j':b.tr.toFixed(1)+' h'):''):'';
+    const sol=Object.values(D.sol).filter(x=>now-x.t<30000),sw=sol.reduce((a,x)=>a+(x.w||0),0),sy=sol.reduce((a,x)=>a+(x.y||0),0);
+    const cons=D.sys.consumption!=null&&now-D.sys.t<30000?D.sys.consumption:null;
+    const tm=Object.entries(D.temps).filter(([,x])=>now-x.t<120000&&x.c!=null).slice(0,3);
+    const rows=[];
+    if(sol.length||D.sys.solar!=null)rows.push(['Solaire',Math.round(D.sys.solar!=null&&!sol.length?D.sys.solar:sw)+' W'+(sy?' · '+sy.toFixed(1)+' kWh':''),'var(--warn)']);
+    if(cons!=null)rows.push(['Conso',Math.round(cons)+' W','var(--wind)']);
+    tm.forEach(([n,x])=>rows.push([n,x.c.toFixed(1)+'°'+(x.h!=null?' · '+Math.round(x.h)+'%':''),'var(--tx)']));
+    const fu=Object.values(D.tanks).find(k=>k.type==='fuel'&&now-k.t<60000);if(fu)rows.push(['Gazole',Math.round(fu.lvl)+' %',fu.lvl<15?'var(--bad)':'var(--tx)']);
+    const rs=rows.slice(0,4),y0=243,h=14;
+    q('.fl').innerHTML=rs.map((r,i)=>`<text class="sm" x="30" y="${y0+i*h}" style="font-size:12px;fill:var(--mut)">${esc(String(r[0]).slice(0,14))}</text><text class="sm" x="270" y="${y0+i*h}" text-anchor="end" style="font-size:12px;fill:${r[2]}">${esc(r[1])}</text>`).join('');
+  };
+}
+
 function mkEnergy(root){
   root.innerHTML=SVG('',`<rect x="6" y="6" width="288" height="288" rx="26" fill="url(#gFace)" stroke="url(#gRim)" stroke-width="3"/><g class="rows"></g><text class="sm none" x="150" y="150" text-anchor="middle">en attente des batteries…</text>`);
   const q=s=>root.querySelector(s);
@@ -2617,7 +2741,8 @@ const DIALS={
   meteo3d:{name:'Bateau 3D et météo',mk:r=>mkAtt3D(r,{classic:true}),legend:'<span>glisse : tourner · pince : zoom · touche : vue</span>'},
   depth:{name:'Profondeur',mk:mkDepth,legend:''},
   engine:{name:'Moteur',mk:mkEngine,legend:''},
-  energy:{name:'Énergie et réservoirs',mk:mkEnergy,legend:''}};
+  energy:{name:'Énergie et réservoirs',mk:mkEnergy,legend:''},
+  power:{name:'Installation électrique',mk:mkPower,legend:'<span>charge · courant · solaire · consommation · températures</span>'}};
 const dialList=()=>{const o=(cfg.dialOrder||[]).filter(id=>DIALS[id]);Object.keys(DIALS).forEach(id=>{if(!o.includes(id)){const k=id==='meteo3d'?o.indexOf('attitude'):-1;if(k>=0)o.splice(k+1,0,id);else o.push(id)}});return o};
 const dialActive=()=>{const a=dialList().filter(id=>!(cfg.dialOff||[]).includes(id));return a.length?a:['wind']};
 const saveCfg=()=>localStorage.setItem('cfg',JSON.stringify(cfg));
@@ -2718,13 +2843,41 @@ function renderLive(){
 }
 
 /* ---------- Signal bateau et provenance des valeurs ---------- */
+/* ---------- Alarmes d'installation : batterie, gasoil, eau, frigo ---------- */
+const AL={act:{},snz:{},shown:{}};
+function alBeep(){try{const a=new(window.AudioContext||window.webkitAudioContext)(),o=a.createOscillator(),g=a.createGain();o.type='square';o.frequency.value=880;g.gain.value=.12;o.connect(g);g.connect(a.destination);o.start();g.gain.setValueAtTime(.12,a.currentTime+.18);g.gain.setValueAtTime(0,a.currentTime+.2);o.frequency.setValueAtTime(660,a.currentTime+.2);g.gain.setValueAtTime(.12,a.currentTime+.4);o.stop(a.currentTime+.6)}catch(e){}}
+function alCheck(){
+  const bar=$('#alBar');if(!bar)return;
+  const now=NOW(),cond=[];
+  const chk=(id,msg,bad,clr)=>{const was=AL.act[id];if(bad)AL.act[id]=true;else if(was&&clr)delete AL.act[id];
+    if(AL.act[id])cond.push({id,msg})};
+  if(cfg.alOn!==false){
+    const soc=cfg.alSoc!=null?cfg.alSoc:25,fu=cfg.alFuel!=null?cfg.alFuel:15,wa=cfg.alWater!=null?cfg.alWater:10,tm=cfg.alTemp;
+    Object.entries(D.bats).forEach(([n,b])=>{if(now-b.t>30000||b.soc==null)return;chk('soc:'+n,`Batterie ${n} : ${Math.round(b.soc)} % (seuil ${soc} %)`,b.soc<soc,b.soc>soc+3)});
+    Object.entries(D.tanks).forEach(([k,t])=>{if(now-t.t>120000)return;
+      if(t.type==='fuel')chk('fuel:'+k,`Gasoil bas : ${Math.round(t.lvl)} % (seuil ${fu} %)`,t.lvl<fu,t.lvl>fu+3);
+      else if(t.type==='freshWater')chk('wat:'+k,`Eau douce basse : ${Math.round(t.lvl)} % (seuil ${wa} %)`,t.lvl<wa,t.lvl>wa+3)});
+    const w=cfg.enWatch;if(w&&w.t0+w.h*3600e3>now&&cfg.batAh){const e=enNow(),rem=(w.t0+w.h*3600e3-now)/3600e3,res=cfg.reserve!=null?cfg.reserve:30,nt=EN.net||[];
+      if(e.b&&e.b.soc!=null&&nt.length>=3&&now-nt[0].t>10*60e3){const avg=nt.reduce((a,x)=>a+x.w,0)/nt.length,proj=e.b.soc-avg*rem/(cfg.batAh*12.8)*100;
+        chk('enwatch',`Passage : à ce rythme la charge tombera à ${Math.max(0,Math.round(proj))} % avant l'arrivée (réserve ${res} %). Réduis la conso ou prévois le moteur.`,proj<res,proj>res+3)}}
+    if(tm!=null&&tm!==''&&!isNaN(+tm))Object.entries(D.temps).forEach(([n,x])=>{if(now-x.t>300000||x.c==null||!/frigo|fridge|koel|cong|freez|vries/i.test(n))return;chk('tmp:'+n,`${n} : ${x.c.toFixed(1)} °C (max ${tm} °C)`,x.c>+tm,x.c<+tm-1)});
+  }
+  Object.keys(AL.act).forEach(id=>{if(!cond.find(c=>c.id===id))delete AL.act[id]});
+  const vis=cond.filter(c=>!(AL.snz[c.id]>Date.now()));
+  vis.forEach(c=>{if(!AL.shown[c.id]){AL.shown[c.id]=1;hap('strong',[200,100,200,100,400]);alBeep()}});
+  Object.keys(AL.shown).forEach(id=>{if(!AL.act[id])delete AL.shown[id]});
+  bar.classList.toggle('hide',!vis.length);
+  bar.innerHTML=vis.map(c=>`<div class="card" style="padding:10px 12px;border-color:var(--bad);margin-bottom:8px;display:flex;gap:10px;align-items:center;justify-content:space-between"><b style="color:var(--bad);font-size:14px">⚠ ${esc(c.msg)}</b><button type="button" data-al="${esc(c.id)}" style="flex:none;padding:6px 10px;border-radius:99px;border:1px solid var(--line);background:transparent;color:var(--tx);font-size:12px">Silence 30 min</button></div>`).join('');
+}
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-al]');if(b){AL.snz[b.dataset.al]=Date.now()+30*60e3;delete AL.shown[b.dataset.al];alCheck()}});
+setInterval(()=>{try{alCheck()}catch(e){}},4000);
 function updNoBoat(){
   const e=$('#noBoat');if(!e)return;
   const lost=cfg.src!=='demo'&&Date.now()-APP_T0>8000&&NOW()-LASTBOAT>15000;
   e.classList.toggle('hide',!lost);
   if(lost){$('#nbT').textContent=tr('Pas de signal bateau');$('#nbS').textContent=tr('Le carnet, les notes et la carte restent disponibles.')+' · '+(($('#src')||{}).textContent||'')}
 }
-const PKEYS={wind:['aws','awa','tws','twa'],speed:['sog','stw','lat'],compass:['hdg','cog','lat'],attitude:['roll','pitch'],meteo3d:['roll','pitch','baro','airT','wTemp'],depth:['depth'],engine:['rpm','engT','oilP'],energy:['bat','tank']};
+const PKEYS={wind:['aws','awa','tws','twa'],speed:['sog','stw','lat'],compass:['hdg','cog','lat'],attitude:['roll','pitch'],meteo3d:['roll','pitch','baro','airT','wTemp'],depth:['depth'],engine:['rpm','engT','oilP'],energy:['bat','tank'],power:['bat']};
 const PLBL={aws:'AWS',awa:'AWA',tws:'TWS',twa:'TWA',sog:'SOG',stw:'STW',hdg:'Cap',cog:'COG',lat:'GPS',roll:'Roulis',pitch:'Tangage',baro:'Baro',airT:'Air',wTemp:'Eau',depth:'Prof.',rpm:'Régime',engT:'T° moteur',oilP:'Huile',bat:'Batteries',tank:'Réservoirs'};
 function updProv(){
   const e=$('#provBar');if(!e)return;
@@ -2856,6 +3009,7 @@ async function showTrip(id){
    ${S.stats?`<div class="rings"><div class="rg"><div class="r" style="--p:${pct(s.avg,Math.max(1,s.maxS))}"><b>${num(s.avg)}</b></div><small>vitesse moy. (max ${num(s.maxS)} nds)</small></div>
     <div class="rg"><div class="r" style="--p:${pct(s.maxW,40)};--c:var(--wind)"><b>${s.maxW?num(s.maxW,0):'--'}</b></div><small>vent max (nds)</small></div>
     <div class="rg"><div class="r" style="--p:${engPct||0};--c:var(--bad)"><b>${engPct!=null?engPct+'%':'--'}</b></div><small>au moteur (${fmtDur(s.eng)})</small></div></div>`:''}</div>
+  ${(()=>{const e=enStats(t);if(!e)return'';const d=(a,b)=>a!=null&&b!=null?(b-a>0?'+':'')+num(b-a,0)+' pts':'';return`<div class="card"><b>Énergie du trajet</b><div class="rings" style="margin-top:8px">${e.a0!=null?`<div class="rg"><div class="r" style="--p:${Math.round(e.a1)};--c:var(--ok)"><b>${Math.round(e.a1)}%</b></div><small>batterie : ${Math.round(e.a0)} % → ${Math.round(e.a1)} %</small></div>`:''}${e.f0!=null?`<div class="rg"><div class="r" style="--p:${Math.round(e.f1)};--c:var(--warn)"><b>${Math.round(e.f1)}%</b></div><small>gasoil : ${Math.round(e.f0)} % → ${Math.round(e.f1)} % (${num(e.f0-e.f1,0)} pts)</small></div>`:''}</div><div class="mut" style="margin-top:8px">${e.ahOut||e.ahIn?`Consommé ${num(e.ahOut,1)} Ah · rechargé ${num(e.ahIn,1)} Ah`:''}${e.wh?` · solaire ${num(e.wh/1000,2)} kWh`:''}</div></div>`})()}
   ${S.map&&t.points.length>1?`<div class="card"><b>Tracé</b><div class="mut" style="margin-bottom:6px">Couleur = vitesse (bleu lent, rouge rapide). Touche un point blanc pour voir l'entrée du log.</div>${miniMap(t,true)}</div>`:''}
   ${S.charts?CHARTS.filter(c=>F.includes(c[0])).map(c=>chart(t,c[1],c[2],c[3],c[4],c[5])).join(''):''}
   <div class="row noprint" style="justify-content:space-between;margin:14px 0 8px"><b style="font:600 20px var(--num)">Journal de bord</b><button class="b" id="tAdd">＋ Entrée</button></div>
@@ -2948,8 +3102,8 @@ function toGPX(t){
   t.points.map(p=>`<trkpt lat="${p.lat}" lon="${p.lon}"><time>${new Date(p.t).toISOString()}</time></trkpt>`).join('\n')+`\n</trkseg></trk></gpx>`;
 }
 function toCSV(t){
-  const h='heure_iso;lat;lon;sog_nds;cog;tws_nds;twa;aws_nds;awa;profondeur_m;rpm;temp_moteur;batterie_v';
-  return h+'\n'+t.points.map(p=>[new Date(p.t).toISOString(),p.lat,p.lon,p.sog,p.cog,p.tws,p.twa,p.aws,p.awa,p.depth,p.rpm,p.engT,p.bat].map(v=>v==null?'':(typeof v==='number'?+v.toFixed(5):v)).join(';')).join('\n');
+  const h='heure_iso;lat;lon;sog_nds;cog;tws_nds;twa;aws_nds;awa;profondeur_m;rpm;temp_moteur;batterie_v;charge_pct;courant_a;solaire_w;gasoil_pct';
+  return h+'\n'+t.points.map(p=>[new Date(p.t).toISOString(),p.lat,p.lon,p.sog,p.cog,p.tws,p.twa,p.aws,p.awa,p.depth,p.rpm,p.engT,p.bat,p.soc,p.bi,p.sw,p.fu].map(v=>v==null?'':(typeof v==='number'?+v.toFixed(5):v)).join(';')).join('\n');
 }
 let FS=null,SH=null;
 async function download(name,txt,type){
@@ -3297,7 +3451,7 @@ $('#fxPlay').onclick=()=>{
 };
 
 
-const APP_VERSION='2.3';
+const APP_VERSION='2.5';
 (()=>{const e=document.getElementById('appVer');if(e)e.textContent='Carnet de bord · v'+APP_VERSION})();
 /* ---------- Météo du parcours : vent, vagues, houle et courant le long du tracé (routage, tracé modifié, depuis ma position) ---------- */
 const RWL={wind:{n:'Vent',u:'nds',lim:'maxW',def:22,to:false},waves:{n:'Vagues',u:'m',lim:'maxH',def:2,to:false},swell:{n:'Houle',u:'m',lim:'maxH',def:2,to:false},cur:{n:'Courant',u:'nds',lim:null,to:true}};
@@ -3662,19 +3816,360 @@ $('#nAdd').onclick=async()=>{
 };
 
 /* ---------- Statistiques ---------- */
-async function renderStats(){
-  const trips=await db.all('trips');
-  if(!trips.length){$('#statsBox').innerHTML='<div class="card mut">Pas encore de données.</div>';return}
-  let dist=0,dur=0,eng=0,maxS=0,maxW=0;const byMonth={};
-  trips.forEach(t=>{const s=tripStats(t);dist+=s.dist;dur+=s.dur;eng+=s.eng;maxS=Math.max(maxS,s.maxS);maxW=Math.max(maxW,s.maxW);
-    const k=new Date(t.start).toISOString().slice(0,7);byMonth[k]=(byMonth[k]||0)+s.dist});
-  const ks=Object.keys(byMonth).sort(),mx=Math.max(...Object.values(byMonth));
-  $('#statsBox').innerHTML=`<div class="card"><div class="stats">
-   <div><span class="mut">Trajets</span><b>${trips.length}</b></div><div><span class="mut">Distance totale</span><b>${num(dist,0)} NM</b></div>
-   <div><span class="mut">Temps en mer</span><b>${fmtDur(dur)}</b></div><div><span class="mut">Heures moteur</span><b>${(eng/3600).toFixed(1)} h</b></div>
-   <div><span class="mut">Vitesse max</span><b>${num(maxS)} nds</b></div><div><span class="mut">Vent max</span><b>${maxW?num(maxW)+' nds':'--'}</b></div></div></div>
-   <div class="card"><b>Milles par mois</b>${ks.map(k=>`<div style="margin-top:8px"><div class="mut">${k} · ${num(byMonth[k],0)} NM</div><div class="bar" style="width:${Math.max(2,byMonth[k]/mx*100)}%"></div></div>`).join('')}</div>`;
+/* ---------- Statistiques : total, saison, mois, semaine, jour ---------- */
+const STAT={mode:null,anchor:null,sy:null,f:{type:'all',crew:'',demo:false}};
+const MONTHS_FR=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+const sCfg=()=>({m1:(cfg.seaM1||4)-1,d1:cfg.seaD1||1,m2:(cfg.seaM2||10)-1,d2:cfg.seaD2||31});
+function seasonRange(y){const c=sCfg(),a=new Date(y,c.m1,c.d1),b=new Date(y,c.m2,c.d2,23,59,59,999);if(b<a)b.setFullYear(y+1);return{y,a:+a,b:+b}}
+function seasonLabel(y){const r=seasonRange(y);return new Date(r.b).getFullYear()===y?`Saison ${y}`:`Saison ${y}-${String((y+1)%100).padStart(2,'0')}`}
+function seasonYearOf(ts){for(const y of[new Date(ts).getFullYear()-1,new Date(ts).getFullYear(),new Date(ts).getFullYear()+1]){const r=seasonRange(y);if(ts>=r.a&&ts<=r.b)return y}return null}
+function seasonCurrent(){const now=NOW(),y=seasonYearOf(now);if(y!=null)return y;let k=new Date(now).getFullYear()+1;while(seasonRange(k).b>now&&k>2000)k--;return k}   // hors saison : la dernière saison terminée, jusqu'à ce que la suivante commence
+function seasonEff(st){st=st||STAT;return st.sy!=null?st.sy:(cfg.seasonAuto!==false?seasonCurrent():(cfg.seasonPin!=null?cfg.seasonPin:seasonCurrent()))}
+const wkStart=ts=>{const d=new Date(ts);d.setHours(0,0,0,0);d.setDate(d.getDate()-((d.getDay()+6)%7));return+d};
+function isoWeek(ts){const d=new Date(ts);d.setHours(0,0,0,0);d.setDate(d.getDate()+3-((d.getDay()+6)%7));const w=new Date(d.getFullYear(),0,4);return 1+Math.round(((d-w)/864e5-3+((w.getDay()+6)%7))/7)}
+function statPeriod(mode,off,st){   // off = décalage de période (0 = courante, -1 = précédente)
+  st=st||STAT;const A=new Date(st.anchor||NOW());
+  if(mode==='total')return{a:-Infinity,b:Infinity,label:'Toutes les navigations',sub:''};
+  if(mode==='season'){const y=seasonEff(st)+(off||0),r=seasonRange(y),f=t=>new Date(t).toLocaleDateString(LOC(),{day:'numeric',month:'short',year:'numeric'});
+    return{a:r.a,b:r.b,label:seasonLabel(y),sub:f(r.a)+' → '+f(r.b),y}}
+  if(mode==='month'){const a=new Date(A.getFullYear(),A.getMonth()+(off||0),1),b=new Date(a.getFullYear(),a.getMonth()+1,1);return{a:+a,b:+b-1,label:MONTHS_FR[a.getMonth()]+' '+a.getFullYear(),sub:''}}
+  if(mode==='week'){const a=wkStart(A)+(off||0)*7*864e5,b=new Date(a);b.setDate(b.getDate()+7);const f=t=>new Date(t).toLocaleDateString(LOC(),{day:'numeric',month:'short'});return{a,b:+b-1,label:'Semaine '+isoWeek(a),sub:f(a)+' → '+f(+b-1)}}
+  if(mode==='quarter'){const a=new Date(A.getFullYear(),Math.floor(A.getMonth()/3)*3+3*(off||0),1),b=new Date(a.getFullYear(),a.getMonth()+3,1);return{a:+a,b:+b-1,label:'T'+(Math.floor(a.getMonth()/3)+1)+' '+a.getFullYear(),sub:MONTHS_FR[a.getMonth()]+' → '+MONTHS_FR[(a.getMonth()+2)%12]}}
+  if(mode==='year'){const y=A.getFullYear()+(off||0);return{a:+new Date(y,0,1),b:+new Date(y+1,0,1)-1,label:String(y),sub:''}}
+  const a=new Date(A.getFullYear(),A.getMonth(),A.getDate()+(off||0)),b=new Date(a.getFullYear(),a.getMonth(),a.getDate()+1);
+  return{a:+a,b:+b-1,label:a.toLocaleDateString(LOC(),{weekday:'long',day:'numeric',month:'long',year:'numeric'}),sub:''};
 }
+function statAgg(trips){
+  const o={n:trips.length,dist:0,dur:0,eng:0,maxS:0,maxW:0,sumS:0,pts:0,longest:0,ah:0,wh:0,fuel:0,fuelN:0};
+  trips.forEach(t=>{const s=tripStats(t);o.dist+=s.dist;o.dur+=s.dur;o.eng+=s.eng;o.maxS=Math.max(o.maxS,s.maxS);o.maxW=Math.max(o.maxW,s.maxW);o.sumS+=s.avg*s.n;o.pts+=s.n;o.longest=Math.max(o.longest,s.dist);
+    const e=enStats(t);if(e){o.ah+=e.ahOut;o.wh+=e.wh;if(e.f0!=null){o.fuel+=Math.max(0,e.f0-e.f1);o.fuelN++}}});
+  return o;
+}
+function statFilter(trips,p){
+  const f=STAT.f,q=f.crew.trim().toLowerCase();
+  return trips.filter(t=>{if(t.start<p.a||t.start>p.b)return false;if(t.demo&&!f.demo)return false;
+    if(q&&!((t.crew||'')+' '+(t.name||'')).toLowerCase().includes(q))return false;
+    if(f.type!=='all'){const s=tripStats(t),r=s.dur>0?s.eng/s.dur:0,k=r<0.25?'sail':r<0.75?'mix':'motor';if(k!==f.type)return false}
+    return true});
+}
+async function renderStats(){
+  const all=await db.all('trips'),box=$('#statsBox');
+  if(!STAT.mode)STAT.mode=cfg.statMode||'season';
+  const mode=STAT.mode,p=statPeriod(mode,0),pp=mode==='total'?null:statPeriod(mode,-1);
+  const real=all.filter(t=>t.demo?STAT.f.demo:true);
+  if(!real.length&&!all.length){box.innerHTML='<div class="card mut">Pas encore de données.</div>';return}
+  const L=statFilter(all,p).sort((a,b)=>a.start-b.start),g=statAgg(L),gp=pp?statAgg(statFilter(all,pp)):null;
+  const btn=(on,attr,txt)=>`<button type="button" ${attr} class="spb${on?' on':''}">${txt}</button>`;
+  const modes=[['total','Total'],['season','Saison'],['month','Mois'],['week','Semaine'],['day','Jour']];
+  const auto=cfg.seasonAuto!==false,cs=seasonCurrent(),isCur=mode==='season'&&p.y===cs;
+  let tag='';if(mode==='season'){const now=NOW(),r=seasonRange(p.y);tag=now>r.b?'terminée':now<r.a?'à venir':'en cours'}
+  const dlt=gp&&gp.dist>0||gp&&g.dist>0?(()=>{const d=g.dist-gp.dist;return`<div class="mut" style="margin-top:4px">${d>=0?'▲ +':'▼ '}${num(Math.abs(d),0)} NM par rapport à ${mode==='season'?'la saison précédente':mode==='month'?'au mois précédent':mode==='week'?'la semaine précédente':'au jour précédent'}</div>`})():'';
+  // histogramme
+  let bars=[];
+  if(mode==='total'){const m={};all.forEach(t=>{if(!statFilter([t],{a:-Infinity,b:Infinity}).length)return;const y=seasonYearOf(t.start),k=y!=null?seasonLabel(y):'Hors saison';m[k]=(m[k]||0)+tripStats(t).dist});bars=Object.entries(m).sort((a,b)=>a[0]<b[0]?-1:1).map(([l,v])=>[l,v])}
+  else if(mode==='season'){const r=seasonRange(p.y);let d=new Date(r.a);d=new Date(d.getFullYear(),d.getMonth(),1);const m={};L.forEach(t=>{const k=new Date(t.start).getFullYear()*12+new Date(t.start).getMonth();m[k]=(m[k]||0)+tripStats(t).dist});
+    for(;+d<=r.b;d=new Date(d.getFullYear(),d.getMonth()+1,1)){const k=d.getFullYear()*12+d.getMonth();bars.push([MONTHS_FR[d.getMonth()].slice(0,3),m[k]||0])}}
+  else if(mode==='month'||mode==='week'){const m={};L.forEach(t=>{const k=new Date(t.start).getDate()+'/'+new Date(t.start).getMonth();m[k]=(m[k]||0)+tripStats(t).dist});
+    for(let t=p.a;t<=p.b;t+=864e5){const d=new Date(t);bars.push([mode==='week'?d.toLocaleDateString(LOC(),{weekday:'short'}).slice(0,2):String(d.getDate()),m[d.getDate()+'/'+d.getMonth()]||0])}}
+  else bars=L.map(t=>[fmtT(t.start),tripStats(t).dist]);
+  const mx=Math.max(1e-9,...bars.map(b=>b[1])),step=Math.ceil(bars.length/12);
+  const chart=bars.length?`<div style="display:flex;align-items:flex-end;gap:3px;height:120px;margin-top:10px">${bars.map(([l,v],i)=>`<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;min-width:0"><span class="mut" style="font-size:10px;height:14px">${v>0&&bars.length<=14?num(v,0):''}</span><div class="bar" style="width:100%;height:${v>0?Math.max(3,v/mx*86):1}px;border-radius:3px 3px 0 0;opacity:${v>0?1:.25}"></div><span class="mut" style="font-size:10px;margin-top:3px;white-space:nowrap">${i%step===0?esc(l):'&nbsp;'}</span></div>`).join('')}</div>`:'';
+  const pct=g.dur>0?Math.round(g.eng/g.dur*100):0,avg=g.pts?g.sumS/g.pts:0;
+  box.innerHTML=`<style>.spb{padding:6px 12px;border-radius:99px;border:1px solid var(--line);background:transparent;color:var(--tx);font:600 13px system-ui}.spb.on{background:var(--acc);border-color:var(--acc);color:#fff}.spn{display:flex;align-items:center;justify-content:space-between;gap:8px}.spn button{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--tx);font-size:20px}</style>
+  <div class="card"><div style="display:flex;gap:6px;flex-wrap:wrap">${modes.map(([k,l])=>btn(mode===k,`data-sm="${k}"`,l)).join('')}</div>
+   ${mode!=='total'?`<div class="spn" style="margin-top:12px"><button type="button" data-sn="-1" aria-label="Période précédente">‹</button><div style="text-align:center;flex:1"><b style="font:600 20px var(--num);text-transform:capitalize">${esc(p.label)}</b>${tag?` <span class="pill">${tag}</span>`:''}<div class="mut" style="font-size:13px">${esc(p.sub)}</div></div><button type="button" data-sn="1" aria-label="Période suivante">›</button></div>
+   <div style="display:flex;gap:8px;justify-content:center;margin-top:8px;flex-wrap:wrap">${mode==='season'?(isCur&&auto?'':btn(0,'data-sc="1"',auto?'Saison en cours':'Revenir à la saison choisie'))+(!auto?btn(0,'data-snext="1"','Passer à la saison suivante'):''):btn(0,'data-sc="1"',mode==='day'?'Aujourd’hui':mode==='week'?'Cette semaine':'Ce mois-ci')}</div>
+   ${mode==='season'?`<div class="mut" style="font-size:12px;text-align:center;margin-top:6px">${auto?'Passage automatique à la saison suivante (Réglages).':'Passage automatique désactivé : la saison ne change que sur ta demande.'}</div>`:''}`:`<div class="mut" style="margin-top:10px">${esc(p.label)}</div>`}
+  </div>
+  <div class="card"><b>Filtres</b><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">${[['all','Tous'],['sail','À la voile'],['mix','Mixtes'],['motor','Au moteur']].map(([k,l])=>btn(STAT.f.type===k,`data-st="${k}"`,l)).join('')}</div>
+   <input id="stCrew" value="${esc(STAT.f.crew)}" placeholder="Équipage ou nom du trajet contient…" style="margin-top:8px" autocapitalize="off">
+   <label style="display:flex;gap:8px;align-items:center;margin-top:8px;color:var(--tx)"><input type="checkbox" id="stDemo" style="width:auto" ${STAT.f.demo?'checked':''}> Inclure les navigations de démonstration</label>
+   <div class="mut" style="font-size:12px;margin-top:4px">« À la voile » : moteur moins de 25 % du temps ; « Au moteur » : plus de 75 %.</div></div>
+  ${g.n?`<div class="card"><div class="stats">
+   <div><span class="mut">Trajets</span><b>${g.n}</b></div><div><span class="mut">Distance</span><b>${num(g.dist,g.dist<100?1:0)} NM</b></div>
+   <div><span class="mut">Temps en mer</span><b>${fmtDur(g.dur)}</b></div><div><span class="mut">Moteur</span><b>${(g.eng/3600).toFixed(1)} h · ${pct} %</b></div>
+   <div><span class="mut">Vitesse moyenne</span><b>${num(avg)} nds</b></div><div><span class="mut">Vitesse max</span><b>${num(g.maxS)} nds</b></div>
+   <div><span class="mut">Vent max</span><b>${g.maxW?num(g.maxW)+' nds':'--'}</b></div><div><span class="mut">Plus long trajet</span><b>${num(g.longest,0)} NM</b></div>
+   ${g.ah||g.wh||g.fuelN?`<div><span class="mut">Batterie consommée</span><b>${g.ah?num(g.ah,0)+' Ah':'--'}</b></div><div><span class="mut">Solaire</span><b>${g.wh?num(g.wh/1000,1)+' kWh':'--'}</b></div>`:''}</div>${dlt}</div>
+  <div class="card"><b>${mode==='total'?'Milles par saison':mode==='season'?'Milles par mois':mode==='day'?'Milles par trajet':'Milles par jour'}</b>${chart}</div>
+  <div class="card"><b>Trajets de la période</b>${L.slice().reverse().map(t=>{const s=tripStats(t);return`<div class="statTrip" data-id="${t.id}" style="padding:10px 0;border-top:1px solid var(--line);cursor:pointer"><div style="display:flex;justify-content:space-between;gap:8px"><span>${esc(t.name)}${t.demo?' <span class="pill">démo</span>':''}</span><b>${num(s.dist)} NM</b></div><div class="mut" style="font-size:13px">${fmtDT(t.start)} · ${fmtDur(s.dur)}${t.crew?' · '+esc(t.crew):''}</div></div>`}).join('')}</div>`
+  :`<div class="card mut">Aucune navigation pour cette période avec ces filtres.</div>`}`;
+  const go2=fn=>{fn();renderStats()};
+  $$('#statsBox [data-sm]').forEach(b=>b.onclick=()=>go2(()=>{STAT.mode=b.dataset.sm;cfg.statMode=STAT.mode;saveCfg()}));
+  $$('#statsBox [data-sn]').forEach(b=>b.onclick=()=>go2(()=>{const d=+b.dataset.sn;
+    if(mode==='season'){STAT.sy=seasonEff()+d;if(cfg.seasonAuto===false){cfg.seasonPin=STAT.sy;saveCfg()}}
+    else{const A=new Date(STAT.anchor||NOW());if(mode==='month')A.setMonth(A.getMonth()+d);else A.setDate(A.getDate()+d*(mode==='week'?7:1));STAT.anchor=+A}}));
+  $$('#statsBox [data-sc]').forEach(b=>b.onclick=()=>go2(()=>{STAT.anchor=null;STAT.sy=null}));
+  $$('#statsBox [data-snext]').forEach(b=>b.onclick=()=>go2(()=>{cfg.seasonPin=seasonEff()+1;STAT.sy=null;saveCfg()}));
+  $$('#statsBox [data-st]').forEach(b=>b.onclick=()=>go2(()=>{STAT.f.type=b.dataset.st}));
+  const cw=$('#stCrew');if(cw)cw.onchange=()=>go2(()=>{STAT.f.crew=cw.value});
+  const dm=$('#stDemo');if(dm)dm.onchange=()=>go2(()=>{STAT.f.demo=dm.checked});
+  $$('#statsBox .statTrip').forEach(e=>e.onclick=()=>{go('trips');showTrip(e.dataset.id)});
+}
+
+/* ---------- Énergie : schéma animé, cadrans, historique, analyse, passage ---------- */
+const EN={sub:'live',mode:'week',anchor:null,sy:null,rec:null,last:0,saved:0,P:null};
+const enDay=t=>{const d=new Date(t);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const enMid=t=>{const d=new Date(t);d.setHours(0,0,0,0);return+d};
+function enNow(){   // photographie des mesures d'énergie du moment
+  const now=NOW(),bs=Object.values(D.bats).filter(b=>now-b.t<30000),b=bs.find(x=>x.soc!=null&&x.i!=null)||bs.find(x=>x.soc!=null)||bs[0]||null;
+  const sol=Object.values(D.sol).filter(x=>now-x.t<60000),sys=now-D.sys.t<60000?D.sys:{};
+  const solW=sol.length?sol.reduce((a,x)=>a+(x.w||0),0):(sys.solar!=null?sys.solar:null);
+  let cons=sys.consumption!=null?sys.consumption:null;const alt=sys.alternator!=null?sys.alternator:null,shore=sys.shore!=null?sys.shore:null,ac=sys.acLoad!=null?sys.acLoad:null;
+  if(cons==null&&b&&b.i!=null&&b.v!=null&&shore==null)cons=Math.max(0,(solW||0)+(alt||0)-b.v*b.i);
+  const tk=t=>Object.values(D.tanks).find(k=>k.type===t&&now-k.t<120000);
+  return{b,solW,cons,alt,shore,ac,fuel:tk('fuel'),water:tk('freshWater'),grey:tk('wasteWater'),black:tk('blackWater')};
+}
+async function enSample(){
+  if(cfg.src==='demo')return;
+  const now=NOW(),dt=EN.last?Math.min(120,(now-EN.last)/1000):0;EN.last=now;if(!dt)return;
+  const e=enNow();if(!e.b&&e.solW==null&&e.cons==null)return;
+  const id=enDay(now);
+  if(!EN.rec||EN.rec.id!==id){if(EN.rec)try{await db.put('energy',EN.rec)}catch(x){}
+    let r=null;try{r=(await db.all('energy')).find(x=>x.id===id)}catch(x){}
+    EN.rec=r||{id,day:enMid(now),h:Array(24).fill(null)}}
+  const h=new Date(now).getHours(),k=EN.rec.h[h]||(EN.rec.h[h]={dt:0,n:0,sol:0,cons:0,alt:0,shore:0,ahIn:0,ahOut:0,socMin:null,socMax:null,socS:0,vS:0,fu0:null,fu1:null,wa0:null,wa1:null,cl:0,clN:0,tw:0,twN:0,mot:0,nav:0});
+  k.dt+=dt;k.n++;
+  if(e.solW!=null)k.sol+=e.solW*dt/3600;if(e.cons!=null)k.cons+=e.cons*dt/3600;if(e.alt!=null)k.alt+=e.alt*dt/3600;if(e.shore!=null)k.shore+=e.shore*dt/3600;
+  if(e.b){if(e.b.i!=null){if(e.b.i>0)k.ahIn+=e.b.i*dt/3600;else k.ahOut-=e.b.i*dt/3600}if(e.b.v!=null)k.vS+=e.b.v;
+    if(e.b.soc!=null){k.socMin=k.socMin==null?e.b.soc:Math.min(k.socMin,e.b.soc);k.socMax=k.socMax==null?e.b.soc:Math.max(k.socMax,e.b.soc);k.socS+=e.b.soc}}
+  if(e.fuel){if(k.fu0==null)k.fu0=e.fuel.lvl;k.fu1=e.fuel.lvl}if(e.water){if(k.wa0==null)k.wa0=e.water.lvl;k.wa1=e.water.lvl}
+  if(WX.src&&WX.cloud!=null){k.cl+=WX.cloud;k.clN++}if(fresh('tws')){k.tw+=D.tws;k.twN++}
+  (EN.net||(EN.net=[])).push({t:now,w:(e.cons||0)-(e.solW||0)-(e.alt||0)});while(EN.net.length&&now-EN.net[0].t>40*60e3)EN.net.shift();
+  if(fresh('rpm')&&D.rpm>=300)k.mot+=dt;if(fresh('sog')&&D.sog>1.5)k.nav+=dt;
+  if(now-EN.saved>60000){EN.saved=now;try{await db.put('energy',EN.rec)}catch(x){}}
+}
+setInterval(()=>{enSample().catch(()=>{})},10000);
+/* historique de démonstration (jamais enregistré) : de quoi voir à quoi ressemble l'analyse */
+function enDemo(a,b){
+  const out=[],end=Math.min(b,NOW());let t=Math.max(a,enMid(NOW())-200*864e5);
+  for(;t<=end;t+=864e5){const d=new Date(t),n=Math.round(t/864e5),cl=Math.max(0,Math.min(1,.5+.42*Math.sin(n*1.7)+.15*Math.sin(n*.5))),nav=n%3===0,mo=nav&&n%6===0?2:0,h=Array(24).fill(null);
+    let soc=70+25*Math.sin(n*.9);
+    for(let i=0;i<24;i++){const sun=Math.max(0,Math.sin(Math.PI*(i-6)/14)),sw=(420*sun*(1-.8*cl)),nv=nav&&i>=9&&i<17,c=48+(nv?72:0)+(i>=19&&i<=23?55:0)+((n+i)%5)*3,al=mo&&i>=9&&i<11?520:0;
+      soc=Math.max(18,Math.min(100,soc+(sw+al-c)/38));
+      h[i]={dt:3600,n:360,sol:sw,cons:c,alt:al,shore:0,ahIn:(sw+al)/13,ahOut:c/13,socMin:soc-1,socMax:soc+1,socS:soc*360,vS:12.8*360,fu0:null,fu1:null,wa0:null,wa1:null,cl:cl*360,clN:360,tw:(8+8*Math.abs(Math.sin(n*.7)))*360,twN:360,mot:al?3600:0,nav:nv?3600:0}}
+    out.push({id:enDay(t),day:t,h,demo:1})}
+  return out;
+}
+async function enLoad(a,b){if(cfg.src==='demo')return enDemo(a,b);let all=[];try{all=await db.all('energy')}catch(e){}if(EN.rec&&!all.find(x=>x.id===EN.rec.id))all.push(EN.rec);else if(EN.rec)all=all.map(x=>x.id===EN.rec.id?EN.rec:x);return all.filter(r=>r.day>=a&&r.day<=b)}
+const enSum=(ks)=>{const o={sol:0,cons:0,alt:0,shore:0,ahIn:0,ahOut:0,dt:0,socMin:null,socS:0,socN:0,nav:0,mot:0,cl:0,clN:0,tw:0,twN:0,fu0:null,fu1:null,wa0:null,wa1:null};
+  ks.forEach(k=>{if(!k)return;['sol','cons','alt','shore','ahIn','ahOut','dt','nav','mot','cl','clN','tw','twN'].forEach(f=>o[f]+=k[f]||0);
+    if(k.socMin!=null){o.socMin=o.socMin==null?k.socMin:Math.min(o.socMin,k.socMin);o.socS+=k.socS;o.socN+=k.n}
+    if(k.fu0!=null){if(o.fu0==null)o.fu0=k.fu0;o.fu1=k.fu1}if(k.wa0!=null){if(o.wa0==null)o.wa0=k.wa0;o.wa1=k.wa1}});return o};
+const enUnit=m=>m==='day'?'hour':(m==='year'||m==='total')?'month':(m==='quarter'||m==='season')?'week':'day';
+function enSeries(recs,p,mode){
+  const u=enUnit(mode),m=new Map(),key=(t,hh)=>{const d=new Date(t);if(u==='hour')return hh;if(u==='day')return enDay(t);if(u==='week')return wkStart(t);return d.getFullYear()*12+d.getMonth()};
+  recs.forEach(r=>r.h.forEach((k,hh)=>{if(!k)return;const kk=key(r.day,hh);(m.get(kk)||m.set(kk,[]).get(kk)).push(k)}));
+  const out=[];
+  if(u==='hour')for(let i=0;i<24;i++)out.push({l:String(i),t:i,s:enSum(m.get(i)||[])});
+  else if(u==='day')for(let t=p.a;t<=p.b;t+=864e5){const d=new Date(t);out.push({l:mode==='week'?d.toLocaleDateString(LOC(),{weekday:'short'}).slice(0,2):String(d.getDate()),t,s:enSum(m.get(enDay(t))||[])})}
+  else if(u==='week'){for(let t=wkStart(Math.max(p.a,recs[0]?recs[0].day:p.a));t<=p.b&&t<=NOW();t+=7*864e5)out.push({l:'S'+isoWeek(t),t,s:enSum(m.get(t)||[])})}
+  else{[...m.keys()].sort((a,b)=>a-b).forEach(kk=>out.push({l:MONTHS_FR[kk%12].slice(0,3),t:kk,s:enSum(m.get(kk))}))}
+  return out;
+}
+/* ----- schéma électrique animé ----- */
+function enSchemaBuild(){
+  const node=(id,x,y,w,h,ic,lab,c)=>`<g id="n_${id}"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="12" fill="var(--card)" stroke="${c}" stroke-width="2"/><text x="${x+w/2}" y="${y+h/2-3}" text-anchor="middle" font-size="19">${ic}</text><text x="${x+w/2}" y="${y+h-10}" text-anchor="middle" style="font:600 9.5px system-ui;fill:var(--mut)">${lab}</text><text id="v_${id}" x="${x+w/2}" y="${y-5}" text-anchor="middle" style="font:700 11px var(--num);fill:${c}"></text></g>`;
+  const wire=(id,d,c)=>`<path d="${d}" fill="none" stroke="${c}" stroke-opacity=".22" stroke-width="3" stroke-linecap="round"/><path id="w_${id}" class="enw" d="${d}" fill="none" stroke="${c}" stroke-width="3" stroke-linecap="round" stroke-dasharray="7 9" style="opacity:0"/>`;
+  return `<svg id="enSvg" viewBox="0 0 400 290" width="100%" role="img" aria-label="Schéma de l'installation électrique"><style>.enw{animation:enf 1s linear infinite}@keyframes enf{to{stroke-dashoffset:-32}}@media(prefers-reduced-motion:reduce){.enw{animation:none}}</style>
+  <defs><linearGradient id="enBat" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#1f9d62"/><stop offset="1" stop-color="#7fe3a8"/></linearGradient><filter id="enGl"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+  ${wire('sm','M86 41H112','#F2994A')}${wire('mb','M182 41H198Q214 41 214 70V96','#F2994A')}
+  ${wire('sc','M86 125H112','#4FB3E8')}${wire('cb','M182 125H214','#4FB3E8')}
+  ${wire('ab','M86 209H150Q214 209 214 196','#E5484D')}
+  ${wire('bl','M276 135H306','#B07CF2')}${wire('bi','M276 205H306','#B07CF2')}
+  ${node('sol',8,16,78,50,'☀️','Panneaux','#F2994A')}${node('mppt',112,16,70,50,'🔆','MPPT','#F2994A')}
+  ${node('shore',8,100,78,50,'🔌','Quai 230 V','#4FB3E8')}${node('chg',112,100,70,50,'🔋','Chargeur','#4FB3E8')}
+  ${node('alt',8,184,78,50,'⚙️','Alternateur','#E5484D')}
+  <g id="n_bat"><rect x="196" y="96" width="82" height="112" rx="14" fill="var(--card)" stroke="#2FB67C" stroke-width="2.5"/><clipPath id="enBc"><rect x="199" y="99" width="76" height="106" rx="11"/></clipPath><rect id="enFill" x="199" y="205" width="76" height="0" fill="url(#enBat)" clip-path="url(#enBc)" opacity=".85" style="transition:all 1.2s"/>
+   <text x="237" y="136" text-anchor="middle" style="font:700 24px var(--num);fill:var(--tx)" id="v_soc">--</text><text x="237" y="156" text-anchor="middle" style="font:600 11px var(--num);fill:var(--tx)" id="v_bv"></text><text x="237" y="172" text-anchor="middle" style="font:600 11px var(--num);fill:var(--tx)" id="v_bi"></text>
+   <text x="237" y="196" text-anchor="middle" style="font:600 9.5px system-ui;fill:var(--mut)">Batteries</text></g>
+  <g id="n_shunt"><rect x="283" y="156" width="18" height="26" rx="5" fill="var(--card)" stroke="var(--mut)"/><text x="292" y="173" text-anchor="middle" font-size="10">Σ</text></g>
+  ${node('l12',306,106,88,50,'💡','Conso 12 V','#B07CF2')}${node('l230',306,184,88,50,'🧊','Conso 230 V','#B07CF2')}
+  <text id="v_net" x="200" y="272" text-anchor="middle" style="font:700 15px var(--num);fill:var(--tx)"></text></svg>`;
+}
+function enSchemaUpd(e){
+  const root=$('#enSvg');if(!root)return;const q=s=>root.querySelector(s);
+  const flow=(id,w,max)=>{const el=q('#w_'+id);if(!el)return;const on=w!=null&&w>3;el.style.opacity=on?1:0;if(on){el.style.strokeWidth=(2.5+Math.min(4,w/max*4)).toFixed(1);el.style.animationDuration=Math.max(.35,1.6-Math.min(1.2,w/max*1.2)).toFixed(2)+'s'}};
+  const dim=(id,on)=>{const g=q('#n_'+id);if(g)g.style.opacity=on?1:.4};
+  const set2=(id,t)=>{const el=q('#v_'+id);if(el)el.textContent=t};
+  const sw=e.solW,sh=e.shore,al=e.alt,cn=e.cons,ac=e.ac,b=e.b;
+  flow('sm',sw,500);flow('mb',sw,500);flow('sc',sh,1500);flow('cb',sh,1500);flow('ab',al,800);flow('bl',cn,400);flow('bi',ac,1500);
+  dim('sol',sw!=null);dim('mppt',sw!=null);dim('shore',sh!=null&&sh>3);dim('chg',sh!=null&&sh>3);dim('alt',al!=null&&al>3);dim('l12',cn!=null);dim('l230',ac!=null&&ac>3);
+  set2('sol',sw!=null?Math.round(sw)+' W':'');set2('shore',sh!=null&&sh>3?Math.round(sh)+' W':'');set2('alt',al!=null&&al>3?Math.round(al)+' W':'');set2('l12',cn!=null?Math.round(cn)+' W':'');set2('l230',ac!=null&&ac>3?Math.round(ac)+' W':'');
+  set2('mppt','');set2('chg','');
+  const soc=b&&b.soc!=null?b.soc:null;set2('soc',soc!=null?Math.round(soc)+'%':'--');set2('bv',b&&b.v!=null?b.v.toFixed(2)+' V':'');set2('bi',b&&b.i!=null?(b.i>0?'+':'')+b.i.toFixed(1)+' A':'');
+  const f=q('#enFill');if(f&&soc!=null){const h=106*Math.max(0,Math.min(100,soc))/100;f.setAttribute('y',205-h);f.setAttribute('height',h);f.setAttribute('fill',soc<20?'#E5484D':soc<50?'#F2B134':'url(#enBat)')}
+  const prod=(sw||0)+(al||0)+(sh||0),use=(cn||0)+(ac||0);
+  set2('net',(sw!=null||cn!=null)?`Production ${Math.round(prod)} W · Consommation ${Math.round(use)} W`:'en attente des données…');
+}
+/* ----- cadrans ----- */
+function enGauge(p,color,val,lab,sub,max){   // arc de 270°
+  const R=38,C=2*Math.PI*R,f=Math.max(0,Math.min(1,p));
+  return `<div class="engg"><svg viewBox="0 0 100 92" width="100%"><g transform="rotate(135 50 50)"><circle cx="50" cy="50" r="${R}" fill="none" stroke="var(--line)" stroke-width="9" stroke-dasharray="${(C*.75).toFixed(1)} ${C.toFixed(1)}" stroke-linecap="round"/><circle cx="50" cy="50" r="${R}" fill="none" stroke="${color}" stroke-width="9" stroke-dasharray="${(C*.75*f).toFixed(1)} ${C.toFixed(1)}" stroke-linecap="round" style="filter:drop-shadow(0 0 3px ${color})"/></g><text x="50" y="52" text-anchor="middle" style="font:700 15px var(--num);fill:var(--tx)">${esc(val)}</text><text x="50" y="66" text-anchor="middle" style="font:500 7px system-ui;fill:var(--mut)">${esc((sub||'').slice(0,22))}</text></svg><div class="engl">${esc(lab)}</div></div>`;
+}
+function enGauges(e){
+  const g=[],b=e.b,col=p=>p<.2?'var(--bad)':p<.5?'var(--warn)':'var(--ok)';
+  if(b&&b.soc!=null)g.push(enGauge(b.soc/100,col(b.soc/100),Math.round(b.soc)+'%','Charge batterie',cfg.batAh?Math.round(cfg.batAh*b.soc/100)+' / '+cfg.batAh+' Ah':''));
+  if(b&&b.v!=null)g.push(enGauge((b.v-11.5)/(14.8-11.5),b.v<12?'var(--bad)':b.v<12.4?'var(--warn)':'var(--wind)',b.v.toFixed(2)+' V','Tension','11,5 → 14,8 V'));
+  if(b&&b.i!=null)g.push(enGauge(Math.min(1,Math.abs(b.i)/60),b.i>=0?'var(--ok)':'var(--acc)',(b.i>0?'+':'')+b.i.toFixed(1)+' A','Courant batterie',b.i>=0?'charge':'décharge'));
+  if(b&&b.i!=null&&b.i<-.3&&cfg.batAh&&b.soc!=null){const h=cfg.batAh*Math.max(0,(b.soc-(cfg.reserve||30)))/100/-b.i;g.push(enGauge(Math.min(1,h/48),h<6?'var(--bad)':h<18?'var(--warn)':'var(--ok)',h>=48?Math.round(h/24)+' j':h.toFixed(h<10?1:0)+' h','Autonomie jusqu’à la réserve','réserve '+(cfg.reserve||30)+' %'))}
+  else if(b&&b.tr!=null&&b.tr>0)g.push(enGauge(Math.min(1,b.tr/48),b.tr<6?'var(--bad)':'var(--ok)',b.tr>=48?Math.round(b.tr/24)+' j':b.tr.toFixed(1)+' h','Autonomie (Victron)',''));
+  if(e.solW!=null)g.push(enGauge(Math.min(1,e.solW/Math.max(100,cfg.solWc||600)),'var(--warn)',Math.round(e.solW)+' W','Production solaire',cfg.solWc?'sur '+cfg.solWc+' Wc':''));
+  if(e.cons!=null)g.push(enGauge(Math.min(1,e.cons/400),'#B07CF2',Math.round(e.cons)+' W','Consommation',''));
+  if(e.fuel){const p=e.fuel.lvl/100,L=cfg.fuelL?Math.round(cfg.fuelL*p)+' L':'';let au='';const fr=fresh('fuelRate')&&D.fuelRate>0?D.fuelRate:null;if(fr&&cfg.fuelL)au=Math.round(cfg.fuelL*p/fr)+' h moteur';g.push(enGauge(p,p<.15?'var(--bad)':p<.3?'var(--warn)':'var(--wind)',Math.round(e.fuel.lvl)+'%','Gasoil',au||L))}
+  if(e.water){const p=e.water.lvl/100;g.push(enGauge(p,p<.15?'var(--bad)':p<.3?'var(--warn)':'#4FB3E8',Math.round(e.water.lvl)+'%','Eau douce',cfg.waterL?Math.round(cfg.waterL*p)+' L':''))}
+  if(e.grey)g.push(enGauge(e.grey.lvl/100,e.grey.lvl>80?'var(--bad)':'var(--mut)',Math.round(e.grey.lvl)+'%','Eaux grises',''));
+  if(e.black)g.push(enGauge(e.black.lvl/100,e.black.lvl>80?'var(--bad)':'var(--mut)',Math.round(e.black.lvl)+'%','Eaux noires',''));
+  Object.entries(D.temps).filter(([,x])=>NOW()-x.t<120000&&x.c!=null).slice(0,3).forEach(([n,x])=>g.push(enGauge((x.c+5)/40,x.c>8&&/frigo|fridge|koel/i.test(n)?'var(--bad)':'var(--wind)',x.c.toFixed(1)+'°',n,x.h!=null?Math.round(x.h)+' % hum.':'')));
+  return g.length?g.join(''):'<div class="mut" style="grid-column:1/-1;padding:12px">En attente des données (Cerbo GX, Signal K ou NMEA 2000).</div>';
+}
+/* ----- vues ----- */
+function enBarChart(ser,mode){
+  const mx=Math.max(1,...ser.map(x=>Math.max(x.s.sol+x.s.alt,x.s.cons))),W=340,H=140,n=ser.length,bw=W/n,step=Math.ceil(n/12);
+  const u=Wh=>Wh/mx*(H-24);
+  const bars=ser.map((x,i)=>{const gx=i*bw,w=Math.max(1.5,bw*.38);return`<rect x="${(gx+bw*.08).toFixed(1)}" y="${(H-u(x.s.sol+x.s.alt)).toFixed(1)}" width="${w.toFixed(1)}" height="${Math.max(0,u(x.s.sol+x.s.alt)).toFixed(1)}" rx="1.5" fill="#F2994A"/><rect x="${(gx+bw*.08+w+1).toFixed(1)}" y="${(H-u(x.s.cons)).toFixed(1)}" width="${w.toFixed(1)}" height="${Math.max(0,u(x.s.cons)).toFixed(1)}" rx="1.5" fill="#B07CF2"/>${i%step===0?`<text x="${(gx+bw/2).toFixed(1)}" y="${H+12}" text-anchor="middle" style="font:9px system-ui;fill:var(--mut)">${esc(x.l)}</text>`:''}`}).join('');
+  const pts=ser.map((x,i)=>x.s.socMin!=null?[(i*bw+bw/2).toFixed(1),(H-x.s.socMin/100*(H-24)).toFixed(1)]:null).filter(Boolean);
+  return `<svg viewBox="0 0 ${W} ${H+16}" width="100%"><line x1="0" y1="${H}" x2="${W}" y2="${H}" stroke="var(--line)"/>${bars}${pts.length>1?`<polyline points="${pts.map(p=>p.join(',')).join(' ')}" fill="none" stroke="#2FB67C" stroke-width="2" stroke-linejoin="round"/>`:''}</svg>
+  <div class="mut" style="font-size:12px;display:flex;gap:14px;flex-wrap:wrap"><span style="color:#F2994A">■ Production</span><span style="color:#B07CF2">■ Consommation</span><span style="color:#2FB67C">― Charge mini</span><span>échelle max ${mx>=1000?(mx/1000).toFixed(1)+' kWh':Math.round(mx)+' Wh'}</span></div>`;
+}
+function enScatter(days){
+  const pts=days.filter(d=>d.s.clN>0&&d.s.sol>20).map(d=>[d.s.cl/d.s.clN*100,d.s.sol]);if(pts.length<5)return'';
+  const n=pts.length,sx=pts.reduce((a,p)=>a+p[0],0),sy=pts.reduce((a,p)=>a+p[1],0),sxx=pts.reduce((a,p)=>a+p[0]*p[0],0),sxy=pts.reduce((a,p)=>a+p[0]*p[1],0),den=n*sxx-sx*sx||1,b=(n*sxy-sx*sy)/den,a=(sy-b*sx)/n,my=Math.max(...pts.map(p=>p[1]))*1.1;
+  const X=c=>20+c/100*310,Y=w=>130-w/my*120;
+  return `<svg viewBox="0 0 340 150" width="100%"><line x1="20" y1="130" x2="330" y2="130" stroke="var(--line)"/><line x1="20" y1="10" x2="20" y2="130" stroke="var(--line)"/>${pts.map(p=>`<circle cx="${X(p[0]).toFixed(1)}" cy="${Y(p[1]).toFixed(1)}" r="3.5" fill="#F2994A" fill-opacity=".8"/>`).join('')}<line x1="${X(0)}" y1="${Y(a).toFixed(1)}" x2="${X(100)}" y2="${Y(a+b*100).toFixed(1)}" stroke="var(--tx)" stroke-dasharray="4 4"/><text x="175" y="146" text-anchor="middle" style="font:9px system-ui;fill:var(--mut)">nébulosité moyenne du jour (%)</text><text x="4" y="12" style="font:9px system-ui;fill:var(--mut)">Wh</text></svg><div class="mut" style="font-size:12px">Chaque point est un jour : la droite montre ce que coûte un ciel couvert à ta production (≈ ${Math.round(-b*10)} Wh de moins par tranche de 10 % de nuages).</div>`;
+}
+function enInsights(days,tot){
+  const o=[];const act=days.filter(d=>d.s.dt>600);if(!act.length)return o;
+  const bal=tot.sol+tot.alt+tot.shore-tot.cons,neg=act.filter(d=>d.s.sol+d.s.alt+d.s.shore<d.s.cons).length;
+  o.push(`${neg} jour${neg>1?'s':''} sur ${act.length} ${neg>1?'ont':'a'} consommé plus qu'il n'a été produit${neg?' (déficit à combler par le moteur ou le quai)':''}.`);
+  const nv=act.filter(d=>d.s.nav>d.s.dt*.4),an=act.filter(d=>d.s.nav<=d.s.dt*.1);
+  if(nv.length>=2&&an.length>=2){const a=nv.reduce((s,d)=>s+d.s.cons/(d.s.dt/3600),0)/nv.length,b=an.reduce((s,d)=>s+d.s.cons/(d.s.dt/3600),0)/an.length;if(b>0)o.push(`En navigation tu consommes en moyenne ${Math.round(a)} W, au mouillage ${Math.round(b)} W (${a>b?'+':''}${Math.round((a/b-1)*100)} %).`)}
+  const cl=act.filter(d=>d.s.clN>0);if(cl.length>=4){const sunny=cl.filter(d=>d.s.cl/d.s.clN<.3),cloudy=cl.filter(d=>d.s.cl/d.s.clN>.7);if(sunny.length&&cloudy.length){const a=sunny.reduce((s,d)=>s+d.s.sol,0)/sunny.length,b=cloudy.reduce((s,d)=>s+d.s.sol,0)/cloudy.length;o.push(`Journée dégagée : ${Math.round(a)} Wh produits ; journée couverte : ${Math.round(b)} Wh (${Math.round((1-b/Math.max(1,a))*100)} % de moins).`)}}
+  const low=act.filter(d=>d.s.socMin!=null).sort((a,b)=>a.s.socMin-b.s.socMin)[0];if(low)o.push(`Charge la plus basse : ${Math.round(low.s.socMin)} % le ${new Date(low.t).toLocaleDateString(LOC(),{day:'numeric',month:'long'})}.`);
+  if(tot.mot>0&&tot.alt>0)o.push(`Le moteur a tourné ${(tot.mot/3600).toFixed(1)} h et recharge environ ${Math.round(tot.alt/(tot.mot/3600))} W en moyenne.`);
+  return o;
+}
+async function enAnalyse(){
+  const p=statPeriod(EN.mode,0,EN),days0=await enLoad(p.a===-Infinity?0:p.a,p.b===Infinity?NOW():p.b),ser=enSeries(days0,p,EN.mode);
+  const dd=days0.map(r=>({t:r.day,s:enSum(r.h)}));
+  EN.last_=({p,ser,dd});
+  const tot=enSum(days0.flatMap(r=>r.h)),fmt=v=>Math.abs(v)>=1000?(v/1000).toFixed(2)+' kWh':Math.round(v)+' Wh';
+  const modes=[['day','Jour'],['week','Semaine'],['month','Mois'],['quarter','Trimestre'],['year','Année'],['season','Saison']];
+  const hrs=tot.dt/3600,prod=tot.sol+tot.alt+tot.shore,fu=tot.fu0!=null&&tot.fu1!=null?tot.fu0-tot.fu1:null,wa=tot.wa0!=null&&tot.wa1!=null?tot.wa0-tot.wa1:null;
+  const kpi=(l,v,c)=>`<div><span class="mut">${l}</span><b style="${c?'color:'+c:''}">${v}</b></div>`;
+  const ins=enInsights(dd,tot);
+  let cmpHtml='';
+  if(EN.cmp&&EN.cmp!=='off'&&EN.mode!=='total'){
+    const offs={day:[-1,-365],week:[-1,-52],month:[-1,-12],quarter:[-1,-4],year:[-1,-1],season:[-1,-1]}[EN.mode],off=EN.cmp==='year'?offs[1]:offs[0],p2=statPeriod(EN.mode,off,EN),d2=await enLoad(p2.a,p2.b),ser2=enSeries(d2,p2,EN.mode),t2=enSum(d2.flatMap(r=>r.h)),pr2=t2.sol+t2.alt+t2.shore;
+    const row=(l,a,b,f,good)=>{const d=b?((a-b)/Math.abs(b)*100):null;return`<tr><td>${l}</td><td>${f(a)}</td><td>${f(b)}</td><td style="color:${d==null||Math.abs(d)<1?'var(--mut)':(d>0)===good?'var(--ok)':'var(--bad)'}">${d==null?'–':(d>0?'+':'')+Math.round(d)+' %'}</td></tr>`};
+    const cum=sr=>{let c=0;return sr.map(x=>c+=x.s.sol+x.s.alt+x.s.shore-x.s.cons)},c1=cum(ser),c2=cum(ser2),n=Math.max(c1.length,c2.length,2),all=[...c1,...c2,0],mn=Math.min(...all),mx=Math.max(...all),rg=(mx-mn)||1,X=i=>20+i/(n-1)*310,Y=v=>120-(v-mn)/rg*105;
+    const ln=(c,col,dash)=>c.length>1?`<polyline points="${c.map((v,i)=>X(i).toFixed(1)+','+Y(v).toFixed(1)).join(' ')}" fill="none" stroke="${col}" stroke-width="2.5" ${dash?'stroke-dasharray="5 4"':''} stroke-linejoin="round"/>`:'';
+    cmpHtml=`<div class="card"><b>Comparaison avec ${esc(p2.label)}</b><div style="overflow:auto"><table style="width:100%;font-size:13px;margin-top:6px"><tr><th></th><th>${esc(p.label)}</th><th>${esc(p2.label)}</th><th>Écart</th></tr>
+     ${row('Production',prod,pr2,fmt,true)}${row('Consommation',tot.cons,t2.cons,fmt,false)}${row('Solaire',tot.sol,t2.sol,fmt,true)}${row('Moteur (h)',tot.mot/3600,t2.mot/3600,v=>v.toFixed(1),false)}${row('Navigation (h)',tot.nav/3600,t2.nav/3600,v=>v.toFixed(1),true)}${t2.socMin!=null&&tot.socMin!=null?row('Charge mini (%)',tot.socMin,t2.socMin,v=>Math.round(v),true):''}</table></div>
+     <svg viewBox="0 0 340 134" width="100%" style="margin-top:8px"><line x1="20" y1="${Y(0).toFixed(1)}" x2="330" y2="${Y(0).toFixed(1)}" stroke="var(--line)"/>${ln(c2,'var(--mut)',1)}${ln(c1,'#F2994A')}</svg>
+     <div class="mut" style="font-size:12px">Bilan cumulé (production − consommation) : <span style="color:#F2994A">― ${esc(p.label)}</span> · <span>- - ${esc(p2.label)}</span></div></div>`}
+  return `<div class="card"><div style="display:flex;gap:6px;flex-wrap:wrap">${modes.map(([k,l])=>`<button type="button" data-em="${k}" class="spb${EN.mode===k?' on':''}">${l}</button>`).join('')}</div>
+   <div class="spn" style="margin-top:12px"><button type="button" data-en="-1" aria-label="Période précédente">‹</button><div style="text-align:center;flex:1"><b style="font:600 20px var(--num);text-transform:capitalize">${esc(p.label)}</b><div class="mut" style="font-size:13px">${esc(p.sub)}</div></div><button type="button" data-en="1" aria-label="Période suivante">›</button></div>
+   <div style="text-align:center;margin-top:8px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap"><button type="button" data-ec="1" class="spb">Période en cours</button><button type="button" data-ex="csv" class="spb">CSV</button><button type="button" data-ex="pdf" class="spb">PDF</button></div><div style="display:flex;gap:6px;justify-content:center;align-items:center;margin-top:8px;flex-wrap:wrap"><span class="mut" style="font-size:13px">Comparer :</span>${[['off','Non'],['prev','Précédente'],['year','Un an avant']].map(([k,l])=>`<button type="button" data-cmp="${k}" class="spb${(EN.cmp||'off')===k?' on':''}">${l}</button>`).join('')}</div>${cfg.src==='demo'?'<div class="mut" style="font-size:12px;text-align:center;margin-top:6px">Données de démonstration (non enregistrées).</div>':''}</div>
+  ${hrs<.05?`<div class="card mut">Pas encore de mesures d'énergie sur cette période. L'historique s'enregistre tout seul dès que l'appli reçoit des données de batterie, de solaire ou de consommation (Cerbo GX, Signal K ou NMEA 2000), même sans trajet en cours.</div>`:`
+  <div class="card"><div class="stats">${kpi('Production',fmt(prod),'#F2994A')}${kpi('Consommation',fmt(tot.cons),'#B07CF2')}${kpi('Bilan',(prod-tot.cons>=0?'+':'−')+fmt(Math.abs(prod-tot.cons)),prod>=tot.cons?'var(--ok)':'var(--bad)')}${kpi('Solaire',fmt(tot.sol),'#F2994A')}${kpi('Alternateur · quai',fmt(tot.alt)+' · '+fmt(tot.shore))}
+   ${kpi('Charge mini',tot.socMin!=null?Math.round(tot.socMin)+' %':'--')}${kpi('Charge moyenne',tot.socN?Math.round(tot.socS/tot.socN)+' %':'--')}${kpi('En navigation',(tot.nav/3600).toFixed(1)+' h')}${kpi('Au mouillage',Math.max(0,hrs-tot.nav/3600).toFixed(0)+' h')}${kpi('Moteur',(tot.mot/3600).toFixed(1)+' h')}
+   ${fu!=null?kpi('Gasoil utilisé',(fu>0?Math.round(fu):0)+' pts'+(cfg.fuelL?' ≈ '+Math.round(cfg.fuelL*Math.max(0,fu)/100)+' L':'')):''}${wa!=null?kpi('Eau douce utilisée',(wa>0?Math.round(wa):0)+' pts'+(cfg.waterL?' ≈ '+Math.round(cfg.waterL*Math.max(0,wa)/100)+' L':'')):''}</div></div>
+  <div class="card"><b>Production et consommation</b>${enBarChart(ser,EN.mode)}</div>
+  ${cmpHtml}
+  ${ins.length?`<div class="card"><b>Ce que disent tes données</b><ul style="margin:8px 0 0 18px;padding:0;line-height:1.5">${ins.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}
+  ${EN.mode!=='day'&&dd.length>=5?`<div class="card"><b>Soleil contre ciel couvert</b>${enScatter(dd)}</div>`:''}
+  ${EN.mode!=='day'&&dd.length?`<div class="card"><b>Jour par jour</b><div class="scroll"><table style="width:100%;font-size:12px"><tr><th>Jour</th><th>Prod.</th><th>Conso</th><th>Bilan</th><th>Ciel</th><th>Nav.</th><th>Moteur</th><th>Mini</th></tr>${dd.slice(-60).reverse().map(d=>{const pr=d.s.sol+d.s.alt+d.s.shore,bl=pr-d.s.cons;return`<tr><td>${new Date(d.t).toLocaleDateString(LOC(),{day:'2-digit',month:'2-digit'})}</td><td>${Math.round(pr)}</td><td>${Math.round(d.s.cons)}</td><td style="color:${bl>=0?'var(--ok)':'var(--bad)'}">${bl>=0?'+':''}${Math.round(bl)}</td><td>${d.s.clN?Math.round(d.s.cl/d.s.clN*100)+'%':'–'}</td><td>${(d.s.nav/3600).toFixed(1)} h</td><td>${(d.s.mot/3600).toFixed(1)} h</td><td>${d.s.socMin!=null?Math.round(d.s.socMin)+'%':'–'}</td></tr>`}).join('')}</table></div><div class="mut" style="font-size:11px">Wh par jour. Ciel : nébulosité moyenne (prévision Windy ou démo).</div></div>`:''}`}`;
+}
+
+function enRows(){
+  const L=EN.last_;if(!L)return[];
+  return L.ser.map(x=>{const s=x.s;return{l:EN.mode==='day'?x.l+' h':(EN.mode==='year'||EN.mode==='total')?x.l:new Date(x.t).toLocaleDateString(LOC(),{day:'2-digit',month:'2-digit',year:'2-digit'}),prod:s.sol+s.alt+s.shore,sol:s.sol,alt:s.alt,shore:s.shore,cons:s.cons,soc:s.socMin,nav:s.nav/3600,mot:s.mot/3600,cl:s.clN?s.cl/s.clN*100:null}})
+}
+function enExport(kind){
+  const L=EN.last_;if(!L)return;const rows=enRows(),name='energie-'+(L.p.label||'periode').replace(/[^\wÀ-ÿ-]+/g,'_');
+  if(kind==='csv'){
+    const h='periode;production_wh;solaire_wh;alternateur_wh;quai_wh;consommation_wh;bilan_wh;charge_mini_pct;navigation_h;moteur_h;nebulosite_pct';
+    download(name+'.csv',h+'\n'+rows.map(r=>[r.l,r.prod,r.sol,r.alt,r.shore,r.cons,r.prod-r.cons,r.soc,r.nav,r.mot,r.cl].map(v=>v==null?'':(typeof v==='number'?+v.toFixed(2):v)).join(';')).join('\n'),'text/csv');return}
+  downloadBin(name+'.pdf',enPdf(L.p,rows),'application/pdf');
+}
+function enPdf(p,rows){
+  const PW=842,PH=595,M=30,pages=[];let cs,y;const newPage=()=>{cs=[];pages.push(cs);y=PH-M};
+  const text=(x,yy,str,sz,bold,col)=>{const b=pdfBytes(str).map(c=>c===40||c===41||c===92?'\\'+String.fromCharCode(c):c<128?String.fromCharCode(c):'\\'+c.toString(8).padStart(3,'0')).join('');cs.push(`BT ${col||'0 g'} /${bold?'F2':'F1'} ${sz} Tf ${x.toFixed(1)} ${yy.toFixed(1)} Td (${b}) Tj ET`)};
+  const rect=(x,yy,w,h,col)=>cs.push(`${col} rg ${x.toFixed(1)} ${yy.toFixed(1)} ${w.toFixed(1)} ${h.toFixed(1)} re f 0 g`);
+  newPage();text(M,y-16,'Energie du bord - '+p.label,18,true);y-=26;if(p.sub){text(M,y-9,p.sub,9,false,'0.3 g');y-=14}
+  const tp=rows.reduce((a,r)=>a+r.prod,0),tc=rows.reduce((a,r)=>a+r.cons,0),f=v=>Math.abs(v)>=1000?(v/1000).toFixed(2)+' kWh':Math.round(v)+' Wh';
+  text(M,y-9,`Production ${f(tp)}   Consommation ${f(tc)}   Bilan ${tp-tc>=0?'+':'-'}${f(Math.abs(tp-tc))}   Moteur ${rows.reduce((a,r)=>a+r.mot,0).toFixed(1)} h   Navigation ${rows.reduce((a,r)=>a+r.nav,0).toFixed(1)} h`,10,true);y-=22;
+  // histogramme production / consommation
+  const CH=130,mx=Math.max(1,...rows.map(r=>Math.max(r.prod,r.cons))),bw=(PW-2*M)/Math.max(1,rows.length),base=y-CH;
+  rows.forEach((r,i)=>{const w=Math.max(1,bw*.38),x=M+i*bw+bw*.08;rect(x,base,w,r.prod/mx*(CH-14),'0.95 0.6 0.16');rect(x+w+1,base,w,r.cons/mx*(CH-14),'0.69 0.49 0.95');if(rows.length<=40||i%Math.ceil(rows.length/40)===0)text(x,base-9,String(r.l).slice(0,6),6,false,'0.4 g')});
+  rect(M,y-CH-22,8,8,'0.95 0.6 0.16');text(M+12,y-CH-21,'Production',8,false);rect(M+70,y-CH-22,8,8,'0.69 0.49 0.95');text(M+82,y-CH-21,'Consommation',8,false);y-=CH+34;
+  const cols=[['Periode',70],['Prod. Wh',60],['Solaire',55],['Alternat.',55],['Quai',50],['Conso Wh',60],['Bilan',55],['Charge mini',60],['Nav. h',45],['Moteur h',50],['Ciel %',45]],BOT=M+16;
+  const head=()=>{rect(M,y-13,PW-2*M,14,'0.86 0.91 0.96');let x=M;cols.forEach(c=>{text(x+3,y-9.5,c[0],7.5,true);x+=c[1]});y-=14};head();
+  rows.forEach(r=>{if(y-12<BOT){newPage();head()}const v=[r.l,r.prod,r.sol,r.alt,r.shore,r.cons,r.prod-r.cons,r.soc,r.nav,r.mot,r.cl];let x=M;v.forEach((c,i)=>{text(x+3,y-9,c==null?'':(typeof c==='number'?(i>=8?c.toFixed(1):Math.round(c)+''):String(c)),7.5,false,i===6&&c<0?'0.8 0 0 rg':'0 g');x+=cols[i][1]});y-=11});
+  const objs=[];const add=q=>{objs.push(q);return objs.length};add('<< /Type /Catalog /Pages 2 0 R >>');add(null);
+  const f1o=add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>'),f2o=add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>'),kids=[];
+  pages.forEach((c,i)=>{c.push(`BT 0.5 g /F1 7.5 Tf ${PW-M-40} ${M-4} Td (${i+1} / ${pages.length}) Tj ET`);const body=c.join('\n'),cid=add(`<< /Length ${body.length} >>\nstream\n${body}\nendstream`),pid=add(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PW} ${PH}] /Resources << /Font << /F1 ${f1o} 0 R /F2 ${f2o} 0 R >> >> /Contents ${cid} 0 R >>`);kids.push(pid+' 0 R')});
+  objs[1]=`<< /Type /Pages /Kids [${kids.join(' ')}] /Count ${kids.length} >>`;
+  let out='%PDF-1.4\n';const offs=[];objs.forEach((o,i)=>{offs.push(out.length);out+=`${i+1} 0 obj\n${o}\nendobj\n`});
+  const xr=out.length;out+=`xref\n0 ${objs.length+1}\n0000000000 65535 f \n`+offs.map(o=>String(o).padStart(10,'0')+' 00000 n \n').join('')+`trailer\n<< /Size ${objs.length+1} /Root 1 0 R >>\nstartxref\n${xr}\n%%EOF`;
+  const u=new Uint8Array(out.length);for(let i=0;i<out.length;i++)u[i]=out.charCodeAt(i)&255;return u;
+}
+/* ----- planificateur de passage ----- */
+function enCloudAt(ts){const r=WXS.raw;if(!r||!r.ts)return null;let k=0,bd=1e18;r.ts.forEach((x,i)=>{const d=Math.abs(x-ts);if(d<bd){bd=d;k=i}});if(bd>6*3600e3)return null;const g=a=>{const v=r[a+'-surface'];return v&&v[k]!=null?v[k]/100:0};return Math.round((1-(1-g('lclouds'))*(1-g('mclouds'))*(1-g('hclouds')))*100)}
+async function enFetchFc(){if(WXS.busy||!cfg.kPoint||!fresh('lat'))return;if(WXS.raw&&Date.now()-WXS.at<30*60e3)return;WXS.busy=true;WXS.at=Date.now();try{WXS.raw=await windyPoint(D.lat,D.lon,'gfs',['lclouds','mclouds','hclouds','precip','wind']);WXS.lat=D.lat;WXS.lon=D.lon;WXS.err=''}catch(e){WXS.raw=null;WXS.err=e.message}WXS.busy=false;if(EN.sub==='pas')renderEnergy()}
+async function enPassage(){
+  enFetchFc();
+  const e=enNow(),P=EN.P||(EN.P=Object.assign({h:24,start:new Date(NOW()).getHours(),mot:0,cl:null,cons:null,soc:null},cfg.enP||{}));
+  const rs=await enLoad(NOW()-60*864e5,NOW()),dd=rs.map(r=>({t:r.day,s:enSum(r.h)})).filter(d=>d.s.dt>3600*6);
+  const navD=dd.filter(d=>d.s.nav>d.s.dt*.3),hrsN=navD.reduce((a,d)=>a+d.s.dt/3600,0),navW=hrsN>10?navD.reduce((a,d)=>a+d.s.cons,0)/hrsN:null;
+  const cl0=WX.src&&WX.cloud!=null?Math.round(WX.cloud*100):null,cons=P.cons!=null?P.cons:Math.round(navW||(e.cons!=null?e.cons:130)),cl=P.cl!=null?P.cl:(cl0!=null?cl0:50),soc0=P.soc!=null?P.soc:(e.b&&e.b.soc!=null?Math.round(e.b.soc):80);
+  // production solaire d'une journée : régression sur l'historique, sinon estimation à partir des Wc
+  let daily,src;const pts=dd.filter(d=>d.s.clN>0&&d.s.sol>20).map(d=>[d.s.cl/d.s.clN*100,d.s.sol]);
+  if(pts.length>=6){const n=pts.length,sx=pts.reduce((a,p)=>a+p[0],0),sy=pts.reduce((a,p)=>a+p[1],0),sxx=pts.reduce((a,p)=>a+p[0]*p[0],0),sxy=pts.reduce((a,p)=>a+p[0]*p[1],0),b=(n*sxy-sx*sy)/(n*sxx-sx*sx||1),a=(sy-b*sx)/n;daily=Math.max(0,a+b*cl);src=`d'après ${pts.length} jours de ton historique`}
+  else{daily=(cfg.solWc||400)*3.2*(1-.8*cl/100);src=cfg.solWc?'estimation à partir de ta puissance solaire (Wc)':'estimation prudente (renseigne ta puissance solaire dans les Réglages)'}
+  const altW=(()=>{const m=dd.reduce((a,d)=>a+d.s.mot,0)/3600,al=dd.reduce((a,d)=>a+d.s.alt,0);return m>2&&al>0?al/m:350})(),capWh=(cfg.batAh||200)*12.8,res=cfg.reserve!=null?cfg.reserve:30;
+  const sh=Array.from({length:24},(_,h)=>Math.max(0,Math.sin(Math.PI*(h-6)/14))),ss=sh.reduce((a,b)=>a+b,0)||1;
+  const fcOk=!!(WXS.raw&&WXS.raw.ts),useFc=fcOk&&P.fc!==false;
+  const dailyAt=c=>{if(pts.length>=6){const n=pts.length,sx=pts.reduce((a,p)=>a+p[0],0),sy=pts.reduce((a,p)=>a+p[1],0),sxx=pts.reduce((a,p)=>a+p[0]*p[0],0),sxy=pts.reduce((a,p)=>a+p[0]*p[1],0),b=(n*sxy-sx*sy)/(n*sxx-sx*sx||1),a=(sy-b*sx)/n;return Math.max(0,a+b*c)}return(cfg.solWc||400)*3.2*(1-.8*c/100)};
+  let t0=enMid(NOW())+P.start*3600e3;if(t0<NOW()-1800e3)t0+=864e5;let fcSum=0;
+  const tr=[soc0];let s=soc0,min=soc0,cum=0;
+  for(let i=0;i<P.h;i++){const hh=(P.start+i)%24,c=useFc?enCloudAt(t0+i*3600e3):null,cc=c!=null?c:cl;if(c!=null)fcSum+=c;const sol=dailyAt(cc)*sh[hh]/ss,al=i<P.mot?altW:0;s+=(sol+al-cons)/capWh*100;s=Math.min(100,s);min=Math.min(min,s);tr.push(s)}
+  const end=tr[tr.length-1],miss=Math.max(0,(res-min)/100*capWh),extra=miss>0?Math.ceil(miss/altW*10)/10:0,ok=min>=res;
+  const W=340,H=150,X=i=>20+i/(tr.length-1||1)*310,Y=v=>H-8-Math.max(0,Math.min(100,v))/100*(H-24);
+  const chart=`<svg viewBox="0 0 340 ${H+14}" width="100%"><rect x="20" y="${Y(res)}" width="310" height="${H-8-Y(res)}" fill="var(--bad)" fill-opacity=".08"/><line x1="20" y1="${Y(res)}" x2="330" y2="${Y(res)}" stroke="var(--bad)" stroke-dasharray="5 4"/><text x="326" y="${Y(res)-4}" text-anchor="end" style="font:9px system-ui;fill:var(--bad)">réserve ${res} %</text><polyline points="${tr.map((v,i)=>X(i).toFixed(1)+','+Y(v).toFixed(1)).join(' ')}" fill="none" stroke="${ok?'#2FB67C':'#E5484D'}" stroke-width="3" stroke-linejoin="round" style="filter:drop-shadow(0 0 3px ${ok?'#2FB67C':'#E5484D'})"/><text x="20" y="${H+8}" style="font:9px system-ui;fill:var(--mut)">départ ${String(P.start).padStart(2,'0')} h</text><text x="330" y="${H+8}" text-anchor="end" style="font:9px system-ui;fill:var(--mut)">+${P.h} h</text><text x="2" y="${Y(100)+3}" style="font:9px system-ui;fill:var(--mut)">100</text><text x="2" y="${Y(0)+3}" style="font:9px system-ui;fill:var(--mut)">0</text></svg>`;
+  const inp=(id,l,v,u,step)=>`<div style="flex:1;min-width:120px"><label>${l}</label><input id="pa_${id}" type="number" inputmode="decimal" value="${v}" step="${step||1}" style="margin-top:2px"><span class="mut" style="font-size:11px">${u}</span></div>`;
+  return `<div class="card"><b>Mon passage</b><div class="mut" style="font-size:13px;margin:2px 0 8px">Simule la charge de tes batteries pendant une traversée et vérifie que tu arrives avec ta réserve.</div>
+   <div style="display:flex;gap:10px;flex-wrap:wrap">${inp('h','Durée',P.h,'heures')}${inp('start','Heure de départ',P.start,'0 à 23 h')}${inp('soc','Charge au départ',soc0,'%')}${inp('cons','Consommation moyenne',cons,navW?'W (ton historique en navigation : '+Math.round(navW)+' W)':'W')}${inp('cl','Nébulosité prévue',cl,cl0!=null?'% (prévision : '+cl0+' %)':'% de ciel couvert')}${inp('mot','Moteur prévu',P.mot,'heures (recharge ≈ '+Math.round(altW)+' W)')}</div></div>
+  <div class="card" style="border-color:${ok?'var(--ok)':'var(--bad)'}"><b style="font-size:18px;color:${ok?'var(--ok)':'var(--bad)'}">${ok?'✔ Passage tenable':'✖ Réserve non tenue'}</b>
+   <div style="margin-top:6px;line-height:1.5">Arrivée avec <b>${Math.round(Math.max(0,end))} %</b> · point bas <b>${Math.round(Math.max(0,min))} %</b> (réserve ${res} %).${min<=0?' <b>Batteries vides avant l’arrivée.</b>':''}${ok?'':` Il manque environ <b>${Math.round(miss)} Wh</b> : prévois <b>${extra.toFixed(1)} h de moteur</b> en plus, ou réduis la consommation d'environ <b>${Math.round(miss/Math.max(1,P.h))} W</b>.`}</div>
+   ${chart}<div class="mut" style="font-size:12px">Production solaire attendue : ${Math.round(daily)} Wh par jour (${src}).${useFc?` Prévision Windy utilisée heure par heure (nébulosité moyenne ${Math.round(fcSum/Math.max(1,P.h))} %).`:''} Batteries : ${cfg.batAh||200} Ah (réglable dans les Réglages).</div>
+   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><label style="display:flex;gap:6px;align-items:center;color:var(--tx);font-size:13px"><input type="checkbox" id="pa_fc" style="width:auto" ${useFc?'checked':''} ${fcOk?'':'disabled'}> Utiliser la prévision Windy${fcOk?'':' (indisponible : clé Windy Point Forecast et position GPS requises)'}</label></div>
+   <div style="margin-top:10px">${cfg.enWatch&&cfg.enWatch.t0+cfg.enWatch.h*3600e3>NOW()?`<button type="button" class="b sec" id="pa_unw">Arrêter la surveillance (reste ${((cfg.enWatch.t0+cfg.enWatch.h*3600e3-NOW())/3600e3).toFixed(1)} h)</button>`:`<button type="button" class="b" id="pa_watch">Surveiller ce passage</button><div class="mut" style="font-size:12px;margin-top:4px">Pendant le passage, une alarme te prévient si, au rythme réel, la charge doit passer sous ta réserve avant l'arrivée.</div>`}</div></div>`;
+}
+async function renderEnergy(){
+  const box=$('#enBox');if(!box)return;
+  const subs=[['live','Direct'],['ana','Analyse'],['pas','Passage']];
+  let body='';
+  if(EN.sub==='live')body=`<div class="card" style="padding:8px 6px 0">${enSchemaBuild()}</div><div class="enGrid" id="enGrid"></div>`;
+  else if(EN.sub==='ana')body=await enAnalyse();
+  else body=await enPassage();
+  box.innerHTML=`<style>.spb{padding:6px 12px;border-radius:99px;border:1px solid var(--line);background:transparent;color:var(--tx);font:600 13px system-ui}.spb.on{background:var(--acc);border-color:var(--acc);color:#fff}.spn{display:flex;align-items:center;justify-content:space-between;gap:8px}.spn button{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--tx);font-size:20px}.enGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:8px 0}.engg{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:8px 6px 6px;text-align:center}.engl{font:600 11px system-ui;color:var(--mut);margin-top:-8px;line-height:1.15}</style>
+  <div style="display:flex;gap:6px;margin-bottom:10px">${subs.map(([k,l])=>`<button type="button" data-es="${k}" class="spb${EN.sub===k?' on':''}" style="flex:1">${l}</button>`).join('')}</div>${body}`;
+  $$('#enBox [data-es]').forEach(b=>b.onclick=()=>{EN.sub=b.dataset.es;renderEnergy()});
+  $$('#enBox [data-em]').forEach(b=>b.onclick=()=>{EN.mode=b.dataset.em;EN.anchor=null;EN.sy=null;renderEnergy()});
+  $$('#enBox [data-en]').forEach(b=>b.onclick=()=>{const d=+b.dataset.en,m=EN.mode;if(m==='season')EN.sy=seasonEff(EN)+d;else{const A=new Date(EN.anchor||NOW());if(m==='month')A.setMonth(A.getMonth()+d);else if(m==='quarter')A.setMonth(A.getMonth()+3*d);else if(m==='year')A.setFullYear(A.getFullYear()+d);else A.setDate(A.getDate()+d*(m==='week'?7:1));EN.anchor=+A}renderEnergy()});
+  $$('#enBox [data-cmp]').forEach(b=>b.onclick=()=>{EN.cmp=b.dataset.cmp;renderEnergy()});
+  $$('#enBox [data-ex]').forEach(b=>b.onclick=()=>enExport(b.dataset.ex));
+  $$('#enBox [data-ec]').forEach(b=>b.onclick=()=>{EN.anchor=null;EN.sy=null;renderEnergy()});
+  const wt=$('#pa_watch');if(wt)wt.onclick=()=>{cfg.enWatch={t0:NOW(),h:EN.P.h};saveCfg();renderEnergy()};
+  const uw=$('#pa_unw');if(uw)uw.onclick=()=>{cfg.enWatch=null;saveCfg();delete AL.act.enwatch;renderEnergy()};
+  const fcb=$('#pa_fc');if(fcb)fcb.onchange=()=>{EN.P.fc=fcb.checked;cfg.enP={...(cfg.enP||{}),fc:fcb.checked};saveCfg();renderEnergy()};
+  $$('#enBox input[id^=pa_]:not(#pa_fc)').forEach(i=>i.onchange=()=>{const P=EN.P;P[i.id.slice(3)]=+i.value;cfg.enP={h:P.h,start:P.start,mot:P.mot,cl:P.cl,cons:P.cons,soc:P.soc,fc:P.fc};saveCfg();renderEnergy()});
+  if(EN.sub==='live')enLive();
+}
+function enLive(){const e=enNow();enSchemaUpd(e);const g=$('#enGrid');if(g)g.innerHTML=enGauges(e)}
+setInterval(()=>{if(EN.sub==='live'&&$('#v-energy')&&$('#v-energy').classList.contains('on')&&$('#enSvg'))try{enLive()}catch(e){}},1500);
 
 /* ---------- Audit : journal inviolable (chaîné par empreintes) de toutes les modifications du carnet ---------- */
 const AUDIT_ACT={entry_create:['Entrée créée','var(--ok)'],entry_edit:['Entrée modifiée','var(--acc)'],entry_delete:['Entrée supprimée','var(--bad)'],photo_add:['Photo ajoutée','var(--wind)'],photo_del:['Photo supprimée','var(--bad)'],trip_edit:['Trajet modifié','var(--acc)'],trip_delete:['Trajet supprimé','var(--bad)']};
@@ -3903,7 +4398,7 @@ function loadSettings(){
   $('#boat').textContent=cfg.boat;
   $('#sBoat').value=cfg.boat;$('#sSrc').value=cfg.src;$('#sGps').value=cfg.gpsSrc||'auto';$('#sWind').value=cfg.windRef||'auto';try{initHist()}catch(e){}try{initSync()}catch(e){}$('#sHost').value=cfg.host;
   $('#sDemoSpd').value=String(cfg.demoSpeed||1);buildLogCfg();updDemoBar();
-  $('#sNoGo').value=cfg.noGo;$('#sYdHost').value=cfg.ydHost;$('#sYdPort').value=cfg.ydPort;$('#sAwake').checked=!!cfg.awake;['lnHdg','lnCog','lnLay'].forEach(k=>$('#'+k).checked=cfg[k]!==false);$('#lnMin').value=cfg.lnMin||30;$('#map3dCb').checked=M3D;$('#sAvoid').checked=cfg.avoidLand!==false;$('#sMinDepth').value=cfg.minDepth??3;$('#sHapLvl').value=String(cfg.hapLvl!=null?cfg.hapLvl:(cfg.haptic===false?0:2));$('#sCruise').value=cfg.cruise;$('#sHeel').value=cfg.heelAlert||25;$('#sKPoint').value=cfg.kPoint;$('#sKMap').value=cfg.kMap;
+  $('#sNoGo').value=cfg.noGo;$('#sYdHost').value=cfg.ydHost;$('#sYdPort').value=cfg.ydPort;$('#sAwake').checked=!!cfg.awake;$('#sCerbo').value=cfg.cerbo||'';$('#alOn').checked=cfg.alOn!==false;$('#seaD1').value=cfg.seaD1||1;$('#enAh').value=cfg.batAh||'';$('#enRes').value=cfg.reserve!=null?cfg.reserve:'';$('#enWc').value=cfg.solWc||'';$('#enFu').value=cfg.fuelL||'';$('#enWa').value=cfg.waterL||'';$('#seaM1').value=cfg.seaM1||4;$('#seaD2').value=cfg.seaD2||31;$('#seaM2').value=cfg.seaM2||10;$('#seaAuto').checked=cfg.seasonAuto!==false;$('#alSoc').value=cfg.alSoc!=null?cfg.alSoc:'';$('#alFuel').value=cfg.alFuel!=null?cfg.alFuel:'';$('#alWater').value=cfg.alWater!=null?cfg.alWater:'';$('#alTemp').value=cfg.alTemp!=null?cfg.alTemp:'';$('#b3Sail').checked=cfg.b3sail!==false;$('#b3Wake').checked=cfg.b3wake!==false;['lnHdg','lnCog','lnLay'].forEach(k=>$('#'+k).checked=cfg[k]!==false);$('#lnMin').value=cfg.lnMin||30;$('#map3dCb').checked=M3D;$('#sAvoid').checked=cfg.avoidLand!==false;$('#sMinDepth').value=cfg.minDepth??3;$('#sHapLvl').value=String(cfg.hapLvl!=null?cfg.hapLvl:(cfg.haptic===false?0:2));$('#sCruise').value=cfg.cruise;$('#sHeel').value=cfg.heelAlert||25;$('#sKPoint').value=cfg.kPoint;$('#sKMap').value=cfg.kMap;
   $('#sStartKn').value=cfg.startKn;$('#sStartSec').value=cfg.startSec;$('#sStopKn').value=cfg.stopKn;$('#sStopMin').value=cfg.stopMin;$('#sInt').value=cfg.interval;
 }
 ['lnHdg','lnCog','lnLay'].forEach(k=>$('#'+k).onchange=e=>{cfg[k]=e.target.checked;saveCfg();scheduleDraw()});$('#sNoGo').onchange=e=>{cfg.noGo=Math.max(0,Math.min(80,+e.target.value||0));e.target.value=cfg.noGo;saveCfg();try{updDials()}catch(_){}};
@@ -3913,9 +4408,10 @@ $('#lnMin').onchange=e=>{cfg.lnMin=Math.max(5,+e.target.value||30);saveCfg();sch
   $$('#v-set .saveb').forEach(b=>b.onclick=()=>$('#sSave').click())}
 $('#hapTest').onclick=()=>{const w=cfg.haptic,l=cfg.hapLvl;cfg.haptic=true;if(!cfg.hapLvl)cfg.hapLvl=2;hap('strong');cfg.haptic=w;cfg.hapLvl=l;setTimeout(()=>{alert(tr('Vibration : ')+HAP.msg)},400)};
 $('#sHapLvl').onchange=e=>{cfg.hapLvl=+e.target.value;cfg.haptic=cfg.hapLvl>0;saveCfg();if(cfg.hapLvl>0)hap('strong')};
+$('#sBoat').oninput=()=>{cfg.boat=$('#sBoat').value.trim()||DEF.boat;$('#boat').textContent=cfg.boat;saveCfg()};   // le nom change tout de suite en haut à gauche, sans attendre « Enregistrer »
 $('#sSave').onclick=()=>{
   cfg={...cfg,boat:$('#sBoat').value||DEF.boat,src:$('#sSrc').value,gpsSrc:$('#sGps').value,windRef:$('#sWind').value,host:$('#sHost').value.trim(),
-   ydHost:$('#sYdHost').value.trim()||DEF.ydHost,ydPort:+$('#sYdPort').value||DEF.ydPort,awake:$('#sAwake').checked,avoidLand:$('#sAvoid').checked,minDepth:Math.max(0,+$('#sMinDepth').value||0),
+   ydHost:$('#sYdHost').value.trim()||DEF.ydHost,ydPort:+$('#sYdPort').value||DEF.ydPort,awake:$('#sAwake').checked,cerbo:$('#sCerbo').value.trim(),alOn:$('#alOn').checked,seaD1:Math.min(31,Math.max(1,+$('#seaD1').value||1)),batAh:+$('#enAh').value||null,reserve:$('#enRes').value===''?null:+$('#enRes').value,solWc:+$('#enWc').value||null,fuelL:+$('#enFu').value||null,waterL:+$('#enWa').value||null,seaM1:+$('#seaM1').value||4,seaD2:Math.min(31,Math.max(1,+$('#seaD2').value||31)),seaM2:+$('#seaM2').value||10,seasonAuto:$('#seaAuto').checked,alSoc:$('#alSoc').value===''?null:+$('#alSoc').value,alFuel:$('#alFuel').value===''?null:+$('#alFuel').value,alWater:$('#alWater').value===''?null:+$('#alWater').value,alTemp:$('#alTemp').value===''?null:+$('#alTemp').value,b3sail:$('#b3Sail').checked,b3wake:$('#b3Wake').checked,avoidLand:$('#sAvoid').checked,minDepth:Math.max(0,+$('#sMinDepth').value||0),
    cruise:+$('#sCruise').value||DEF.cruise,heelAlert:Math.max(10,Math.min(45,+$('#sHeel').value||25)),kPoint:$('#sKPoint').value.trim(),kMap:$('#sKMap').value.trim(),
    startKn:+$('#sStartKn').value||DEF.startKn,startSec:+$('#sStartSec').value||DEF.startSec,
    stopKn:+$('#sStopKn').value||DEF.stopKn,stopMin:+$('#sStopMin').value||DEF.stopMin,interval:Math.max(1,+$('#sInt').value||DEF.interval)};
@@ -4761,6 +5257,11 @@ function demoStep(dt){
   S('propulsion.0.revolutions',run?(2050+30*Math.sin(s.t/3))/60:0);S('propulsion.0.temperature',s.engT+273.15);
   S('propulsion.0.oilPressure',(run?3.6+0.1*Math.sin(s.t/5):0)*100000);S('propulsion.0.runTime',s.engSec);S('propulsion.0.fuel.rate',(run?3.4:0)/3.6e6);
   S('electrical.batteries.Servitude.voltage',12.9+(s.soc-50)*0.006+(run?0.9:0));S('electrical.batteries.Servitude.capacity.stateOfCharge',s.soc/100);
+  S('electrical.batteries.Servitude.current',run?18:-(9+3*Math.sin(s.t/40))+(Math.max(0,Math.sin((s.t-1200)/2400))*14));
+  S('electrical.batteries.Servitude.capacity.timeRemaining',(s.soc/100*400)/Math.max(3,9)*3600);
+  S('electrical.solar.MPPT Pont.panelPower',Math.max(0,320*Math.sin(s.t/3000)));S('electrical.solar.MPPT Pont.yieldToday',0.8+s.t/9000);
+  S('electrical.system.consumption',118+25*Math.sin(s.t/50));S('electrical.system.alternator',run?520:0);S('electrical.system.shore',s.t<240?1400:0);S('electrical.system.acLoad',s.t<240?180:0);
+  S('environment.inside.Frigo.temperature',277.6+0.6*Math.sin(s.t/200));S('environment.inside.Carré.temperature',292.4+0.4*Math.sin(s.t/900));S('environment.inside.Carré.relativeHumidity',0.58);
   S('electrical.batteries.Démarrage.voltage',run?13.9:12.7);
   S('tanks.fuel.0.currentLevel',s.fuel/120);S('tanks.freshWater.0.currentLevel',s.water/150);
   try{aisDemo(s.lat,s.lon,cog,dt)}catch(e){}
@@ -4924,6 +5425,7 @@ function go(v){
   if(v==='route'){$('#rCruise').value=cfg.cruise;renderPlan();renderPolar()}
   if(v==='notes'){renderNotes();noteTab(NT)}
   if(v==='stats')renderStats();
+  if(v==='energy')renderEnergy();
   window.scrollTo(0,0);
 }
 $$('nav button').forEach(b=>b.onclick=()=>go(b.dataset.v));
@@ -4933,7 +5435,7 @@ function startSource(){
   if(cfg.src!=='demo'&&(CLK.k!==1||DM)){if(cur&&cur.demo)endTrip();setClock(1,true);DM=null}
   updDemoBar();
   startPhoneGps();
-  cfg.src==='ydwg'?startYdwg():cfg.src==='signalk'&&cfg.host?connectSK():startSim()}
+  cfg.src==='ydwg'?startYdwg():cfg.src==='signalk'&&cfg.host?connectSK():startSim();startCerbo()}
 
 /* ---------- Démarrage ---------- */
 (async()=>{
@@ -4973,8 +5475,12 @@ const HELP=[
    ['Sources et limites : un fichier GRIB importé remplace les appels Windy (sans connexion ni clé). Au-delà de l\'horizon des prévisions, les dernières valeurs sont prolongées et l\'appli le signale. Le planificateur de départ compare plusieurs heures de départ avec les mêmes règles. Ce sont des prévisions : elles peuvent se tromper, vérifie toujours la météo officielle.','Bronnen en beperkingen: een geïmporteerd GRIB-bestand vervangt de Windy-oproepen (zonder verbinding of sleutel). Voorbij de voorspellingshorizon worden de laatste waarden verlengd en dat wordt gemeld. De vertrekplanner vergelijkt meerdere vertrekuren met dezelfde regels. Het zijn voorspellingen: ze kunnen fout zijn, controleer altijd het officiële weerbericht.','Sources and limits: an imported GRIB file replaces Windy calls (no connection or key needed). Beyond the forecast horizon the last values are extended and the app flags it. The departure planner compares several departure times with the same rules. These are forecasts: they can be wrong, always check the official weather.','Quellen und Grenzen: Eine importierte GRIB-Datei ersetzt die Windy-Abfragen (ohne Verbindung oder Schlüssel). Jenseits des Vorhersagehorizonts werden die letzten Werte fortgeschrieben und die App weist darauf hin. Der Abfahrtsplaner vergleicht mehrere Abfahrtszeiten nach denselben Regeln. Es sind Vorhersagen: Sie können falsch sein, prüfe immer den offiziellen Wetterbericht.','Fuentes y límites: un GRIB importado sustituye las llamadas a Windy (sin conexión ni clave). Más allá del horizonte de previsión se prolongan los últimos valores y la app lo avisa. El planificador de salida compara varias horas de salida con las mismas reglas. Son previsiones: pueden fallar, consulta siempre la meteo oficial.']],
    ['Météo du parcours (bouton 🌦 sur la carte, ou « Météo du parcours » dans Routage ou dans le panneau de route 📍) : un graphique montre le vent, les vagues, la houle et le courant heure par heure le long de ton tracé. Glisse le doigt sur le graphique : un repère se déplace sur la carte et affiche l\'heure, la position, le vent (force, direction, angle), les vagues, la houle et le moteur. Touche aussi le tracé sur la carte pour lire la météo à cet endroit. Le tracé est coloré selon la couche choisie, les zones de nuit sont grisées et ta limite (vent max, vagues max) apparaît en pointillés rouges avec la durée de dépassement et le pic.','Weer langs de route (knop 🌦 op de kaart, of «Weer langs de route» in Routering of in het routepaneel 📍): een grafiek toont wind, golven, deining en stroom uur per uur langs je route. Sleep met je vinger over de grafiek: een markering beweegt op de kaart en toont uur, positie, wind (kracht, richting, hoek), golven, deining en motor. Tik ook op de route op de kaart om het weer op die plek te lezen. De route is gekleurd volgens de gekozen laag, nachtzones zijn grijs en je limiet (max. wind, max. golven) staat als rode stippellijn met de duur van de overschrijding en de piek.','Weather along the route (🌦 button on the chart, or «Weather along the route» in Routing or in the 📍 route panel): a chart shows wind, waves, swell and current hour by hour along your track. Drag a finger over the chart: a marker moves on the map and shows time, position, wind (strength, direction, angle), waves, swell and engine. Tap the track on the map to read the weather at that spot too. The track is coloured by the chosen layer, night zones are greyed and your limit (max wind, max waves) appears as a red dotted line with the time spent above it and the peak.','Wetter entlang der Route (Taste 🌦 auf der Karte, oder «Wetter entlang der Route» im Routing oder im Routenfeld 📍): Ein Diagramm zeigt Wind, Wellen, Dünung und Strömung Stunde für Stunde entlang deiner Strecke. Ziehe den Finger über das Diagramm: Eine Markierung wandert auf der Karte und zeigt Zeit, Position, Wind (Stärke, Richtung, Winkel), Wellen, Dünung und Motor. Tippe auch auf die Strecke auf der Karte, um das Wetter dort zu lesen. Die Strecke ist nach der gewählten Ebene gefärbt, Nachtzonen sind grau, und deine Grenze (max. Wind, max. Wellen) erscheint als rote Strichlinie mit der Dauer der Überschreitung und dem Maximum.','Meteo del recorrido (botón 🌦 en la carta, o «Meteo del recorrido» en Rutas o en el panel de ruta 📍): un gráfico muestra viento, olas, mar de fondo y corriente hora a hora a lo largo de tu trazado. Desliza el dedo por el gráfico: una marca se mueve en la carta y muestra hora, posición, viento (fuerza, dirección, ángulo), olas, mar de fondo y motor. Toca también el trazado en la carta para leer la meteo en ese punto. El trazado se colorea según la capa elegida, las zonas de noche se ven en gris y tu límite (viento máx., olas máx.) aparece como línea roja discontinua con el tiempo por encima y el pico.'],
    ['Trois vues du parcours : « Routage » montre le routage calculé (la variante choisie). « Mon tracé » suit ton tracé actuel, y compris tes étapes ajoutées ou déplacées, en ligne droite entre tes points : la vitesse est estimée avec ta polaire, ta vitesse de croisière et la météo rencontrée (sans simuler le louvoyage). « Depuis ici » part de ta position actuelle, maintenant, et suit les points restants de ton tracé : utile en navigation pour savoir ce qui t\'attend ; elle se met à jour toute seule toutes les 2 minutes. Si tu modifies le tracé après un routage, l\'appli te le dit et propose « Recalculer le routage avec mon tracé » pour obtenir de nouvelles trajectoires qui passent par tes étapes.','Drie weergaven van de route: «Routering» toont de berekende routering (de gekozen variant). «Mijn route» volgt je huidige route, inclusief toegevoegde of verplaatste etappepunten, in rechte lijn tussen je punten: de snelheid wordt geschat met je polaire, je kruissnelheid en het weer onderweg (zonder laveren te simuleren). «Vanaf hier» start op je huidige positie, nu, en volgt de resterende punten van je route: handig onderweg om te weten wat je te wachten staat; ze ververst zichzelf elke 2 minuten. Wijzig je de route na een routering, dan meldt de app dat en stelt «Routering opnieuw berekenen met mijn route» voor, voor nieuwe trajecten die door je punten gaan.','Three views of the route: «Routing» shows the computed routing (the chosen variant). «My track» follows your current track, including waypoints you added or moved, in a straight line between your points: speed is estimated from your polar, your cruising speed and the weather met (tacking is not simulated). «From here» starts at your current position, now, and follows the remaining points of your track: useful under way to see what lies ahead; it refreshes itself every 2 minutes. If you change the track after a routing, the app tells you and offers «Recompute the routing with my track» to get new routes that pass through your waypoints.','Drei Ansichten der Route: «Routing» zeigt das berechnete Routing (die gewählte Variante). «Meine Strecke» folgt deiner aktuellen Strecke, einschließlich hinzugefügter oder verschobener Etappenpunkte, als Gerade zwischen deinen Punkten: Die Geschwindigkeit wird mit deiner Polare, deiner Reisegeschwindigkeit und dem angetroffenen Wetter geschätzt (Kreuzen wird nicht simuliert). «Von hier» startet an deiner aktuellen Position, jetzt, und folgt den verbleibenden Punkten deiner Strecke: nützlich unterwegs, um zu sehen, was kommt; sie aktualisiert sich alle 2 Minuten selbst. Änderst du die Strecke nach einem Routing, weist die App darauf hin und bietet «Routing mit meiner Strecke neu berechnen» an, für neue Routen durch deine Punkte.','Tres vistas del recorrido: «Ruta» muestra la ruta calculada (la variante elegida). «Mi trazado» sigue tu trazado actual, incluidos los puntos que añadiste o moviste, en línea recta entre tus puntos: la velocidad se estima con tu polar, tu velocidad de crucero y la meteo encontrada (no se simula el ceñir). «Desde aquí» parte de tu posición actual, ahora, y sigue los puntos restantes de tu trazado: útil en navegación para saber qué te espera; se actualiza sola cada 2 minutos. Si cambias el trazado tras calcular una ruta, la app te lo dice y propone «Recalcular la ruta con mi trazado» para obtener nuevas rutas que pasen por tus puntos.']],
+ [['Énergie (électricité, gasoil, eau)','Energie (elektriciteit, diesel, water)','Energy (electricity, fuel, water)','Energie (Strom, Diesel, Wasser)','Energía (electricidad, gasoil, agua)'],
+  [['Onglet Énergie › Direct : un schéma animé montre les flux entre panneaux, MPPT, quai 230 V, chargeur, alternateur, batteries et consommateurs (les flux grossissent avec la puissance). Dessous, des cadrans : charge, tension, courant, autonomie jusqu\'à ta réserve, solaire, consommation, gasoil, eau douce, eaux grises et noires, températures.','Tabblad Energie › Live: een geanimeerd schema toont de stromen tussen zonnepanelen, MPPT, walstroom 230 V, lader, dynamo, accu\'s en verbruikers (de stromen worden dikker bij meer vermogen). Daaronder meters: lading, spanning, stroom, autonomie tot je reserve, zon, verbruik, diesel, water, grijs en zwart water, temperaturen.','Energy tab › Live: an animated diagram shows the flows between solar panels, MPPT, 230 V shore power, charger, alternator, batteries and loads (flows thicken with power). Below, gauges: charge, voltage, current, autonomy to your reserve, solar, consumption, fuel, fresh water, grey and black water, temperatures.','Reiter Energie › Live: ein animiertes Schema zeigt die Flüsse zwischen Solarmodulen, MPPT, Landstrom 230 V, Ladegerät, Lichtmaschine, Batterien und Verbrauchern (die Flüsse werden bei mehr Leistung dicker). Darunter Anzeigen: Ladung, Spannung, Strom, Autonomie bis zur Reserve, Solar, Verbrauch, Diesel, Wasser, Grau- und Schwarzwasser, Temperaturen.','Pestaña Energía › En vivo: un esquema animado muestra los flujos entre paneles, MPPT, tierra 230 V, cargador, alternador, baterías y consumos (los flujos engordan con la potencia). Debajo, indicadores: carga, tensión, corriente, autonomía hasta tu reserva, solar, consumo, gasoil, agua dulce, aguas grises y negras, temperaturas.'],
+   ['Énergie › Analyse : choisis jour, semaine, mois, trimestre, année ou saison, avec ‹ ›. Tu vois production, consommation, bilan, charge mini, heures de navigation et de moteur, gasoil et eau utilisés, et des constats écrits (jours déficitaires, effet d\'un ciel couvert, conso en navigation). « Comparer » met deux périodes ou deux saisons côte à côte. CSV et PDF exportent la période. L\'historique s\'enregistre tout seul, même sans trajet.','Energie › Analyse: kies dag, week, maand, kwartaal, jaar of seizoen met ‹ ›. Je ziet productie, verbruik, saldo, laagste lading, vaar- en motoruren, diesel- en watergebruik, plus geschreven bevindingen (tekortdagen, effect van bewolking, verbruik tijdens het varen). «Vergelijken» zet twee periodes of seizoenen naast elkaar. CSV en PDF exporteren de periode. De historie wordt automatisch opgeslagen, ook zonder trajecten.','Energy › Analysis: pick day, week, month, quarter, year or season with ‹ ›. You see production, consumption, balance, lowest charge, sailing and engine hours, fuel and water used, and written findings (deficit days, effect of cloud cover, consumption while sailing). «Compare» puts two periods or seasons side by side. CSV and PDF export the period. History is recorded automatically, even without a trip.','Energie › Analyse: wähle Tag, Woche, Monat, Quartal, Jahr oder Saison mit ‹ ›. Du siehst Erzeugung, Verbrauch, Bilanz, niedrigste Ladung, Segel- und Motorstunden, Diesel- und Wasserverbrauch sowie Erkenntnisse in Worten (Defizittage, Wirkung von Bewölkung, Verbrauch beim Segeln). «Vergleichen» stellt zwei Zeiträume oder Saisons nebeneinander. CSV und PDF exportieren den Zeitraum. Der Verlauf wird automatisch gespeichert, auch ohne Törn.','Energía › Análisis: elige día, semana, mes, trimestre, año o temporada con ‹ ›. Verás producción, consumo, balance, carga mínima, horas de navegación y de motor, gasoil y agua usados, y conclusiones escritas (días deficitarios, efecto de la nubosidad, consumo navegando). «Comparar» pone dos periodos o temporadas lado a lado. CSV y PDF exportan el periodo. El historial se guarda solo, incluso sin travesía.'],
+   ['Énergie › Passage : indique durée, heure de départ, charge, consommation, nébulosité et heures de moteur. L\'appli trace la charge de tes batteries contre ta réserve et dit si le passage est tenable, sinon combien d\'heures de moteur ajouter. Avec la prévision Windy, la nébulosité est prise heure par heure. « Surveiller ce passage » déclenche une alarme si, au rythme réel, la réserve ne sera pas tenue. Capacités, réserve et réservoirs se règlent dans Réglages › Énergie du bord ; le Cerbo GX Victron dans Réglages › Cerbo GX.','Energie › Overtocht: geef duur, vertrekuur, lading, verbruik, bewolking en motoruren op. De app tekent de lading van je accu\'s tegenover je reserve en zegt of de overtocht haalbaar is, zo niet hoeveel motoruren erbij moeten. Met de Windy-voorspelling wordt de bewolking uur per uur gebruikt. «Overtocht bewaken» geeft een alarm als de reserve op het werkelijke tempo niet gehaald wordt. Capaciteiten, reserve en tanks stel je in bij Instellingen › Energie aan boord; de Victron Cerbo GX bij Instellingen › Cerbo GX.','Energy › Passage: enter duration, departure time, charge, consumption, cloud cover and engine hours. The app plots your battery charge against your reserve and says whether the passage is feasible, otherwise how many engine hours to add. With the Windy forecast, cloud cover is used hour by hour. «Watch this passage» raises an alarm if, at the real rate, the reserve will not hold. Capacities, reserve and tanks are set in Settings › Onboard energy; the Victron Cerbo GX in Settings › Cerbo GX.','Energie › Schlag: gib Dauer, Abfahrtszeit, Ladung, Verbrauch, Bewölkung und Motorstunden an. Die App zeichnet die Batterieladung gegen deine Reserve und sagt, ob der Schlag machbar ist, sonst wie viele Motorstunden fehlen. Mit der Windy-Vorhersage wird die Bewölkung stundenweise verwendet. «Schlag überwachen» löst Alarm aus, wenn die Reserve im tatsächlichen Tempo nicht reicht. Kapazitäten, Reserve und Tanks stellst du unter Einstellungen › Energie an Bord ein; den Victron Cerbo GX unter Einstellungen › Cerbo GX.','Energía › Travesía: indica duración, hora de salida, carga, consumo, nubosidad y horas de motor. La app traza la carga de tus baterías frente a tu reserva y dice si la travesía es viable; si no, cuántas horas de motor añadir. Con la previsión de Windy, la nubosidad se usa hora a hora. «Vigilar esta travesía» da una alarma si, al ritmo real, no se mantendrá la reserva. Capacidades, reserva y depósitos se ajustan en Ajustes › Energía a bordo; el Victron Cerbo GX en Ajustes › Cerbo GX.']]],
  [['Notes, Stats','Notities, Statistieken','Notes, Stats','Notizen, Statistik','Notas, Estadísticas'],
-  [['Notes : bloc-notes libre (pense-bête, travaux, avitaillement). Stats : distance totale, temps en mer, milles par mois, vitesses et consommation sur l\'ensemble de tes trajets.','Notities: vrij notitieblok (geheugensteun, klussen, bevoorrading). Statistieken: totale afstand, tijd op zee, mijlen per maand, snelheden en verbruik over al je trajecten.','Notes: free notepad (reminders, jobs, provisioning). Stats: total distance, time at sea, miles per month, speeds and consumption across all your trips.','Notizen: freier Notizblock (Merkzettel, Arbeiten, Proviant). Statistik: Gesamtstrecke, Zeit auf See, Meilen pro Monat, Geschwindigkeiten und Verbrauch über alle Törns.','Notas: bloc libre (recordatorios, trabajos, avituallamiento). Estadísticas: distancia total, tiempo en el mar, millas por mes, velocidades y consumo de todas tus travesías.']]],
+  [['Notes : bloc-notes libre (pense-bête, travaux, avitaillement). Stats : choisis Total, Saison, Mois, Semaine ou Jour (‹ › pour naviguer), filtre par type de navigation (voile, mixte, moteur) ou par équipage. La saison (par défaut du 1er avril au 31 octobre) et son passage automatique se règlent dans Réglages › Saison de navigation.','Notities: vrij notitieblok (geheugensteun, klussen, bevoorrading). Statistieken: kies Totaal, Seizoen, Maand, Week of Dag (‹ › om te bladeren), filter op type zeilen (zeil, gemengd, motor) of bemanning. Het seizoen (standaard 1 april tot 31 oktober) en de automatische overgang stel je in bij Instellingen › Vaarseizoen.','Notes: free notepad (reminders, jobs, provisioning). Stats: choose Total, Season, Month, Week or Day (‹ › to browse), filter by sailing type (sail, mixed, motor) or crew. The season (default 1 April to 31 October) and its automatic rollover are set in Settings › Sailing season.','Notizen: freier Notizblock (Merkzettel, Arbeiten, Proviant). Statistik: wähle Gesamt, Saison, Monat, Woche oder Tag (‹ › zum Blättern), filtere nach Fahrtart (Segeln, gemischt, Motor) oder Crew. Die Saison (Standard 1. April bis 31. Oktober) und der automatische Wechsel werden unter Einstellungen › Segelsaison eingestellt.','Notas: bloc libre (recordatorios, trabajos, avituallamiento). Estadísticas: elige Total, Temporada, Mes, Semana o Día (‹ › para navegar), filtra por tipo de navegación (vela, mixta, motor) o tripulación. La temporada (por defecto del 1 de abril al 31 de octubre) y su cambio automático se ajustan en Ajustes › Temporada de navegación.']]],
  [['Réglages et connexion au bateau','Instellingen en verbinding met de boot','Settings and boat connection','Einstellungen und Verbindung zum Boot','Ajustes y conexión con el barco'],
   [['Source de données : « YDWG-02 direct » dans l\'appli Android (Wi-Fi du boîtier Yacht Devices, adresse 192.168.4.1, port 1456 par défaut), Signal K, ou Démo pour essayer sans bateau. Le GPS du téléphone peut compléter ou remplacer celui du bateau. La langue, le retour haptique, les clés Windy et le Diagnostic se trouvent aussi dans Réglages.','Gegevensbron: «YDWG-02 direct» in de Android-app (wifi van de Yacht Devices-gateway, adres 192.168.4.1, standaard poort 1456), Signal K, of Demo om zonder boot uit te proberen. De GPS van de telefoon kan die van de boot aanvullen of vervangen. Taal, haptische feedback, Windy-sleutels en Diagnose staan ook in Instellingen.','Data source: «YDWG-02 direct» in the Android app (Wi-Fi of the Yacht Devices gateway, address 192.168.4.1, default port 1456), Signal K, or Demo to try without a boat. The phone GPS can supplement or replace the boat\'s. Language, haptic feedback, Windy keys and Diagnostics are also in Settings.','Datenquelle: «YDWG-02 direkt» in der Android-App (WLAN des Yacht-Devices-Gateways, Adresse 192.168.4.1, Standardport 1456), Signal K oder Demo zum Ausprobieren ohne Boot. Das Handy-GPS kann das des Bootes ergänzen oder ersetzen. Sprache, haptisches Feedback, Windy-Schlüssel und Diagnose finden sich ebenfalls in den Einstellungen.','Fuente de datos: «YDWG-02 directo» en la app Android (Wi-Fi de la pasarela Yacht Devices, dirección 192.168.4.1, puerto 1456 por defecto), Signal K, o Demo para probar sin barco. El GPS del teléfono puede complementar o sustituir al del barco. El idioma, la respuesta háptica, las claves de Windy y el Diagnóstico también están en Ajustes.']]]
 ];
