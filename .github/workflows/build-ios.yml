@@ -1,0 +1,56 @@
+name: Compiler l'appli iOS (test)
+
+# Compilation pour le simulateur iOS, sans signature : vérifie que le plugin Swift BoatLink compile.
+# Ne touche ni à build-apk.yml ni au noyau de l'appli. Déclenchement manuel, ou si les fichiers iOS changent.
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'native/ios/**'
+      - 'scripts/patch-ios.js'
+      - 'scripts/add-ios-files.rb'
+      - '.github/workflows/build-ios.yml'
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Installer les dépendances (plateforme iOS sans modifier package.json)
+        run: |
+          npm install
+          npm install --no-save @capacitor/ios@^7.0.0
+
+      - name: Créer le projet iOS
+        run: npx cap add ios
+
+      - name: Ajouter le plugin natif, les permissions et la version
+        run: node scripts/patch-ios.js
+
+      - name: Ajouter les fichiers Swift au projet Xcode
+        run: ruby scripts/add-ios-files.rb
+
+      - name: Copier l'appli dans le projet iOS
+        run: npx cap sync ios
+
+      - name: Compiler pour le simulateur
+        working-directory: ios/App
+        run: |
+          if [ -d App.xcworkspace ]; then TARGET="-workspace App.xcworkspace"; else TARGET="-project App.xcodeproj"; fi
+          xcodebuild $TARGET -scheme App -configuration Debug -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO build | tee xcodebuild.log | tail -40
+          test ${PIPESTATUS[0]} -eq 0
+
+      - name: Journal de compilation
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-xcodebuild-log
+          path: ios/App/xcodebuild.log
+          if-no-files-found: ignore
