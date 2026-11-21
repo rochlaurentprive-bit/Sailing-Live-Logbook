@@ -3766,7 +3766,7 @@ $('#fxPlay').onclick=()=>{
 };
 
 
-const APP_VERSION='2.6.1',APP_BUILD='21.11-k';
+const APP_VERSION='2.6.1',APP_BUILD='21.11-m';
 (()=>{const e=document.getElementById('appVer');if(e)e.textContent='Carnet de bord · v'+APP_VERSION+' ('+APP_BUILD+')'})();
 /* ---------- Météo du parcours : vent, vagues, houle et courant le long du tracé (routage, tracé modifié, depuis ma position) ---------- */
 const RWL={wind:{n:'Vent',u:'nds',lim:'maxW',def:22,to:false},waves:{n:'Vagues',u:'m',lim:'maxH',def:2,to:false},swell:{n:'Houle',u:'m',lim:'maxH',def:2,to:false},cur:{n:'Courant',u:'nds',lim:null,to:true}};
@@ -5788,7 +5788,7 @@ function anchKind(t){
   if(/moor/.test(s)||t.mooring||t.man_made==='mooring')return'moor';
   return'port';
 }
-async function anchSearch(c,rNM,kinds){
+async function anchSearch(c,rNM,kinds,prog){
   /* Une seule requête sert plusieurs recherches : on télécharge d'un coup les 3 types sur un rayon d'au moins 10 NM,
      on garde la réponse 24 h (centre arrondi à ~1 NM), puis on filtre sur place (type, rayon, distance). */
   const fetchR=rNM<=10?15:rNM<=20?25:45,fetchK=rNM<=10?Object.keys(ANCH_KINDS):kinds;
@@ -5805,14 +5805,14 @@ async function anchSearch(c,rNM,kinds){
   const dl=fetchR/60,dn=fetchR/60/Math.max(.2,Math.cos(c.lat*D2R)),b=`(${(cl-dl).toFixed(4)},${(cn-dn).toFixed(4)},${(cl+dl).toFixed(4)},${(cn+dn).toFixed(4)})`;
   const ql='[out:json][timeout:12];('+fetchK.map(k=>ANCH_KINDS[k].q(b)).join('')+');out center tags 150;';
   let j=null,err=null,n429=0;const codes=[],t0=Date.now();
-  const SRV=['https://overpass-api.de/api/interpreter','https://overpass.openstreetmap.fr/api/interpreter','https://overpass.private.coffee/api/interpreter','https://overpass.kumi.systems/api/interpreter','https://maps.mail.ru/osm/tools/overpass/api/interpreter'];
+  const SRV=['https://overpass.private.coffee/api/interpreter','https://overpass.openstreetmap.fr/api/interpreter','https://overpass.kumi.systems/api/interpreter','https://lz4.overpass-api.de/api/interpreter','https://overpass-api.de/api/interpreter','https://maps.mail.ru/osm/tools/overpass/api/interpreter'];
   let last=-1;try{last=SRV.indexOf(localStorage.getItem('ovLast'))}catch(e){}
   if(last>0)SRV.unshift(SRV.splice(last,1)[0]);
   const host=u=>u.split('/')[2].replace(/^overpass\.|^maps\./,'');
   for(const u of SRV){
     if(Date.now()-t0>40000||ac.signal.aborted)break;
     const tmo=new AbortController(),tm=setTimeout(()=>tmo.abort(),9000),onab=()=>tmo.abort();ac.signal.addEventListener('abort',onab);
-    try{const r=await fetch(u,{method:'POST',body:'data='+encodeURIComponent(ql),headers:{'Content-Type':'application/x-www-form-urlencoded'},signal:tmo.signal});
+    try{prog&&prog('Serveur '+(codes.length+1)+'/'+SRV.length+' : '+host(u)+(codes.length?' (précédents : '+codes.join(' · ')+')':'')+'…');const r=await fetch(u,{method:'POST',body:'data='+encodeURIComponent(ql),headers:{'Content-Type':'application/x-www-form-urlencoded','Accept':'*/*'},signal:tmo.signal});
       if(r.ok){j=await r.json();try{localStorage.setItem('ovLast',u)}catch(e){}clearTimeout(tm);break}
       codes.push(host(u)+' '+r.status);if(r.status===429)n429++;err=new Error('service saturé')}
     catch(e){codes.push(host(u)+' '+(ac.signal.aborted?'annulé':e.name==='AbortError'?'délai':'injoignable'));err=new Error(ac.signal.aborted?'recherche annulée':'service injoignable')}
@@ -5841,7 +5841,7 @@ function plcDlg(o){
   const old=$('#plcDlg');if(old)old.remove();
   const d=document.createElement('div');d.id='plcDlg';d.style.cssText='position:fixed;inset:0;z-index:60;background:rgba(5,15,28,.55);display:flex;align-items:flex-end;justify-content:center';
   const acts=o.actions||[{k:'ok',label:'Choisir'}];
-  let mode=o.mode||'place',center=o.center||null,kinds=['anch'],rad=10;
+  let mode=o.mode||'place',center=o.center||null,kinds=['anch','moor','port'],rad=10;
   d.innerHTML=`<div class="card" style="width:min(560px,100%);max-height:88vh;overflow:auto;margin:0;border-radius:20px 20px 0 0;padding:14px 14px 22px"><div class="row" style="justify-content:space-between;align-items:center"><b style="font-size:17px">${esc(o.title||'Choisir un lieu')}</b><button class="b sec" id="plcX" style="width:auto;padding:6px 12px">Fermer</button></div>
   <div class="seg" style="margin-top:10px"><button id="plcM1">🔎 Lieu par nom</button><button id="plcM2">⚓ Mouillages</button></div><div id="plcBody"></div></div>`;
   document.body.appendChild(d);
@@ -5874,8 +5874,8 @@ function plcDlg(o){
     const o2=()=>{close();plcDlg({...o,mode:'place',title:'Autour de quel lieu ?',actions:[{k:'c',label:'Choisir'}],onPick:(p)=>plcDlg({...o,mode:'anch',center:p})})};
     $$('#plcK [data-k]').forEach(c=>c.onchange=()=>{kinds=$$('#plcK [data-k]').filter(x=>x.checked).map(x=>x.dataset.k)});
     $$('#plcR [data-r]').forEach(b=>b.onclick=()=>{rad=+b.dataset.r;$$('#plcR [data-r]').forEach(x=>x.classList.toggle('on',x===b))});
-    $('#plcAg').onclick=async()=>{const res=$('#plcRes');if(!cen){res.textContent='Choisis d’abord un lieu (« changer »).';return}if(!kinds.length){res.textContent='Coche au moins un type.';return}res.textContent='Recherche… (30 s maximum)';const gb=$('#plcAg');gb.disabled=true;
-      try{const l=await anchSearch(cen,rad,kinds);if(!l.length){res.textContent='Rien trouvé dans ce rayon (la base OpenStreetMap est incomplète ici). Élargis le rayon ou consulte un guide de croisière.';return}
+    $('#plcAg').onclick=async()=>{const res=$('#plcRes');if(!cen){res.textContent='Choisis d’abord un lieu (« changer »).';return}if(!kinds.length){res.textContent='Coche au moins un type.';return}res.textContent='Recherche…';const gb=$('#plcAg');gb.disabled=true;
+      try{const l=await anchSearch(cen,rad,kinds,t=>{res.textContent=t});if(!l.length){res.textContent='Le serveur a répondu mais rien n’est enregistré dans OpenStreetMap dans ce rayon pour '+kinds.map(k=>ANCH_KINDS[k].lbl.toLowerCase()).join(', ')+'. Élargis le rayon, coche aussi les ports ou les bouées, ou consulte un guide de croisière.';return}
         l.forEach(p=>{p.ico=ANCH_KINDS[p.kind].ico;p.sub=`${p.d.toFixed(1)} NM · cap ${Math.round(p.brg)}° (${card(p.brg)})${p.info?' · '+p.info:''}`;if(!p.name)p.name=ANCH_KINDS[p.kind].lbl+' (sans nom)'});
         res.innerHTML=`<div style="margin-bottom:4px">${l.length} résultat(s), du plus proche au plus loin</div>`+l.map(rowHtml).join('');wire(l)}
       catch(e){res.textContent='⚠️ '+e.message}
