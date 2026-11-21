@@ -1,4 +1,4 @@
-const C='carnet-pi-2.6.0';
+const C='carnet-pi-2.6.1';
 const TILE_HOSTS=['tile.openstreetmap.org','basemaps.cartocdn.com','server.arcgisonline.com','tiles.openseamap.org'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(['./','./index.html','./pi-adapter.js','./manifest.webmanifest'])));self.skipWaiting()});
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k.startsWith('carnet-pi-')&&k!==C).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));

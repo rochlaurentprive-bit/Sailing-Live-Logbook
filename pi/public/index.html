@@ -3466,7 +3466,7 @@ $('#fxPlay').onclick=()=>{
 };
 
 
-const APP_VERSION='2.6';
+const APP_VERSION='2.6.1';
 (()=>{const e=document.getElementById('appVer');if(e)e.textContent='Carnet de bord · v'+APP_VERSION})();
 /* ---------- Météo du parcours : vent, vagues, houle et courant le long du tracé (routage, tracé modifié, depuis ma position) ---------- */
 const RWL={wind:{n:'Vent',u:'nds',lim:'maxW',def:22,to:false},waves:{n:'Vagues',u:'m',lim:'maxH',def:2,to:false},swell:{n:'Houle',u:'m',lim:'maxH',def:2,to:false},cur:{n:'Courant',u:'nds',lim:null,to:true}};
@@ -4770,9 +4770,11 @@ const GRIBS=(()=>{
 async function windyPoint(lat,lon,model,params){
   if(GRIBS.on()&&!(params||[]).some(x=>/clouds|precip/.test(x))){const g=GRIBS.point(lat,lon,params);if(g)return g}
   let r;
-  try{r=await fetch('https://api.windy.com/api/point-forecast/v2',{method:'POST',headers:{'Content-Type':'application/json'},
+  const ac=typeof AbortController!=='undefined'?new AbortController():null,tm=setTimeout(()=>ac&&ac.abort(),20000);
+  try{r=await fetch('https://api.windy.com/api/point-forecast/v2',{method:'POST',headers:{'Content-Type':'application/json'},signal:ac?ac.signal:undefined,
     body:JSON.stringify({lat:+lat.toFixed(2),lon:+lon.toFixed(2),model,parameters:params,levels:['surface'],key:cfg.kPoint})})}
-  catch(e){const x=new Error('appel Windy impossible (hors ligne, ou bloqué par le navigateur/CORS)');x.fatal=true;throw x}
+  catch(e){clearTimeout(tm);const x=new Error(e&&e.name==='AbortError'?'Windy ne répond pas (délai de 20 s dépassé)':'appel Windy impossible (hors ligne, ou bloqué par le navigateur/CORS)');x.fatal=true;throw x}
+  clearTimeout(tm);
   if(r.status===204)return null;
   if(!r.ok){const txt=(await r.text().catch(()=>'')).slice(0,120);const x=new Error(`Windy ${r.status} ${model} ${txt}`);x.fatal=[400,401,403,429].includes(r.status);throw x}
   return r.json();
@@ -5566,7 +5568,17 @@ $('#rVs').onclick=()=>plcDlg({title:'Point « Via »',actions:[{k:'V',label:'Via
 $('#rAnch').onclick=()=>{const B=parseLL($('#rB').value);plcDlg({title:'Mouillages, bouées, ports',mode:'anch',center:B?{lat:B.lat,lon:B.lon,name:'l’arrivée'}:null,actions:[{k:'B',label:'Arrivée'},{k:'V',label:'Via'},{k:'W',label:'☁️ Météo'}],onPick:(p,a)=>{if(a==='W')wxGoPlace(p);else plcSetField(p,a)}})};
 
 /* ---------- Onglet Météo ---------- */
+const WXM=[['auto','Auto (meilleur modèle ici)'],['gfs','GFS (mondial, 0,25°)'],['icon','ICON (mondial, DWD)'],['iconEu','ICON-EU (Europe, 7 km)'],['iconD2','ICON-D2 (Europe centrale, 2 km)'],['aromeFrance','AROME HD France (1,3 km)'],['arome','AROME (Europe de l\'Ouest, 2,5 km)'],['namConus','NAM (USA)'],['hrrrConus','HRRR (USA, 3 km)'],['canHrdps','HRDPS (Canada, 2,5 km)']];
+const WXW=[['gfsWave','Vagues GFS (mondial)'],['iconWave','Vagues ICON (mondial)'],['iconEuWave','Vagues ICON-EU (Europe)'],['none','Sans vagues']];
+function wxChain(lat,lon){
+  if(lat>=24&&lat<=50&&lon>=-125&&lon<=-66)return['hrrrConus','namConus','gfs'];
+  if(lat>=41&&lat<=75&&lon>=-141&&lon<=-52)return['canHrdps','gfs'];
+  if(lat>=34&&lat<=72&&lon>=-14&&lon<=35)return['aromeFrance','arome','iconD2','iconEu','icon','gfs'];
+  return['icon','gfs'];
+}
 const WXV=Object.assign({mode:'here',place:null,when:'now',t:0,model:'gfs',wmodel:'gfsWave',limW:20,limH:1.5,data:null,busy:false,err:'',key:''},JSON.parse(localStorage.getItem('wxv')||'{}'),{data:null,busy:false,err:'',key:'',when:'now',t:0});
+if(!WXM.some(m=>m[0]===WXV.model))WXV.model='auto';if(!WXW.some(m=>m[0]===WXV.wmodel))WXV.wmodel='gfsWave';
+let wxSeq=0;
 const wxSave=()=>localStorage.setItem('wxv',JSON.stringify({mode:WXV.mode,place:WXV.place,model:WXV.model,wmodel:WXV.wmodel,limW:WXV.limW,limH:WXV.limH}));
 const BFT=[1,4,7,11,17,22,28,34,41,48,56,64];
 const bft=k=>{let n=0;while(n<BFT.length&&k>=BFT[n])n++;return n};
@@ -5608,23 +5620,41 @@ async function wxLoad(force){
   const p=wxPlace();if(!p){WXV.err='Position du bateau inconnue : choisis « Ailleurs » et un lieu.';WXV.data=null;renderWx();return}
   const key=[p.lat.toFixed(2),p.lon.toFixed(2),WXV.model,WXV.wmodel,cfg.src==='demo'].join('|');
   if(!force&&WXV.data&&WXV.key===key&&Date.now()-WXV.data.at<20*60e3)return;
-  WXV.busy=true;WXV.err='';renderWx();
+  const my=++wxSeq;WXV.busy=true;WXV.err='';renderWx();
   try{
     let d;
     if(cfg.src==='demo'&&!cfg.kPoint){d=wxDemo(p)}
     else{
-      let r=null,w=null,warn='';
+      let r=null,w=null,warn='',used=WXV.model;
       if(!cfg.kPoint&&!GRIBS.on())throw new Error('clé Windy Point Forecast absente (⚙️ Réglages) et aucun GRIB importé');
-      try{r=await windyPoint(p.lat,p.lon,WXV.model,['wind','windGust','temp','pressure','lclouds','mclouds','hclouds','precip','rh'])}
-      catch(e){if(!GRIBS.on())throw e;warn='Windy indisponible ('+e.message+') : vent des GRIB importés seulement.';r=await windyPoint(p.lat,p.lon,WXV.model,['wind'])}
-      if(!r)throw new Error('pas de données '+WXV.model+' à cet endroit');
-      try{w=await windyPoint(p.lat,p.lon,WXV.wmodel,['waves','windWaves','swell1','swell2'])}catch(e){warn=(warn?warn+' ':'')+'Vagues indisponibles ici ('+e.message+').'}
-      d=wxParse(r,w);d.src=(GRIBS.on()&&!cfg.kPoint?'GRIB importés':'Windy')+' · '+({gfs:'GFS',ecmwf:'ECMWF',icon:'ICON',iconEu:'ICON-EU'}[WXV.model]||WXV.model);d.warn=warn;d.model=WXV.model;
+      const PA=['wind','windGust','temp','pressure','lclouds','mclouds','hclouds','precip','rh'];
+      const okW=x=>x&&(x['wind_u-surface']||[]).some(v=>v!=null);
+      const chain=WXV.model==='auto'?wxChain(p.lat,p.lon):[WXV.model];
+      let lastErr=null;
+      for(const m of chain){
+        try{const x=await windyPoint(p.lat,p.lon,m,PA);if(okW(x)){r=x;used=m;break}}
+        catch(e){lastErr=e;if(e.fatal&&!GRIBS.on())throw e}
+        if(my!==wxSeq)return;
+      }
+      if(!r&&GRIBS.on()){warn='Windy indisponible'+(lastErr?' ('+lastErr.message+')':'')+' : vent des GRIB importés seulement.';r=await windyPoint(p.lat,p.lon,used,['wind'])}
+      if(!r)throw new Error(lastErr?lastErr.message:'le modèle '+WXV.model+' n\'a pas de données à cet endroit (modèle régional hors zone ?). Essaie « Auto » ou GFS.');
+      if(WXV.wmodel!=='none'){
+        const wch=WXV.wmodel==='gfsWave'&&WXV.model==='auto'?['iconEuWave','gfsWave']:[WXV.wmodel];
+        for(const wm of wch){
+          try{const x=await windyPoint(p.lat,p.lon,wm,['waves','windWaves','swell1','swell2']);if(x&&(x['waves_height-surface']||x['swell1_height-surface']||[]).some(v=>v!=null)){w=x;break}}
+          catch(e){warn=(warn?warn+' ':'')+'Vagues indisponibles ici ('+e.message+').'}
+          if(my!==wxSeq)return;
+        }
+        if(!w&&!warn)warn='Pas de données de vagues ici (zone côtière ou modèle hors zone).';
+      }
+      if(my!==wxSeq)return;
+      const nm=Object.fromEntries(WXM);
+      d=wxParse(r,w);d.src=(GRIBS.on()&&!cfg.kPoint?'GRIB importés':'Windy')+' · '+((nm[used]||used).replace(/ \(.*$/,''));d.warn=warn;d.model=used;
     }
     d.at=Date.now();d.place=p;WXV.data=d;WXV.key=key;
     if(WXV.when==='later'&&!WXV.t)WXV.t=d.ts[0];
-  }catch(e){WXV.err=e.message;WXV.data=null}
-  WXV.busy=false;renderWx();
+  }catch(e){if(my!==wxSeq)return;WXV.err=e.message;WXV.data=null}
+  if(my!==wxSeq)return;WXV.busy=false;renderWx();
 }
 function wxGoPlace(p){WXV.mode='else';WXV.place={name:p.name||'Lieu',lat:p.lat,lon:p.lon};wxSave();go('wx')}
 function wxIdx(d){const t=WXV.when==='now'?Date.now():WXV.t;let k=0,bd=1e18;d.ts.forEach((x,i)=>{const e=Math.abs(x-t);if(e<bd){bd=e;k=i}});return k}
@@ -5672,9 +5702,9 @@ function renderWx(){
   if(WXV.when==='later'&&d){const k=wxIdx(d);const days=[];let last='';d.ts.forEach((t,i)=>{const s=new Date(t).toDateString();if(s!==last){last=s;days.push(i)}});
     h+=`<div class="row" style="gap:6px;flex-wrap:wrap;margin-bottom:6px">${days.slice(0,6).map(i=>{const t=d.ts[i],dd=new Date(t),noon=d.ts.findIndex(x=>x>=new Date(dd.getFullYear(),dd.getMonth(),dd.getDate(),12).getTime());return`<button class="b sec" data-day="${Math.max(noon,i)}" style="width:auto;padding:5px 10px;font-size:13px">${dd.toLocaleDateString(LOC(),{weekday:'short',day:'numeric'})}</button>`}).join('')}</div>
     <input type="range" id="wxSl" min="0" max="${d.ts.length-1}" value="${k}" style="padding:0"><div class="mut" id="wxSlL" style="margin-top:2px">${fm(d.ts[k])} (dans ${Math.round((d.ts[k]-Date.now())/3600e3)} h)</div>`}
-  h+=`<div class="row" style="margin-top:8px;gap:6px"><select id="wxMod" style="flex:1"><option value="gfs">GFS (NOAA)</option><option value="ecmwf">ECMWF</option><option value="icon">ICON (DWD)</option><option value="iconEu">ICON-EU (Europe)</option></select><select id="wxWMod" style="flex:1"><option value="gfsWave">Vagues GFS</option><option value="ecmwfWaves">Vagues ECMWF</option></select><button class="b sec" id="wxRef" style="width:auto">↻</button></div></div>`;
+  h+=`<div class="row" style="margin-top:8px;gap:6px"><select id="wxMod" style="flex:1">${WXM.map(m=>`<option value="${m[0]}">${m[1]}</option>`).join('')}</select><select id="wxWMod" style="flex:1">${WXW.map(m=>`<option value="${m[0]}">${m[1]}</option>`).join('')}</select><button class="b sec" id="wxRef" style="width:auto">↻</button></div></div>`;
   if(WXV.busy)h+='<div class="card mut">Chargement des prévisions…</div>';
-  else if(WXV.err)h+=`<div class="card warn">⚠️ ${esc(WXV.err)}<div class="mut" style="margin-top:6px">Il faut une clé Windy Point Forecast (⚙️ Réglages → Routage et météo) ou des GRIB importés. Le mode démonstration affiche des données fictives.</div></div>`;
+  else if(WXV.err)h+=`<div class="card warn">⚠️ ${esc(WXV.err)}${cfg.kPoint?'':'<div class="mut" style="margin-top:6px">Il faut une clé Windy Point Forecast (⚙️ Réglages → Routage et météo) ou des GRIB importés. Le mode démonstration affiche des données fictives.</div>'}</div>`;
   else if(d){
     const k=wxIdx(d),S=d.S,t=d.ts[k],g=a=>S[a][k];const w=g('wind'),gu=g('gust'),dr=g('dir'),wh=g('wh'),sun=sunPos(d.place.lat,d.place.lon,t);
     const dial=(dr==null)?'':`<svg viewBox="0 0 100 100" style="width:104px;height:104px"><circle cx="50" cy="50" r="44" fill="none" stroke="var(--line)" stroke-width="5"/><circle cx="50" cy="50" r="44" fill="none" stroke="${wxCol(w||0)}" stroke-width="5" stroke-dasharray="${Math.min(1,(w||0)/40)*276} 276" transform="rotate(-90 50 50)" stroke-linecap="round"/><g transform="rotate(${Math.round(dr+180)} 50 50)"><path d="M50 14 L60 40 L50 34 L40 40Z" fill="${wxCol(w||0)}"/></g><text x="50" y="52" text-anchor="middle" font-size="22" font-weight="700" fill="var(--tx)">${w==null?'--':Math.round(w)}</text><text x="50" y="66" text-anchor="middle" font-size="9" fill="var(--mut)">nœuds</text></svg>`;
@@ -5718,8 +5748,8 @@ function wxWire(){
     sv.onpointerdown=e=>{sv.setPointerCapture(e.pointerId);mv(e);sv._d=1};sv.onpointermove=e=>{if(sv._d)mv(e)};sv.onpointerup=()=>{sv._d=0;renderWx()}});
   const lw=$('#wxLW');if(lw)lw.onchange=()=>{WXV.limW=Math.max(5,+lw.value||20);wxSave();renderWx()};
   const lh=$('#wxLH');if(lh)lh.onchange=()=>{WXV.limH=Math.max(.2,+lh.value||1.5);wxSave();renderWx()};
-  $('#wxMap').onclick=()=>{go('route');if(cfg.kMap)showWindy();else alert('Renseigne la clé Windy Map Forecast dans ⚙️ Réglages.')};
-  $('#wxRoute').onclick=()=>{const p=d.place;$('#rB').value=p.lat.toFixed(4)+', '+p.lon.toFixed(4);wpFromFields();go('route')};
+  const wm=$('#wxMap');if(wm)wm.onclick=()=>{go('route');if(cfg.kMap)showWindy();else alert('Renseigne la clé Windy Map Forecast dans ⚙️ Réglages.')};
+  const wr=$('#wxRoute');if(wr)wr.onclick=()=>{const p=d.place;$('#rB').value=p.lat.toFixed(4)+', '+p.lon.toFixed(4);wpFromFields();go('route')};
 }
 let wxLiveT=0;
 function wxLive(){ // met à jour le curseur et le libellé sans tout reconstruire pendant le glissement

@@ -1,6 +1,6 @@
 {
   "name": "signalk-carnet-de-bord",
-  "version": "2.6.0",
+  "version": "2.6.1",
   "description": "Carnet de bord de navigation pour Signal K / OpenPlotter : application web, enregistrement 24 h/24 des trajets et stockage partagé sur le Raspberry Pi.",
   "main": "plugin/index.js",
   "keywords": [
