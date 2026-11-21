@@ -1,6 +1,6 @@
 {
   "name": "carnet-de-bord",
-  "version": "2.5",
+  "version": "2.6",
   "private": true,
   "description": "Carnet de bord de navigation (Android)",
   "dependencies": {
