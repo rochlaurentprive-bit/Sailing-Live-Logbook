@@ -1841,6 +1841,7 @@ Aucun résultat. Essaie un autre nom ou ajoute le pays.|Geen resultaat. Probeer 
 Autour de :|Rond:|Around:|Rund um:|Alrededor de:
 changer|wijzigen|change|ändern|cambiar
 Rayon|Straal|Radius|Radius|Radio
+Rayon (NM)|Straal (NM)|Radius (NM)|Radius (NM)|Radio (NM)
 Données OpenStreetMap (Internet requis), souvent incomplètes :|OpenStreetMap-gegevens (internet vereist), vaak onvolledig:|OpenStreetMap data (internet required), often incomplete:|OpenStreetMap-Daten (Internet nötig), oft unvollständig:|Datos de OpenStreetMap (requiere Internet), a menudo incompletos:
 vérifie toujours|controleer altijd|always check|prüfe immer|comprueba siempre
 la carte marine, la profondeur, le fond et l’abri par rapport au vent prévu.|de zeekaart, de diepte, de bodem en de beschutting ten opzichte van de verwachte wind.|the nautical chart, the depth, the bottom and the shelter against the forecast wind.|die Seekarte, die Wassertiefe, den Grund und den Schutz vor dem vorhergesagten Wind.|la carta náutica, la profundidad, el fondo y el abrigo respecto al viento previsto.
@@ -3765,7 +3766,7 @@ $('#fxPlay').onclick=()=>{
 };
 
 
-const APP_VERSION='2.6.1',APP_BUILD='21.11-g';
+const APP_VERSION='2.6.1',APP_BUILD='21.11-h';
 (()=>{const e=document.getElementById('appVer');if(e)e.textContent='Carnet de bord · v'+APP_VERSION+' ('+APP_BUILD+')'})();
 /* ---------- Météo du parcours : vent, vagues, houle et courant le long du tracé (routage, tracé modifié, depuis ma position) ---------- */
 const RWL={wind:{n:'Vent',u:'nds',lim:'maxW',def:22,to:false},waves:{n:'Vagues',u:'m',lim:'maxH',def:2,to:false},swell:{n:'Houle',u:'m',lim:'maxH',def:2,to:false},cur:{n:'Courant',u:'nds',lim:null,to:true}};
@@ -5854,12 +5855,13 @@ function plcDlg(o){
     const cen=center||(fresh('lat')?{lat:D.lat,lon:D.lon,name:'ma position'}:null);
     body.innerHTML=`<div class="mut" style="margin:6px 0">Autour de : <b id="plcC">${cen?esc(cen.name||cen.lat.toFixed(3)+', '+cen.lon.toFixed(3)):'—'}</b> <button class="b sec" id="plcCh" style="width:auto;padding:3px 10px;font-size:12px">changer</button></div>
     <div class="row" style="gap:6px;flex-wrap:wrap" id="plcK">${Object.entries(ANCH_KINDS).map(([k,v])=>`<label style="display:flex;gap:5px;align-items:center;color:var(--tx);font-size:13px"><input type="checkbox" data-k="${k}" style="width:auto" ${kinds.includes(k)?'checked':''}> ${v.ico} ${v.lbl}</label>`).join('')}</div>
-    <div class="row" style="margin-top:8px;align-items:center"><label style="margin:0">Rayon</label><select id="plcR" style="width:auto">${[3,5,10,20,40].map(x=>`<option value="${x}" ${x===rad?'selected':''}>${x} NM</option>`).join('')}</select><button class="b" id="plcAg" style="flex:1">Chercher</button></div>
+    <div class="row" style="margin-top:8px;align-items:center"><label style="margin:0">Rayon (NM)</label><div id="plcR" class="seg" style="flex:1;margin:0">${[3,5,10,20,40].map(x=>`<button data-r="${x}" class="${x===rad?'on':''}" style="padding:8px 4px">${x}</button>`).join('')}</div></div>
+    <div class="row" style="margin-top:8px"><button class="b" id="plcAg" style="flex:1">Chercher</button></div>
     <div id="plcRes" class="mut" style="margin-top:8px">Données OpenStreetMap (Internet requis), souvent incomplètes : <b>vérifie toujours</b> la carte marine, la profondeur, le fond et l’abri par rapport au vent prévu.</div>`;
     $('#plcCh').onclick=()=>{mode='place';o2()};
     const o2=()=>{close();plcDlg({...o,mode:'place',title:'Autour de quel lieu ?',actions:[{k:'c',label:'Choisir'}],onPick:(p)=>plcDlg({...o,mode:'anch',center:p})})};
     $$('#plcK [data-k]').forEach(c=>c.onchange=()=>{kinds=$$('#plcK [data-k]').filter(x=>x.checked).map(x=>x.dataset.k)});
-    $('#plcR').onchange=e=>rad=+e.target.value;
+    $$('#plcR [data-r]').forEach(b=>b.onclick=()=>{rad=+b.dataset.r;$$('#plcR [data-r]').forEach(x=>x.classList.toggle('on',x===b))});
     $('#plcAg').onclick=async()=>{const res=$('#plcRes');if(!cen){res.textContent='Choisis d’abord un lieu (« changer »).';return}if(!kinds.length){res.textContent='Coche au moins un type.';return}res.textContent='Recherche… (30 s maximum)';const gb=$('#plcAg');gb.disabled=true;
       try{const l=await anchSearch(cen,rad,kinds);if(!l.length){res.textContent='Rien trouvé dans ce rayon (la base OpenStreetMap est incomplète ici). Élargis le rayon ou consulte un guide de croisière.';return}
         l.forEach(p=>{p.ico=ANCH_KINDS[p.kind].ico;p.sub=`${p.d.toFixed(1)} NM · cap ${Math.round(p.brg)}° (${card(p.brg)})${p.info?' · '+p.info:''}`;if(!p.name)p.name=ANCH_KINDS[p.kind].lbl+' (sans nom)'});
