@@ -514,7 +514,8 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
     <select id="mapBase"><option value="osm">OpenStreetMap</option><option value="voy">Carte claire (Carto)</option><option value="esri">Satellite (Esri)</option><option value="none">Aucun fond (hors ligne)</option></select>
     <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="mapSea" checked style="width:auto"> Balises et feux marins (OpenSeaMap)</label>
     <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="mapDepth" style="width:auto"> Profondeurs d'eau en couleur (EMODnet) · touche la carte pour lire la profondeur</label>
-    <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="mapEnc" style="width:auto"> Cartes marines officielles Pays-Bas (Rijkswaterstaat, ENC) · eaux néerlandaises uniquement</label>
+    <label>Cartes marines officielles (gratuites, indicatives)</label>
+    <select id="mapEnc"><option value="">Aucune</option><option value="nl">Pays-Bas · eaux navigables (Rijkswaterstaat)</option><option value="be">Belgique · côte et estran (Vlaamse Hydrografie)</option><option value="de">Allemagne · voies intérieures (WSV)</option></select>
     <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="mapIso" style="width:auto"> Lignes isobathes calculées (courbes de profondeur de 2 m à 2000 m, d'après les données EMODnet : indicatives, hauteur de marée non corrigée)</label>
     <label>Niveaux des isobathes (mètres, séparés par des virgules)</label><input id="isoLv" placeholder="2,5,10,20,30,50,100,200,500,1000,2000">
     <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="aisOn" style="width:auto"> Cibles AIS (bateaux reçus par l'AIS raccordé au réseau NMEA 2000) · touche une cible pour le détail</label>
@@ -854,7 +855,10 @@ Satellite (Esri)|Satelliet (Esri)|Satellite (Esri)|Satellit (Esri)|Satélite (Es
 OpenStreetMap|OpenStreetMap|OpenStreetMap|OpenStreetMap|OpenStreetMap
 Aucun fond (hors ligne)|Geen achtergrond (offline)|No background (offline)|Kein Hintergrund (offline)|Sin fondo (sin conexión)
 Carte météo Windy|Windy-weerkaart|Windy weather map|Windy-Wetterkarte|Mapa meteorológico Windy
-Cartes marines officielles Pays-Bas (Rijkswaterstaat, ENC) · eaux néerlandaises uniquement|Officiële zeekaarten Nederland (Rijkswaterstaat, ENC) · alleen Nederlandse wateren|Official nautical charts Netherlands (Rijkswaterstaat, ENC) · Dutch waters only|Amtliche Seekarten Niederlande (Rijkswaterstaat, ENC) · nur niederländische Gewässer|Cartas náuticas oficiales de Países Bajos (Rijkswaterstaat, ENC) · solo aguas neerlandesas
+Cartes marines officielles (gratuites, indicatives)|Officiële zeekaarten (gratis, indicatief)|Official nautical charts (free, indicative)|Amtliche Seekarten (kostenlos, nur Richtwert)|Cartas náuticas oficiales (gratuitas, orientativas)
+Pays-Bas · eaux navigables (Rijkswaterstaat)|Nederland · vaarwateren (Rijkswaterstaat)|Netherlands · navigable waters (Rijkswaterstaat)|Niederlande · Wasserstraßen (Rijkswaterstaat)|Países Bajos · aguas navegables (Rijkswaterstaat)
+Belgique · côte et estran (Vlaamse Hydrografie)|België · kust en strand (Vlaamse Hydrografie)|Belgium · coast and foreshore (Vlaamse Hydrografie)|Belgien · Küste und Watt (Vlaamse Hydrografie)|Bélgica · costa y estran (Vlaamse Hydrografie)
+Allemagne · voies intérieures (WSV)|Duitsland · binnenwateren (WSV)|Germany · inland waterways (WSV)|Deutschland · Binnenwasserstraßen (WSV)|Alemania · vías interiores (WSV)
 Balises et feux marins (OpenSeaMap)|Boeien en lichten (OpenSeaMap)|Buoys and marine lights (OpenSeaMap)|Seezeichen und Feuer (OpenSeaMap)|Balizas y luces marinas (OpenSeaMap)
 Profondeurs d'eau en couleur (EMODnet) · touche la carte pour lire la profondeur|Waterdiepte in kleur (EMODnet) · tik op de kaart om de diepte te lezen|Water depths in colour (EMODnet) · tap the map to read the depth|Wassertiefen farbig (EMODnet) · Karte antippen, um die Tiefe zu lesen|Profundidades en color (EMODnet) · toca el mapa para leer la profundidad
 Pas de données de profondeur ici (hors zone EMODnet).|Hier geen dieptegegevens (buiten EMODnet-gebied).|No depth data here (outside the EMODnet area).|Hier keine Tiefendaten (außerhalb des EMODnet-Gebiets).|Sin datos de profundidad aquí (fuera de la zona EMODnet).
@@ -3486,13 +3490,17 @@ function setM3D(on){
 setInterval(()=>{m3dFrame();if(M3D&&$('#v-map').classList.contains('on'))scheduleDraw()},1500);
 /* ---------- Carte ---------- */
 const tileCache={}; let tileErr=0, drawQ=0;
+const wmsT=(b,l,z,x,y)=>{const W=40075016.6856,t=W/Math.pow(2,z),x0=-W/2+x*t,y1=W/2-y*t;return`${b}?service=WMS&version=1.3.0&request=GetMap&layers=${l}&styles=&format=image/png&transparent=true&crs=EPSG:3857&width=256&height=256&bbox=${x0},${y1-t},${x0+t},${y1}`};
+const encL=()=>{const v=($('#mapEnc')||{}).value;return v?'enc_'+v:''};
 const MAPSRC={
   osm:{u:(z,x,y)=>`https://tile.openstreetmap.org/${z}/${x}/${y}.png`,max:19},
   voy:{u:(z,x,y)=>`https://a.basemaps.cartocdn.com/rastertiles/voyager/${z}/${x}/${y}.png`,max:19},
   esri:{u:(z,x,y)=>`https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${x}`,max:18},
   depth:{u:(z,x,y)=>`https://tiles.emodnet-bathymetry.eu/2020/baselayer/web_mercator/${z}/${x}/${y}.png`,max:12,alpha:.55},
   iso:{u:(z,x,y)=>{const W=40075016.6856,t=W/Math.pow(2,z),x0=-W/2+x*t,y1=W/2-y*t;return`https://ows.emodnet-bathymetry.eu/wms?service=WMS&version=1.3.0&request=GetMap&layers=emodnet:contours&styles=&format=image/png&transparent=true&crs=EPSG:3857&width=256&height=256&bbox=${x0},${y1-t},${x0+t},${y1}`},max:16,alpha:.9},
-  enc:{u:(z,x,y)=>{const W=40075016.6856,t=W/Math.pow(2,z),x0=-W/2+x*t,y1=W/2-y*t;return`https://geo.rijkswaterstaat.nl/arcgis/rest/services/ENC/mcs_inland/MapServer/exts/MaritimeChartService/WMSServer?service=WMS&version=1.3.0&request=GetMap&layers=1,2,3,4,5,6,7,9&styles=&format=image/png&transparent=true&crs=EPSG:3857&width=256&height=256&bbox=${x0},${y1-t},${x0+t},${y1}`},max:17,bb:[3.13,50.75,7.22,53.61]},
+  enc_nl:{u:(z,x,y)=>wmsT('https://geo.rijkswaterstaat.nl/arcgis/rest/services/ENC/mcs_inland/MapServer/exts/MaritimeChartService/WMSServer','1,2,3,4,5,6,7,9',z,x,y),max:17,bb:[3.13,50.75,7.22,53.61]},
+  enc_be:{u:(z,x,y)=>wmsT('https://inspire.afdelingkust.be/sr/wms','Coastline,InterTidalArea,Shoreline',z,x,y),max:17,bb:[2.2,51,3.5,52]},
+  enc_de:{u:(z,x,y)=>wmsT('https://via.bund.de/wsv/ienc/wms','IENC',z,x,y),max:17,bb:[6.03,48.48,20,60]},
   sea:{u:(z,x,y)=>`https://tiles.openseamap.org/seamark/${z}/${x}/${y}.png`,max:18}};
 function tileImg(layer,z,x,y){
   const k=layer+'/'+z+'/'+x+'/'+y,c=tileCache[k];
@@ -3549,7 +3557,7 @@ function renderMap(){
   for(let lo=Math.ceil(lon0/st)*st;lo<=lon1;lo+=st){const x=wx(lo,z)-ox;g.beginPath();g.moveTo(x,0);g.lineTo(x,H);g.stroke();g.fillText(lo.toFixed(st<0.01?3:st<1?2:0)+'°',x+3,H-4)}
   for(let la=Math.ceil(lat0/st)*st;la<=lat1;la+=st){const y=wy(la,z)-oy;g.beginPath();g.moveTo(0,y);g.lineTo(W,y);g.stroke();g.fillText(la.toFixed(st<0.01?3:st<1?2:0)+'°',3,y-3)}
   // fonds de carte
-  const base=$('#mapBase').value,layers=[];if(base!=='none')layers.push(base);if($('#mapDepth').checked)layers.push('depth');if($('#mapEnc').checked)layers.push('enc');if($('#mapIso').checked&&(ISO.span>2.5||!ISO.segs))layers.push('iso');if($('#mapSea').checked)layers.push('sea');
+  const base=$('#mapBase').value,layers=[];if(base!=='none')layers.push(base);if($('#mapDepth').checked)layers.push('depth');if(encL())layers.push(encL());if($('#mapIso').checked&&(ISO.span>2.5||!ISO.segs))layers.push('iso');if($('#mapSea').checked)layers.push('sea');
   const tz=Math.min(z,Math.max(...layers.map(l=>MAPSRC[l].max),0)),sc=2**(z-tz),n=2**tz;
   for(const layer of layers){
     const zz=Math.min(z,MAPSRC[layer].max),s2=2**(z-zz),nn=2**zz;
@@ -3644,8 +3652,8 @@ function renderMap(){
   $('#m3d').onclick=()=>setM3D(!M3D);$('#map3dCb').onchange=e=>setM3D(e.target.checked);$('#wpToggle').addEventListener('click',()=>{if(M3D)setM3D(false)});
   $('#mZin').onclick=()=>zoomBy(1);$('#mZout').onclick=()=>zoomBy(-1);$('#mFit').onclick=()=>drawMapSel(true);$('#mBoat').onclick=()=>{if(!fresh('lat')||D.lat==null){const b=$('#mBoat');b.textContent='🚫';setTimeout(()=>b.textContent='⛵',1500);try{toast&&toast('Position du bateau inconnue')}catch(e){}return}MV.auto=false;MV.lat=D.lat;MV.lon=D.lon;if(MV.z<13)MV.z=14;scheduleDraw()};
   const b=localStorage.getItem('mapBase');if(b)$('#mapBase').value=b;
-  $('#mapSea').checked=localStorage.getItem('mapSea')!=='0';$('#mapDepth').checked=localStorage.getItem('mapDepth')==='1';$('#mapIso').checked=localStorage.getItem('mapIso')==='1';$('#mapEnc').checked=localStorage.getItem('mapEnc')==='1';
-  const onLayer=()=>{localStorage.setItem('mapBase',$('#mapBase').value);localStorage.setItem('mapSea',$('#mapSea').checked?'1':'0');localStorage.setItem('mapDepth',$('#mapDepth').checked?'1':'0');localStorage.setItem('mapIso',$('#mapIso').checked?'1':'0');localStorage.setItem('mapEnc',$('#mapEnc').checked?'1':'0');tileErr=0;for(const k in tileCache)if(!tileCache[k].ok)delete tileCache[k];scheduleDraw()};
+  $('#mapSea').checked=localStorage.getItem('mapSea')!=='0';$('#mapDepth').checked=localStorage.getItem('mapDepth')==='1';$('#mapIso').checked=localStorage.getItem('mapIso')==='1';$('#mapEnc').value=localStorage.getItem('mapEnc')||'';
+  const onLayer=()=>{localStorage.setItem('mapBase',$('#mapBase').value);localStorage.setItem('mapSea',$('#mapSea').checked?'1':'0');localStorage.setItem('mapDepth',$('#mapDepth').checked?'1':'0');localStorage.setItem('mapIso',$('#mapIso').checked?'1':'0');localStorage.setItem('mapEnc',$('#mapEnc').value);tileErr=0;for(const k in tileCache)if(!tileCache[k].ok)delete tileCache[k];scheduleDraw()};
   $('#mapBase').onchange=onLayer;$('#mapSea').onchange=onLayer;$('#mapDepth').onchange=onLayer;$('#mapIso').onchange=onLayer;$('#mapEnc').onchange=onLayer;
   addEventListener('resize',scheduleDraw);
 })();
@@ -3770,7 +3778,7 @@ $('#fxPlay').onclick=()=>{
 };
 
 
-const APP_VERSION='2.6.1',APP_BUILD='22.11-a';
+const APP_VERSION='2.6.1',APP_BUILD='22.11-b';
 (()=>{const e=document.getElementById('appVer');if(e)e.textContent='Carnet de bord · v'+APP_VERSION+' ('+APP_BUILD+')'})();
 /* ---------- Météo du parcours : vent, vagues, houle et courant le long du tracé (routage, tracé modifié, depuis ma position) ---------- */
 const RWL={wind:{n:'Vent',u:'nds',lim:'maxW',def:22,to:false},waves:{n:'Vagues',u:'m',lim:'maxH',def:2,to:false},swell:{n:'Houle',u:'m',lim:'maxH',def:2,to:false},cur:{n:'Courant',u:'nds',lim:null,to:true}};
@@ -7516,8 +7524,8 @@ function seaDraw(g,P){
 /* ---------- Cartes hors ligne : enregistre les tuiles de la zone affichée (Cache API) ---------- */
 const OFFA=(()=>{try{return JSON.parse(localStorage.getItem('offAreas'))||[]}catch(e){return[]}})();
 const OFF={busy:false,stop:false};
-const OFF_KB={osm:15,voy:12,esri:26,depth:8,iso:5,enc:12,sea:4};
-const offLayers=()=>{const l=[],b=$('#mapBase').value;if(b!=='none')l.push(b);if($('#mapDepth').checked)l.push('depth');if($('#mapIso').checked)l.push('iso');if($('#mapEnc').checked)l.push('enc');if($('#mapSea').checked)l.push('sea');return l};
+const OFF_KB={osm:15,voy:12,esri:26,depth:8,iso:5,enc_nl:12,enc_be:6,enc_de:12,sea:4};
+const offLayers=()=>{const l=[],b=$('#mapBase').value;if(b!=='none')l.push(b);if($('#mapDepth').checked)l.push('depth');if($('#mapIso').checked)l.push('iso');if(encL())l.push(encL());if($('#mapSea').checked)l.push('sea');return l};
 function offPlan(z1){   // liste des tuiles à enregistrer pour la zone visible
   const v=viewBBox(),z0=Math.max(3,Math.min(MV.z,z1)-3),out=[];let kb=0;
   offLayers().forEach(ly=>{const zm=Math.min(z1,MAPSRC[ly].max);for(let z=z0;z<=zm;z++){const n=2**z,
