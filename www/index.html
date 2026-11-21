@@ -441,6 +441,9 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
   <div id="nTabChk" class="hide"></div><div id="nTabMnt" class="hide"></div>
 </section>
 
+<section id="v-energy">
+  <div id="enBox"></div>
+</section>
 <section id="v-stats">
   <div id="statsBox"></div>
 </section>
@@ -474,6 +477,10 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
     <button class="b sec" id="gpsAsk">Autoriser / tester le GPS du téléphone</button>
     <label>Adresse Signal K (hôte:port)</label><input id="sHost" placeholder="192.168.1.50:3000">
     <label>YDWG-02 : adresse (Wi-Fi du boîtier) et port TCP</label>
+    <div style="margin:6px 0 10px"><b>Énergie du bord</b>
+    <div class="row" style="margin-top:6px"><div style="flex:1"><label>Batteries (Ah)</label><input id="enAh" type="number" inputmode="numeric" placeholder="200"></div><div style="flex:1"><label>Réserve mini (%)</label><input id="enRes" type="number" inputmode="numeric" placeholder="30"></div></div>
+    <div class="row"><div style="flex:1"><label>Panneaux (Wc)</label><input id="enWc" type="number" inputmode="numeric" placeholder="400"></div><div style="flex:1"><label>Réservoir gasoil (L)</label><input id="enFu" type="number" inputmode="numeric" placeholder="120"></div><div style="flex:1"><label>Réservoir eau (L)</label><input id="enWa" type="number" inputmode="numeric" placeholder="150"></div></div>
+    <div class="muted" style="font-size:12px">Sert aux cadrans, à l'autonomie et au planificateur de passage de l'onglet Énergie.</div></div>
     <div style="margin:6px 0 10px"><b>Saison de navigation (statistiques)</b>
     <div class="row" style="margin-top:6px"><div style="flex:1"><label>Début : jour</label><input id="seaD1" type="number" min="1" max="31" inputmode="numeric" placeholder="1"></div><div style="flex:2"><label>mois</label><select id="seaM1"><option value="1">janvier</option><option value="2">février</option><option value="3">mars</option><option value="4">avril</option><option value="5">mai</option><option value="6">juin</option><option value="7">juillet</option><option value="8">août</option><option value="9">septembre</option><option value="10">octobre</option><option value="11">novembre</option><option value="12">décembre</option></select></div></div>
     <div class="row"><div style="flex:1"><label>Fin : jour</label><input id="seaD2" type="number" min="1" max="31" inputmode="numeric" placeholder="31"></div><div style="flex:2"><label>mois</label><select id="seaM2"><option value="1">janvier</option><option value="2">février</option><option value="3">mars</option><option value="4">avril</option><option value="5">mai</option><option value="6">juin</option><option value="7">juillet</option><option value="8">août</option><option value="9">septembre</option><option value="10">octobre</option><option value="11">novembre</option><option value="12">décembre</option></select></div></div>
@@ -615,6 +622,7 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
   <button data-v="trips"><svg viewBox="0 0 24 24"><circle cx="5.5" cy="18.5" r="1.8"/><circle cx="18.5" cy="5.5" r="1.8"/><path d="M7 17.5c8 0 1-11 10-11"/></svg>Logbook</button>
   <button data-v="map"><svg viewBox="0 0 24 24"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg>Carte</button>
   <button data-v="route"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>Routage</button>
+  <button data-v="energy"><svg viewBox="0 0 24 24"><path d="M13 2L5 14h6l-1 8 8-12h-6z"/></svg>Énergie</button>
   <button data-v="notes"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M9 12h7M9 16h5"/></svg>Notes</button>
   <button data-v="stats"><svg viewBox="0 0 24 24"><path d="M5 20V11M12 20V4M19 20v-6"/></svg>Stats</button>
 </nav>
@@ -1695,8 +1703,8 @@ if(NATIVE)document.body.classList.add('native');
 /* ---------- Stockage IndexedDB ---------- */
 let SYNCING=false;   // vrai pendant une synchro avec le Pi : on garde alors l'horodatage d'origine
 const db={h:null,
-  open(){return new Promise((ok,ko)=>{const r=indexedDB.open('carnet',3);
-    r.onupgradeneeded=()=>{const d=r.result;['trips','notes','photos','audit','grib'].forEach(n=>{if(!d.objectStoreNames.contains(n))d.createObjectStore(n,{keyPath:'id'})})};
+  open(){return new Promise((ok,ko)=>{const r=indexedDB.open('carnet',4);
+    r.onupgradeneeded=()=>{const d=r.result;['trips','notes','photos','audit','grib','energy'].forEach(n=>{if(!d.objectStoreNames.contains(n))d.createObjectStore(n,{keyPath:'id'})})};
     r.onsuccess=()=>{this.h=r.result;ok()};r.onerror=()=>ko(r.error)})},
   st(s,m){return this.h.transaction(s,m||'readonly').objectStore(s)},
   req(q){return new Promise((ok,ko)=>{q.onsuccess=()=>ok(q.result);q.onerror=()=>ko(q.error)})},
@@ -1843,7 +1851,7 @@ function skValue(path,v){
   else if((m=path.match(/^electrical\.batteries\.([^.]+)\.temperature$/))){(D.bats[m[1]]=D.bats[m[1]]||{}).tc=v-273.15;D.bats[m[1]].t=NOW()}
   else if((m=path.match(/^electrical\.batteries\.([^.]+)\.capacity\.timeRemaining$/))){(D.bats[m[1]]=D.bats[m[1]]||{}).tr=v/3600;D.bats[m[1]].t=NOW()}
   else if((m=path.match(/^electrical\.solar\.([^.]+)\.(panelPower|yieldToday)$/))){const o=D.sol[m[1]]=D.sol[m[1]]||{};if(m[2]==='panelPower')o.w=v;else o.y=v;o.t=NOW()}
-  else if((m=path.match(/^electrical\.system\.(consumption|solar)$/))){D.sys[m[1]]=v;D.sys.t=NOW()}
+  else if((m=path.match(/^electrical\.system\.(consumption|solar|shore|alternator|acLoad)$/))){D.sys[m[1]]=v;D.sys.t=NOW()}
   else if((m=path.match(/^environment\.inside\.([^.]+)\.(temperature|relativeHumidity)$/))){const o=D.temps[m[1]]=D.temps[m[1]]||{};if(m[2]==='temperature')o.c=v-273.15;else o.h=v*100;o.t=NOW()}
   else if((m=path.match(/^electrical\.batteries\.([^.]+)\.capacity\.stateOfCharge$/))){(D.bats[m[1]]=D.bats[m[1]]||{}).soc=v*100;D.bats[m[1]].t=NOW();SRC.bat=PSRC}
 }
@@ -1894,6 +1902,9 @@ function cerbo(tp,v){
     else if(k==='system/0/Dc/Battery/Temperature')S('electrical.batteries.Servitude.temperature',v+273.15);
     else if(k==='system/0/Dc/System/Power')S('electrical.system.consumption',v);
     else if(k==='system/0/Dc/Pv/Power')S('electrical.system.solar',v);
+    else if(k==='system/0/Ac/Grid/L1/Power')S('electrical.system.shore',v);
+    else if(k==='system/0/Ac/Consumption/L1/Power')S('electrical.system.acLoad',v);
+    else if(k==='system/0/Dc/Alternator/Power')S('electrical.system.alternator',v);
     else if((m=k.match(/^solarcharger\/(\d+)\/CustomName$/)))CER.names['s'+m[1]]=v;
     else if((m=k.match(/^solarcharger\/(\d+)\/Yield\/Power$/)))S(`electrical.solar.${CER.names['s'+m[1]]||'MPPT '+m[1]}.panelPower`,v);
     else if((m=k.match(/^solarcharger\/(\d+)\/History\/Daily\/0\/Yield$/)))S(`electrical.solar.${CER.names['s'+m[1]]||'MPPT '+m[1]}.yieldToday`,v);
@@ -3809,16 +3820,18 @@ function seasonRange(y){const c=sCfg(),a=new Date(y,c.m1,c.d1),b=new Date(y,c.m2
 function seasonLabel(y){const r=seasonRange(y);return new Date(r.b).getFullYear()===y?`Saison ${y}`:`Saison ${y}-${String((y+1)%100).padStart(2,'0')}`}
 function seasonYearOf(ts){for(const y of[new Date(ts).getFullYear()-1,new Date(ts).getFullYear(),new Date(ts).getFullYear()+1]){const r=seasonRange(y);if(ts>=r.a&&ts<=r.b)return y}return null}
 function seasonCurrent(){const now=NOW(),y=seasonYearOf(now);if(y!=null)return y;let k=new Date(now).getFullYear()+1;while(seasonRange(k).b>now&&k>2000)k--;return k}   // hors saison : la dernière saison terminée, jusqu'à ce que la suivante commence
-function seasonEff(){return STAT.sy!=null?STAT.sy:(cfg.seasonAuto!==false?seasonCurrent():(cfg.seasonPin!=null?cfg.seasonPin:seasonCurrent()))}
+function seasonEff(st){st=st||STAT;return st.sy!=null?st.sy:(cfg.seasonAuto!==false?seasonCurrent():(cfg.seasonPin!=null?cfg.seasonPin:seasonCurrent()))}
 const wkStart=ts=>{const d=new Date(ts);d.setHours(0,0,0,0);d.setDate(d.getDate()-((d.getDay()+6)%7));return+d};
 function isoWeek(ts){const d=new Date(ts);d.setHours(0,0,0,0);d.setDate(d.getDate()+3-((d.getDay()+6)%7));const w=new Date(d.getFullYear(),0,4);return 1+Math.round(((d-w)/864e5-3+((w.getDay()+6)%7))/7)}
-function statPeriod(mode,off){   // off = décalage de période (0 = courante, -1 = précédente)
-  const A=new Date(STAT.anchor||NOW());
+function statPeriod(mode,off,st){   // off = décalage de période (0 = courante, -1 = précédente)
+  st=st||STAT;const A=new Date(st.anchor||NOW());
   if(mode==='total')return{a:-Infinity,b:Infinity,label:'Toutes les navigations',sub:''};
-  if(mode==='season'){const y=seasonEff()+(off||0),r=seasonRange(y),f=t=>new Date(t).toLocaleDateString(LOC(),{day:'numeric',month:'short',year:'numeric'});
+  if(mode==='season'){const y=seasonEff(st)+(off||0),r=seasonRange(y),f=t=>new Date(t).toLocaleDateString(LOC(),{day:'numeric',month:'short',year:'numeric'});
     return{a:r.a,b:r.b,label:seasonLabel(y),sub:f(r.a)+' → '+f(r.b),y}}
   if(mode==='month'){const a=new Date(A.getFullYear(),A.getMonth()+(off||0),1),b=new Date(a.getFullYear(),a.getMonth()+1,1);return{a:+a,b:+b-1,label:MONTHS_FR[a.getMonth()]+' '+a.getFullYear(),sub:''}}
   if(mode==='week'){const a=wkStart(A)+(off||0)*7*864e5,b=new Date(a);b.setDate(b.getDate()+7);const f=t=>new Date(t).toLocaleDateString(LOC(),{day:'numeric',month:'short'});return{a,b:+b-1,label:'Semaine '+isoWeek(a),sub:f(a)+' → '+f(+b-1)}}
+  if(mode==='quarter'){const a=new Date(A.getFullYear(),Math.floor(A.getMonth()/3)*3+3*(off||0),1),b=new Date(a.getFullYear(),a.getMonth()+3,1);return{a:+a,b:+b-1,label:'T'+(Math.floor(a.getMonth()/3)+1)+' '+a.getFullYear(),sub:MONTHS_FR[a.getMonth()]+' → '+MONTHS_FR[(a.getMonth()+2)%12]}}
+  if(mode==='year'){const y=A.getFullYear()+(off||0);return{a:+new Date(y,0,1),b:+new Date(y+1,0,1)-1,label:String(y),sub:''}}
   const a=new Date(A.getFullYear(),A.getMonth(),A.getDate()+(off||0)),b=new Date(a.getFullYear(),a.getMonth(),a.getDate()+1);
   return{a:+a,b:+b-1,label:a.toLocaleDateString(LOC(),{weekday:'long',day:'numeric',month:'long',year:'numeric'}),sub:''};
 }
@@ -3889,6 +3902,210 @@ async function renderStats(){
   const dm=$('#stDemo');if(dm)dm.onchange=()=>go2(()=>{STAT.f.demo=dm.checked});
   $$('#statsBox .statTrip').forEach(e=>e.onclick=()=>{go('trips');showTrip(e.dataset.id)});
 }
+
+/* ---------- Énergie : schéma animé, cadrans, historique, analyse, passage ---------- */
+const EN={sub:'live',mode:'week',anchor:null,sy:null,rec:null,last:0,saved:0,P:null};
+const enDay=t=>{const d=new Date(t);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const enMid=t=>{const d=new Date(t);d.setHours(0,0,0,0);return+d};
+function enNow(){   // photographie des mesures d'énergie du moment
+  const now=NOW(),bs=Object.values(D.bats).filter(b=>now-b.t<30000),b=bs.find(x=>x.soc!=null&&x.i!=null)||bs.find(x=>x.soc!=null)||bs[0]||null;
+  const sol=Object.values(D.sol).filter(x=>now-x.t<60000),sys=now-D.sys.t<60000?D.sys:{};
+  const solW=sol.length?sol.reduce((a,x)=>a+(x.w||0),0):(sys.solar!=null?sys.solar:null);
+  let cons=sys.consumption!=null?sys.consumption:null;const alt=sys.alternator!=null?sys.alternator:null,shore=sys.shore!=null?sys.shore:null,ac=sys.acLoad!=null?sys.acLoad:null;
+  if(cons==null&&b&&b.i!=null&&b.v!=null&&shore==null)cons=Math.max(0,(solW||0)+(alt||0)-b.v*b.i);
+  const tk=t=>Object.values(D.tanks).find(k=>k.type===t&&now-k.t<120000);
+  return{b,solW,cons,alt,shore,ac,fuel:tk('fuel'),water:tk('freshWater'),grey:tk('wasteWater'),black:tk('blackWater')};
+}
+async function enSample(){
+  if(cfg.src==='demo')return;
+  const now=NOW(),dt=EN.last?Math.min(120,(now-EN.last)/1000):0;EN.last=now;if(!dt)return;
+  const e=enNow();if(!e.b&&e.solW==null&&e.cons==null)return;
+  const id=enDay(now);
+  if(!EN.rec||EN.rec.id!==id){if(EN.rec)try{await db.put('energy',EN.rec)}catch(x){}
+    let r=null;try{r=(await db.all('energy')).find(x=>x.id===id)}catch(x){}
+    EN.rec=r||{id,day:enMid(now),h:Array(24).fill(null)}}
+  const h=new Date(now).getHours(),k=EN.rec.h[h]||(EN.rec.h[h]={dt:0,n:0,sol:0,cons:0,alt:0,shore:0,ahIn:0,ahOut:0,socMin:null,socMax:null,socS:0,vS:0,fu0:null,fu1:null,wa0:null,wa1:null,cl:0,clN:0,tw:0,twN:0,mot:0,nav:0});
+  k.dt+=dt;k.n++;
+  if(e.solW!=null)k.sol+=e.solW*dt/3600;if(e.cons!=null)k.cons+=e.cons*dt/3600;if(e.alt!=null)k.alt+=e.alt*dt/3600;if(e.shore!=null)k.shore+=e.shore*dt/3600;
+  if(e.b){if(e.b.i!=null){if(e.b.i>0)k.ahIn+=e.b.i*dt/3600;else k.ahOut-=e.b.i*dt/3600}if(e.b.v!=null)k.vS+=e.b.v;
+    if(e.b.soc!=null){k.socMin=k.socMin==null?e.b.soc:Math.min(k.socMin,e.b.soc);k.socMax=k.socMax==null?e.b.soc:Math.max(k.socMax,e.b.soc);k.socS+=e.b.soc}}
+  if(e.fuel){if(k.fu0==null)k.fu0=e.fuel.lvl;k.fu1=e.fuel.lvl}if(e.water){if(k.wa0==null)k.wa0=e.water.lvl;k.wa1=e.water.lvl}
+  if(WX.src&&WX.cloud!=null){k.cl+=WX.cloud;k.clN++}if(fresh('tws')){k.tw+=D.tws;k.twN++}
+  if(fresh('rpm')&&D.rpm>=300)k.mot+=dt;if(fresh('sog')&&D.sog>1.5)k.nav+=dt;
+  if(now-EN.saved>60000){EN.saved=now;try{await db.put('energy',EN.rec)}catch(x){}}
+}
+setInterval(()=>{enSample().catch(()=>{})},10000);
+/* historique de démonstration (jamais enregistré) : de quoi voir à quoi ressemble l'analyse */
+function enDemo(a,b){
+  const out=[],end=Math.min(b,NOW());let t=Math.max(a,enMid(NOW())-200*864e5);
+  for(;t<=end;t+=864e5){const d=new Date(t),n=Math.round(t/864e5),cl=Math.max(0,Math.min(1,.5+.42*Math.sin(n*1.7)+.15*Math.sin(n*.5))),nav=n%3===0,mo=nav&&n%6===0?2:0,h=Array(24).fill(null);
+    let soc=70+25*Math.sin(n*.9);
+    for(let i=0;i<24;i++){const sun=Math.max(0,Math.sin(Math.PI*(i-6)/14)),sw=(420*sun*(1-.8*cl)),nv=nav&&i>=9&&i<17,c=48+(nv?72:0)+(i>=19&&i<=23?55:0)+((n+i)%5)*3,al=mo&&i>=9&&i<11?520:0;
+      soc=Math.max(18,Math.min(100,soc+(sw+al-c)/38));
+      h[i]={dt:3600,n:360,sol:sw,cons:c,alt:al,shore:0,ahIn:(sw+al)/13,ahOut:c/13,socMin:soc-1,socMax:soc+1,socS:soc*360,vS:12.8*360,fu0:null,fu1:null,wa0:null,wa1:null,cl:cl*360,clN:360,tw:(8+8*Math.abs(Math.sin(n*.7)))*360,twN:360,mot:al?3600:0,nav:nv?3600:0}}
+    out.push({id:enDay(t),day:t,h,demo:1})}
+  return out;
+}
+async function enLoad(a,b){if(cfg.src==='demo')return enDemo(a,b);let all=[];try{all=await db.all('energy')}catch(e){}if(EN.rec&&!all.find(x=>x.id===EN.rec.id))all.push(EN.rec);else if(EN.rec)all=all.map(x=>x.id===EN.rec.id?EN.rec:x);return all.filter(r=>r.day>=a&&r.day<=b)}
+const enSum=(ks)=>{const o={sol:0,cons:0,alt:0,shore:0,ahIn:0,ahOut:0,dt:0,socMin:null,socS:0,socN:0,nav:0,mot:0,cl:0,clN:0,tw:0,twN:0,fu0:null,fu1:null,wa0:null,wa1:null};
+  ks.forEach(k=>{if(!k)return;['sol','cons','alt','shore','ahIn','ahOut','dt','nav','mot','cl','clN','tw','twN'].forEach(f=>o[f]+=k[f]||0);
+    if(k.socMin!=null){o.socMin=o.socMin==null?k.socMin:Math.min(o.socMin,k.socMin);o.socS+=k.socS;o.socN+=k.n}
+    if(k.fu0!=null){if(o.fu0==null)o.fu0=k.fu0;o.fu1=k.fu1}if(k.wa0!=null){if(o.wa0==null)o.wa0=k.wa0;o.wa1=k.wa1}});return o};
+const enUnit=m=>m==='day'?'hour':(m==='year'||m==='total')?'month':(m==='quarter'||m==='season')?'week':'day';
+function enSeries(recs,p,mode){
+  const u=enUnit(mode),m=new Map(),key=(t,hh)=>{const d=new Date(t);if(u==='hour')return hh;if(u==='day')return enDay(t);if(u==='week')return wkStart(t);return d.getFullYear()*12+d.getMonth()};
+  recs.forEach(r=>r.h.forEach((k,hh)=>{if(!k)return;const kk=key(r.day,hh);(m.get(kk)||m.set(kk,[]).get(kk)).push(k)}));
+  const out=[];
+  if(u==='hour')for(let i=0;i<24;i++)out.push({l:String(i),t:i,s:enSum(m.get(i)||[])});
+  else if(u==='day')for(let t=p.a;t<=p.b;t+=864e5){const d=new Date(t);out.push({l:mode==='week'?d.toLocaleDateString(LOC(),{weekday:'short'}).slice(0,2):String(d.getDate()),t,s:enSum(m.get(enDay(t))||[])})}
+  else if(u==='week'){for(let t=wkStart(Math.max(p.a,recs[0]?recs[0].day:p.a));t<=p.b&&t<=NOW();t+=7*864e5)out.push({l:'S'+isoWeek(t),t,s:enSum(m.get(t)||[])})}
+  else{[...m.keys()].sort((a,b)=>a-b).forEach(kk=>out.push({l:MONTHS_FR[kk%12].slice(0,3),t:kk,s:enSum(m.get(kk))}))}
+  return out;
+}
+/* ----- schéma électrique animé ----- */
+function enSchemaBuild(){
+  const node=(id,x,y,w,h,ic,lab,c)=>`<g id="n_${id}"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="12" fill="var(--card)" stroke="${c}" stroke-width="2"/><text x="${x+w/2}" y="${y+h/2-3}" text-anchor="middle" font-size="19">${ic}</text><text x="${x+w/2}" y="${y+h-10}" text-anchor="middle" style="font:600 9.5px system-ui;fill:var(--mut)">${lab}</text><text id="v_${id}" x="${x+w/2}" y="${y-5}" text-anchor="middle" style="font:700 11px var(--num);fill:${c}"></text></g>`;
+  const wire=(id,d,c)=>`<path d="${d}" fill="none" stroke="${c}" stroke-opacity=".22" stroke-width="3" stroke-linecap="round"/><path id="w_${id}" class="enw" d="${d}" fill="none" stroke="${c}" stroke-width="3" stroke-linecap="round" stroke-dasharray="7 9" style="opacity:0"/>`;
+  return `<svg id="enSvg" viewBox="0 0 400 290" width="100%" role="img" aria-label="Schéma de l'installation électrique"><style>.enw{animation:enf 1s linear infinite}@keyframes enf{to{stroke-dashoffset:-32}}@media(prefers-reduced-motion:reduce){.enw{animation:none}}</style>
+  <defs><linearGradient id="enBat" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#1f9d62"/><stop offset="1" stop-color="#7fe3a8"/></linearGradient><filter id="enGl"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+  ${wire('sm','M86 41H112','#F2994A')}${wire('mb','M182 41H198Q214 41 214 70V96','#F2994A')}
+  ${wire('sc','M86 125H112','#4FB3E8')}${wire('cb','M182 125H214','#4FB3E8')}
+  ${wire('ab','M86 209H150Q214 209 214 196','#E5484D')}
+  ${wire('bl','M276 135H306','#B07CF2')}${wire('bi','M276 205H306','#B07CF2')}
+  ${node('sol',8,16,78,50,'☀️','Panneaux','#F2994A')}${node('mppt',112,16,70,50,'🔆','MPPT','#F2994A')}
+  ${node('shore',8,100,78,50,'🔌','Quai 230 V','#4FB3E8')}${node('chg',112,100,70,50,'🔋','Chargeur','#4FB3E8')}
+  ${node('alt',8,184,78,50,'⚙️','Alternateur','#E5484D')}
+  <g id="n_bat"><rect x="196" y="96" width="82" height="112" rx="14" fill="var(--card)" stroke="#2FB67C" stroke-width="2.5"/><clipPath id="enBc"><rect x="199" y="99" width="76" height="106" rx="11"/></clipPath><rect id="enFill" x="199" y="205" width="76" height="0" fill="url(#enBat)" clip-path="url(#enBc)" opacity=".85" style="transition:all 1.2s"/>
+   <text x="237" y="136" text-anchor="middle" style="font:700 24px var(--num);fill:var(--tx)" id="v_soc">--</text><text x="237" y="156" text-anchor="middle" style="font:600 11px var(--num);fill:var(--tx)" id="v_bv"></text><text x="237" y="172" text-anchor="middle" style="font:600 11px var(--num);fill:var(--tx)" id="v_bi"></text>
+   <text x="237" y="196" text-anchor="middle" style="font:600 9.5px system-ui;fill:var(--mut)">Batteries</text></g>
+  <g id="n_shunt"><rect x="283" y="156" width="18" height="26" rx="5" fill="var(--card)" stroke="var(--mut)"/><text x="292" y="173" text-anchor="middle" font-size="10">Σ</text></g>
+  ${node('l12',306,106,88,50,'💡','Conso 12 V','#B07CF2')}${node('l230',306,184,88,50,'🧊','Conso 230 V','#B07CF2')}
+  <text id="v_net" x="200" y="272" text-anchor="middle" style="font:700 15px var(--num);fill:var(--tx)"></text></svg>`;
+}
+function enSchemaUpd(e){
+  const root=$('#enSvg');if(!root)return;const q=s=>root.querySelector(s);
+  const flow=(id,w,max)=>{const el=q('#w_'+id);if(!el)return;const on=w!=null&&w>3;el.style.opacity=on?1:0;if(on){el.style.strokeWidth=(2.5+Math.min(4,w/max*4)).toFixed(1);el.style.animationDuration=Math.max(.35,1.6-Math.min(1.2,w/max*1.2)).toFixed(2)+'s'}};
+  const dim=(id,on)=>{const g=q('#n_'+id);if(g)g.style.opacity=on?1:.4};
+  const set2=(id,t)=>{const el=q('#v_'+id);if(el)el.textContent=t};
+  const sw=e.solW,sh=e.shore,al=e.alt,cn=e.cons,ac=e.ac,b=e.b;
+  flow('sm',sw,500);flow('mb',sw,500);flow('sc',sh,1500);flow('cb',sh,1500);flow('ab',al,800);flow('bl',cn,400);flow('bi',ac,1500);
+  dim('sol',sw!=null);dim('mppt',sw!=null);dim('shore',sh!=null&&sh>3);dim('chg',sh!=null&&sh>3);dim('alt',al!=null&&al>3);dim('l12',cn!=null);dim('l230',ac!=null&&ac>3);
+  set2('sol',sw!=null?Math.round(sw)+' W':'');set2('shore',sh!=null&&sh>3?Math.round(sh)+' W':'');set2('alt',al!=null&&al>3?Math.round(al)+' W':'');set2('l12',cn!=null?Math.round(cn)+' W':'');set2('l230',ac!=null&&ac>3?Math.round(ac)+' W':'');
+  set2('mppt','');set2('chg','');
+  const soc=b&&b.soc!=null?b.soc:null;set2('soc',soc!=null?Math.round(soc)+'%':'--');set2('bv',b&&b.v!=null?b.v.toFixed(2)+' V':'');set2('bi',b&&b.i!=null?(b.i>0?'+':'')+b.i.toFixed(1)+' A':'');
+  const f=q('#enFill');if(f&&soc!=null){const h=106*Math.max(0,Math.min(100,soc))/100;f.setAttribute('y',205-h);f.setAttribute('height',h);f.setAttribute('fill',soc<20?'#E5484D':soc<50?'#F2B134':'url(#enBat)')}
+  const prod=(sw||0)+(al||0)+(sh||0),use=(cn||0)+(ac||0);
+  set2('net',(sw!=null||cn!=null)?`Production ${Math.round(prod)} W · Consommation ${Math.round(use)} W`:'en attente des données…');
+}
+/* ----- cadrans ----- */
+function enGauge(p,color,val,lab,sub,max){   // arc de 270°
+  const R=38,C=2*Math.PI*R,f=Math.max(0,Math.min(1,p));
+  return `<div class="engg"><svg viewBox="0 0 100 92" width="100%"><g transform="rotate(135 50 50)"><circle cx="50" cy="50" r="${R}" fill="none" stroke="var(--line)" stroke-width="9" stroke-dasharray="${(C*.75).toFixed(1)} ${C.toFixed(1)}" stroke-linecap="round"/><circle cx="50" cy="50" r="${R}" fill="none" stroke="${color}" stroke-width="9" stroke-dasharray="${(C*.75*f).toFixed(1)} ${C.toFixed(1)}" stroke-linecap="round" style="filter:drop-shadow(0 0 3px ${color})"/></g><text x="50" y="52" text-anchor="middle" style="font:700 15px var(--num);fill:var(--tx)">${esc(val)}</text><text x="50" y="66" text-anchor="middle" style="font:500 7px system-ui;fill:var(--mut)">${esc((sub||'').slice(0,22))}</text></svg><div class="engl">${esc(lab)}</div></div>`;
+}
+function enGauges(e){
+  const g=[],b=e.b,col=p=>p<.2?'var(--bad)':p<.5?'var(--warn)':'var(--ok)';
+  if(b&&b.soc!=null)g.push(enGauge(b.soc/100,col(b.soc/100),Math.round(b.soc)+'%','Charge batterie',cfg.batAh?Math.round(cfg.batAh*b.soc/100)+' / '+cfg.batAh+' Ah':''));
+  if(b&&b.v!=null)g.push(enGauge((b.v-11.5)/(14.8-11.5),b.v<12?'var(--bad)':b.v<12.4?'var(--warn)':'var(--wind)',b.v.toFixed(2)+' V','Tension','11,5 → 14,8 V'));
+  if(b&&b.i!=null)g.push(enGauge(Math.min(1,Math.abs(b.i)/60),b.i>=0?'var(--ok)':'var(--acc)',(b.i>0?'+':'')+b.i.toFixed(1)+' A','Courant batterie',b.i>=0?'charge':'décharge'));
+  if(b&&b.i!=null&&b.i<-.3&&cfg.batAh&&b.soc!=null){const h=cfg.batAh*Math.max(0,(b.soc-(cfg.reserve||30)))/100/-b.i;g.push(enGauge(Math.min(1,h/48),h<6?'var(--bad)':h<18?'var(--warn)':'var(--ok)',h>=48?Math.round(h/24)+' j':h.toFixed(h<10?1:0)+' h','Autonomie jusqu’à la réserve','réserve '+(cfg.reserve||30)+' %'))}
+  else if(b&&b.tr!=null&&b.tr>0)g.push(enGauge(Math.min(1,b.tr/48),b.tr<6?'var(--bad)':'var(--ok)',b.tr>=48?Math.round(b.tr/24)+' j':b.tr.toFixed(1)+' h','Autonomie (Victron)',''));
+  if(e.solW!=null)g.push(enGauge(Math.min(1,e.solW/Math.max(100,cfg.solWc||600)),'var(--warn)',Math.round(e.solW)+' W','Production solaire',cfg.solWc?'sur '+cfg.solWc+' Wc':''));
+  if(e.cons!=null)g.push(enGauge(Math.min(1,e.cons/400),'#B07CF2',Math.round(e.cons)+' W','Consommation',''));
+  if(e.fuel){const p=e.fuel.lvl/100,L=cfg.fuelL?Math.round(cfg.fuelL*p)+' L':'';let au='';const fr=fresh('fuelRate')&&D.fuelRate>0?D.fuelRate:null;if(fr&&cfg.fuelL)au=Math.round(cfg.fuelL*p/fr)+' h moteur';g.push(enGauge(p,p<.15?'var(--bad)':p<.3?'var(--warn)':'var(--wind)',Math.round(e.fuel.lvl)+'%','Gasoil',au||L))}
+  if(e.water){const p=e.water.lvl/100;g.push(enGauge(p,p<.15?'var(--bad)':p<.3?'var(--warn)':'#4FB3E8',Math.round(e.water.lvl)+'%','Eau douce',cfg.waterL?Math.round(cfg.waterL*p)+' L':''))}
+  if(e.grey)g.push(enGauge(e.grey.lvl/100,e.grey.lvl>80?'var(--bad)':'var(--mut)',Math.round(e.grey.lvl)+'%','Eaux grises',''));
+  if(e.black)g.push(enGauge(e.black.lvl/100,e.black.lvl>80?'var(--bad)':'var(--mut)',Math.round(e.black.lvl)+'%','Eaux noires',''));
+  Object.entries(D.temps).filter(([,x])=>NOW()-x.t<120000&&x.c!=null).slice(0,3).forEach(([n,x])=>g.push(enGauge((x.c+5)/40,x.c>8&&/frigo|fridge|koel/i.test(n)?'var(--bad)':'var(--wind)',x.c.toFixed(1)+'°',n,x.h!=null?Math.round(x.h)+' % hum.':'')));
+  return g.length?g.join(''):'<div class="mut" style="grid-column:1/-1;padding:12px">En attente des données (Cerbo GX, Signal K ou NMEA 2000).</div>';
+}
+/* ----- vues ----- */
+function enBarChart(ser,mode){
+  const mx=Math.max(1,...ser.map(x=>Math.max(x.s.sol+x.s.alt,x.s.cons))),W=340,H=140,n=ser.length,bw=W/n,step=Math.ceil(n/12);
+  const u=Wh=>Wh/mx*(H-24);
+  const bars=ser.map((x,i)=>{const gx=i*bw,w=Math.max(1.5,bw*.38);return`<rect x="${(gx+bw*.08).toFixed(1)}" y="${(H-u(x.s.sol+x.s.alt)).toFixed(1)}" width="${w.toFixed(1)}" height="${Math.max(0,u(x.s.sol+x.s.alt)).toFixed(1)}" rx="1.5" fill="#F2994A"/><rect x="${(gx+bw*.08+w+1).toFixed(1)}" y="${(H-u(x.s.cons)).toFixed(1)}" width="${w.toFixed(1)}" height="${Math.max(0,u(x.s.cons)).toFixed(1)}" rx="1.5" fill="#B07CF2"/>${i%step===0?`<text x="${(gx+bw/2).toFixed(1)}" y="${H+12}" text-anchor="middle" style="font:9px system-ui;fill:var(--mut)">${esc(x.l)}</text>`:''}`}).join('');
+  const pts=ser.map((x,i)=>x.s.socMin!=null?[(i*bw+bw/2).toFixed(1),(H-x.s.socMin/100*(H-24)).toFixed(1)]:null).filter(Boolean);
+  return `<svg viewBox="0 0 ${W} ${H+16}" width="100%"><line x1="0" y1="${H}" x2="${W}" y2="${H}" stroke="var(--line)"/>${bars}${pts.length>1?`<polyline points="${pts.map(p=>p.join(',')).join(' ')}" fill="none" stroke="#2FB67C" stroke-width="2" stroke-linejoin="round"/>`:''}</svg>
+  <div class="mut" style="font-size:12px;display:flex;gap:14px;flex-wrap:wrap"><span style="color:#F2994A">■ Production</span><span style="color:#B07CF2">■ Consommation</span><span style="color:#2FB67C">― Charge mini</span><span>échelle max ${mx>=1000?(mx/1000).toFixed(1)+' kWh':Math.round(mx)+' Wh'}</span></div>`;
+}
+function enScatter(days){
+  const pts=days.filter(d=>d.s.clN>0&&d.s.sol>20).map(d=>[d.s.cl/d.s.clN*100,d.s.sol]);if(pts.length<5)return'';
+  const n=pts.length,sx=pts.reduce((a,p)=>a+p[0],0),sy=pts.reduce((a,p)=>a+p[1],0),sxx=pts.reduce((a,p)=>a+p[0]*p[0],0),sxy=pts.reduce((a,p)=>a+p[0]*p[1],0),den=n*sxx-sx*sx||1,b=(n*sxy-sx*sy)/den,a=(sy-b*sx)/n,my=Math.max(...pts.map(p=>p[1]))*1.1;
+  const X=c=>20+c/100*310,Y=w=>130-w/my*120;
+  return `<svg viewBox="0 0 340 150" width="100%"><line x1="20" y1="130" x2="330" y2="130" stroke="var(--line)"/><line x1="20" y1="10" x2="20" y2="130" stroke="var(--line)"/>${pts.map(p=>`<circle cx="${X(p[0]).toFixed(1)}" cy="${Y(p[1]).toFixed(1)}" r="3.5" fill="#F2994A" fill-opacity=".8"/>`).join('')}<line x1="${X(0)}" y1="${Y(a).toFixed(1)}" x2="${X(100)}" y2="${Y(a+b*100).toFixed(1)}" stroke="var(--tx)" stroke-dasharray="4 4"/><text x="175" y="146" text-anchor="middle" style="font:9px system-ui;fill:var(--mut)">nébulosité moyenne du jour (%)</text><text x="4" y="12" style="font:9px system-ui;fill:var(--mut)">Wh</text></svg><div class="mut" style="font-size:12px">Chaque point est un jour : la droite montre ce que coûte un ciel couvert à ta production (≈ ${Math.round(-b*10)} Wh de moins par tranche de 10 % de nuages).</div>`;
+}
+function enInsights(days,tot){
+  const o=[];const act=days.filter(d=>d.s.dt>600);if(!act.length)return o;
+  const bal=tot.sol+tot.alt+tot.shore-tot.cons,neg=act.filter(d=>d.s.sol+d.s.alt+d.s.shore<d.s.cons).length;
+  o.push(`${neg} jour${neg>1?'s':''} sur ${act.length} ${neg>1?'ont':'a'} consommé plus qu'il n'a été produit${neg?' (déficit à combler par le moteur ou le quai)':''}.`);
+  const nv=act.filter(d=>d.s.nav>d.s.dt*.4),an=act.filter(d=>d.s.nav<=d.s.dt*.1);
+  if(nv.length>=2&&an.length>=2){const a=nv.reduce((s,d)=>s+d.s.cons/(d.s.dt/3600),0)/nv.length,b=an.reduce((s,d)=>s+d.s.cons/(d.s.dt/3600),0)/an.length;if(b>0)o.push(`En navigation tu consommes en moyenne ${Math.round(a)} W, au mouillage ${Math.round(b)} W (${a>b?'+':''}${Math.round((a/b-1)*100)} %).`)}
+  const cl=act.filter(d=>d.s.clN>0);if(cl.length>=4){const sunny=cl.filter(d=>d.s.cl/d.s.clN<.3),cloudy=cl.filter(d=>d.s.cl/d.s.clN>.7);if(sunny.length&&cloudy.length){const a=sunny.reduce((s,d)=>s+d.s.sol,0)/sunny.length,b=cloudy.reduce((s,d)=>s+d.s.sol,0)/cloudy.length;o.push(`Journée dégagée : ${Math.round(a)} Wh produits ; journée couverte : ${Math.round(b)} Wh (${Math.round((1-b/Math.max(1,a))*100)} % de moins).`)}}
+  const low=act.filter(d=>d.s.socMin!=null).sort((a,b)=>a.s.socMin-b.s.socMin)[0];if(low)o.push(`Charge la plus basse : ${Math.round(low.s.socMin)} % le ${new Date(low.t).toLocaleDateString(LOC(),{day:'numeric',month:'long'})}.`);
+  if(tot.mot>0&&tot.alt>0)o.push(`Le moteur a tourné ${(tot.mot/3600).toFixed(1)} h et recharge environ ${Math.round(tot.alt/(tot.mot/3600))} W en moyenne.`);
+  return o;
+}
+async function enAnalyse(){
+  const p=statPeriod(EN.mode,0,EN),days0=await enLoad(p.a===-Infinity?0:p.a,p.b===Infinity?NOW():p.b),ser=enSeries(days0,p,EN.mode);
+  const dd=days0.map(r=>({t:r.day,s:enSum(r.h)}));
+  const tot=enSum(days0.flatMap(r=>r.h)),fmt=v=>Math.abs(v)>=1000?(v/1000).toFixed(2)+' kWh':Math.round(v)+' Wh';
+  const modes=[['day','Jour'],['week','Semaine'],['month','Mois'],['quarter','Trimestre'],['year','Année'],['season','Saison']];
+  const hrs=tot.dt/3600,prod=tot.sol+tot.alt+tot.shore,fu=tot.fu0!=null&&tot.fu1!=null?tot.fu0-tot.fu1:null,wa=tot.wa0!=null&&tot.wa1!=null?tot.wa0-tot.wa1:null;
+  const kpi=(l,v,c)=>`<div><span class="mut">${l}</span><b style="${c?'color:'+c:''}">${v}</b></div>`;
+  const ins=enInsights(dd,tot);
+  return `<div class="card"><div style="display:flex;gap:6px;flex-wrap:wrap">${modes.map(([k,l])=>`<button type="button" data-em="${k}" class="spb${EN.mode===k?' on':''}">${l}</button>`).join('')}</div>
+   <div class="spn" style="margin-top:12px"><button type="button" data-en="-1" aria-label="Période précédente">‹</button><div style="text-align:center;flex:1"><b style="font:600 20px var(--num);text-transform:capitalize">${esc(p.label)}</b><div class="mut" style="font-size:13px">${esc(p.sub)}</div></div><button type="button" data-en="1" aria-label="Période suivante">›</button></div>
+   <div style="text-align:center;margin-top:8px"><button type="button" data-ec="1" class="spb">Période en cours</button></div>${cfg.src==='demo'?'<div class="mut" style="font-size:12px;text-align:center;margin-top:6px">Données de démonstration (non enregistrées).</div>':''}</div>
+  ${hrs<.05?`<div class="card mut">Pas encore de mesures d'énergie sur cette période. L'historique s'enregistre tout seul dès que l'appli reçoit des données de batterie, de solaire ou de consommation (Cerbo GX, Signal K ou NMEA 2000), même sans trajet en cours.</div>`:`
+  <div class="card"><div class="stats">${kpi('Production',fmt(prod),'#F2994A')}${kpi('Consommation',fmt(tot.cons),'#B07CF2')}${kpi('Bilan',(prod-tot.cons>=0?'+':'−')+fmt(Math.abs(prod-tot.cons)),prod>=tot.cons?'var(--ok)':'var(--bad)')}${kpi('Solaire',fmt(tot.sol),'#F2994A')}${kpi('Alternateur · quai',fmt(tot.alt)+' · '+fmt(tot.shore))}
+   ${kpi('Charge mini',tot.socMin!=null?Math.round(tot.socMin)+' %':'--')}${kpi('Charge moyenne',tot.socN?Math.round(tot.socS/tot.socN)+' %':'--')}${kpi('En navigation',(tot.nav/3600).toFixed(1)+' h')}${kpi('Au mouillage',Math.max(0,hrs-tot.nav/3600).toFixed(0)+' h')}${kpi('Moteur',(tot.mot/3600).toFixed(1)+' h')}
+   ${fu!=null?kpi('Gasoil utilisé',(fu>0?Math.round(fu):0)+' pts'+(cfg.fuelL?' ≈ '+Math.round(cfg.fuelL*Math.max(0,fu)/100)+' L':'')):''}${wa!=null?kpi('Eau douce utilisée',(wa>0?Math.round(wa):0)+' pts'+(cfg.waterL?' ≈ '+Math.round(cfg.waterL*Math.max(0,wa)/100)+' L':'')):''}</div></div>
+  <div class="card"><b>Production et consommation</b>${enBarChart(ser,EN.mode)}</div>
+  ${ins.length?`<div class="card"><b>Ce que disent tes données</b><ul style="margin:8px 0 0 18px;padding:0;line-height:1.5">${ins.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}
+  ${EN.mode!=='day'&&dd.length>=5?`<div class="card"><b>Soleil contre ciel couvert</b>${enScatter(dd)}</div>`:''}
+  ${EN.mode!=='day'&&dd.length?`<div class="card"><b>Jour par jour</b><div class="scroll"><table style="width:100%;font-size:12px"><tr><th>Jour</th><th>Prod.</th><th>Conso</th><th>Bilan</th><th>Ciel</th><th>Nav.</th><th>Moteur</th><th>Mini</th></tr>${dd.slice(-60).reverse().map(d=>{const pr=d.s.sol+d.s.alt+d.s.shore,bl=pr-d.s.cons;return`<tr><td>${new Date(d.t).toLocaleDateString(LOC(),{day:'2-digit',month:'2-digit'})}</td><td>${Math.round(pr)}</td><td>${Math.round(d.s.cons)}</td><td style="color:${bl>=0?'var(--ok)':'var(--bad)'}">${bl>=0?'+':''}${Math.round(bl)}</td><td>${d.s.clN?Math.round(d.s.cl/d.s.clN*100)+'%':'–'}</td><td>${(d.s.nav/3600).toFixed(1)} h</td><td>${(d.s.mot/3600).toFixed(1)} h</td><td>${d.s.socMin!=null?Math.round(d.s.socMin)+'%':'–'}</td></tr>`}).join('')}</table></div><div class="mut" style="font-size:11px">Wh par jour. Ciel : nébulosité moyenne (prévision Windy ou démo).</div></div>`:''}`}`;
+}
+/* ----- planificateur de passage ----- */
+async function enPassage(){
+  const e=enNow(),P=EN.P||(EN.P=Object.assign({h:24,start:new Date(NOW()).getHours(),mot:0,cl:null,cons:null,soc:null},cfg.enP||{}));
+  const rs=await enLoad(NOW()-60*864e5,NOW()),dd=rs.map(r=>({t:r.day,s:enSum(r.h)})).filter(d=>d.s.dt>3600*6);
+  const navD=dd.filter(d=>d.s.nav>d.s.dt*.3),hrsN=navD.reduce((a,d)=>a+d.s.dt/3600,0),navW=hrsN>10?navD.reduce((a,d)=>a+d.s.cons,0)/hrsN:null;
+  const cl0=WX.src&&WX.cloud!=null?Math.round(WX.cloud*100):null,cons=P.cons!=null?P.cons:Math.round(navW||(e.cons!=null?e.cons:130)),cl=P.cl!=null?P.cl:(cl0!=null?cl0:50),soc0=P.soc!=null?P.soc:(e.b&&e.b.soc!=null?Math.round(e.b.soc):80);
+  // production solaire d'une journée : régression sur l'historique, sinon estimation à partir des Wc
+  let daily,src;const pts=dd.filter(d=>d.s.clN>0&&d.s.sol>20).map(d=>[d.s.cl/d.s.clN*100,d.s.sol]);
+  if(pts.length>=6){const n=pts.length,sx=pts.reduce((a,p)=>a+p[0],0),sy=pts.reduce((a,p)=>a+p[1],0),sxx=pts.reduce((a,p)=>a+p[0]*p[0],0),sxy=pts.reduce((a,p)=>a+p[0]*p[1],0),b=(n*sxy-sx*sy)/(n*sxx-sx*sx||1),a=(sy-b*sx)/n;daily=Math.max(0,a+b*cl);src=`d'après ${pts.length} jours de ton historique`}
+  else{daily=(cfg.solWc||400)*3.2*(1-.8*cl/100);src=cfg.solWc?'estimation à partir de ta puissance solaire (Wc)':'estimation prudente (renseigne ta puissance solaire dans les Réglages)'}
+  const altW=(()=>{const m=dd.reduce((a,d)=>a+d.s.mot,0)/3600,al=dd.reduce((a,d)=>a+d.s.alt,0);return m>2&&al>0?al/m:350})(),capWh=(cfg.batAh||200)*12.8,res=cfg.reserve!=null?cfg.reserve:30;
+  const sh=Array.from({length:24},(_,h)=>Math.max(0,Math.sin(Math.PI*(h-6)/14))),ss=sh.reduce((a,b)=>a+b,0)||1;
+  const tr=[soc0];let s=soc0,min=soc0,cum=0;
+  for(let i=0;i<P.h;i++){const hh=(P.start+i)%24,sol=daily*sh[hh]/ss,al=i<P.mot?altW:0;s+=(sol+al-cons)/capWh*100;s=Math.min(100,s);min=Math.min(min,s);tr.push(s)}
+  const end=tr[tr.length-1],miss=Math.max(0,(res-min)/100*capWh),extra=miss>0?Math.ceil(miss/altW*10)/10:0,ok=min>=res;
+  const W=340,H=150,X=i=>20+i/(tr.length-1||1)*310,Y=v=>H-8-Math.max(0,Math.min(100,v))/100*(H-24);
+  const chart=`<svg viewBox="0 0 340 ${H+14}" width="100%"><rect x="20" y="${Y(res)}" width="310" height="${H-8-Y(res)}" fill="var(--bad)" fill-opacity=".08"/><line x1="20" y1="${Y(res)}" x2="330" y2="${Y(res)}" stroke="var(--bad)" stroke-dasharray="5 4"/><text x="326" y="${Y(res)-4}" text-anchor="end" style="font:9px system-ui;fill:var(--bad)">réserve ${res} %</text><polyline points="${tr.map((v,i)=>X(i).toFixed(1)+','+Y(v).toFixed(1)).join(' ')}" fill="none" stroke="${ok?'#2FB67C':'#E5484D'}" stroke-width="3" stroke-linejoin="round" style="filter:drop-shadow(0 0 3px ${ok?'#2FB67C':'#E5484D'})"/><text x="20" y="${H+8}" style="font:9px system-ui;fill:var(--mut)">départ ${String(P.start).padStart(2,'0')} h</text><text x="330" y="${H+8}" text-anchor="end" style="font:9px system-ui;fill:var(--mut)">+${P.h} h</text><text x="2" y="${Y(100)+3}" style="font:9px system-ui;fill:var(--mut)">100</text><text x="2" y="${Y(0)+3}" style="font:9px system-ui;fill:var(--mut)">0</text></svg>`;
+  const inp=(id,l,v,u,step)=>`<div style="flex:1;min-width:120px"><label>${l}</label><input id="pa_${id}" type="number" inputmode="decimal" value="${v}" step="${step||1}" style="margin-top:2px"><span class="mut" style="font-size:11px">${u}</span></div>`;
+  return `<div class="card"><b>Mon passage</b><div class="mut" style="font-size:13px;margin:2px 0 8px">Simule la charge de tes batteries pendant une traversée et vérifie que tu arrives avec ta réserve.</div>
+   <div style="display:flex;gap:10px;flex-wrap:wrap">${inp('h','Durée',P.h,'heures')}${inp('start','Heure de départ',P.start,'0 à 23 h')}${inp('soc','Charge au départ',soc0,'%')}${inp('cons','Consommation moyenne',cons,navW?'W (ton historique en navigation : '+Math.round(navW)+' W)':'W')}${inp('cl','Nébulosité prévue',cl,cl0!=null?'% (prévision : '+cl0+' %)':'% de ciel couvert')}${inp('mot','Moteur prévu',P.mot,'heures (recharge ≈ '+Math.round(altW)+' W)')}</div></div>
+  <div class="card" style="border-color:${ok?'var(--ok)':'var(--bad)'}"><b style="font-size:18px;color:${ok?'var(--ok)':'var(--bad)'}">${ok?'✔ Passage tenable':'✖ Réserve non tenue'}</b>
+   <div style="margin-top:6px;line-height:1.5">Arrivée avec <b>${Math.round(Math.max(0,end))} %</b> · point bas <b>${Math.round(Math.max(0,min))} %</b> (réserve ${res} %).${min<=0?' <b>Batteries vides avant l’arrivée.</b>':''}${ok?'':` Il manque environ <b>${Math.round(miss)} Wh</b> : prévois <b>${extra.toFixed(1)} h de moteur</b> en plus, ou réduis la consommation d'environ <b>${Math.round(miss/Math.max(1,P.h))} W</b>.`}</div>
+   ${chart}<div class="mut" style="font-size:12px">Production solaire attendue : ${Math.round(daily)} Wh par jour (${src}). Batteries : ${cfg.batAh||200} Ah (réglable dans les Réglages).</div></div>`;
+}
+async function renderEnergy(){
+  const box=$('#enBox');if(!box)return;
+  const subs=[['live','Direct'],['ana','Analyse'],['pas','Passage']];
+  let body='';
+  if(EN.sub==='live')body=`<div class="card" style="padding:8px 6px 0">${enSchemaBuild()}</div><div class="enGrid" id="enGrid"></div>`;
+  else if(EN.sub==='ana')body=await enAnalyse();
+  else body=await enPassage();
+  box.innerHTML=`<style>.spb{padding:6px 12px;border-radius:99px;border:1px solid var(--line);background:transparent;color:var(--tx);font:600 13px system-ui}.spb.on{background:var(--acc);border-color:var(--acc);color:#fff}.spn{display:flex;align-items:center;justify-content:space-between;gap:8px}.spn button{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--tx);font-size:20px}.enGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:8px 0}.engg{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:8px 6px 6px;text-align:center}.engl{font:600 11px system-ui;color:var(--mut);margin-top:-8px;line-height:1.15}</style>
+  <div style="display:flex;gap:6px;margin-bottom:10px">${subs.map(([k,l])=>`<button type="button" data-es="${k}" class="spb${EN.sub===k?' on':''}" style="flex:1">${l}</button>`).join('')}</div>${body}`;
+  $$('#enBox [data-es]').forEach(b=>b.onclick=()=>{EN.sub=b.dataset.es;renderEnergy()});
+  $$('#enBox [data-em]').forEach(b=>b.onclick=()=>{EN.mode=b.dataset.em;EN.anchor=null;EN.sy=null;renderEnergy()});
+  $$('#enBox [data-en]').forEach(b=>b.onclick=()=>{const d=+b.dataset.en,m=EN.mode;if(m==='season')EN.sy=seasonEff(EN)+d;else{const A=new Date(EN.anchor||NOW());if(m==='month')A.setMonth(A.getMonth()+d);else if(m==='quarter')A.setMonth(A.getMonth()+3*d);else if(m==='year')A.setFullYear(A.getFullYear()+d);else A.setDate(A.getDate()+d*(m==='week'?7:1));EN.anchor=+A}renderEnergy()});
+  $$('#enBox [data-ec]').forEach(b=>b.onclick=()=>{EN.anchor=null;EN.sy=null;renderEnergy()});
+  $$('#enBox input[id^=pa_]').forEach(i=>i.onchange=()=>{const P=EN.P;P[i.id.slice(3)]=+i.value;cfg.enP={h:P.h,start:P.start,mot:P.mot,cl:P.cl,cons:P.cons,soc:P.soc};saveCfg();renderEnergy()});
+  if(EN.sub==='live')enLive();
+}
+function enLive(){const e=enNow();enSchemaUpd(e);const g=$('#enGrid');if(g)g.innerHTML=enGauges(e)}
+setInterval(()=>{if(EN.sub==='live'&&$('#v-energy')&&$('#v-energy').classList.contains('on')&&$('#enSvg'))try{enLive()}catch(e){}},1500);
 
 /* ---------- Audit : journal inviolable (chaîné par empreintes) de toutes les modifications du carnet ---------- */
 const AUDIT_ACT={entry_create:['Entrée créée','var(--ok)'],entry_edit:['Entrée modifiée','var(--acc)'],entry_delete:['Entrée supprimée','var(--bad)'],photo_add:['Photo ajoutée','var(--wind)'],photo_del:['Photo supprimée','var(--bad)'],trip_edit:['Trajet modifié','var(--acc)'],trip_delete:['Trajet supprimé','var(--bad)']};
@@ -4117,7 +4334,7 @@ function loadSettings(){
   $('#boat').textContent=cfg.boat;
   $('#sBoat').value=cfg.boat;$('#sSrc').value=cfg.src;$('#sGps').value=cfg.gpsSrc||'auto';$('#sWind').value=cfg.windRef||'auto';try{initHist()}catch(e){}try{initSync()}catch(e){}$('#sHost').value=cfg.host;
   $('#sDemoSpd').value=String(cfg.demoSpeed||1);buildLogCfg();updDemoBar();
-  $('#sNoGo').value=cfg.noGo;$('#sYdHost').value=cfg.ydHost;$('#sYdPort').value=cfg.ydPort;$('#sAwake').checked=!!cfg.awake;$('#sCerbo').value=cfg.cerbo||'';$('#alOn').checked=cfg.alOn!==false;$('#seaD1').value=cfg.seaD1||1;$('#seaM1').value=cfg.seaM1||4;$('#seaD2').value=cfg.seaD2||31;$('#seaM2').value=cfg.seaM2||10;$('#seaAuto').checked=cfg.seasonAuto!==false;$('#alSoc').value=cfg.alSoc!=null?cfg.alSoc:'';$('#alFuel').value=cfg.alFuel!=null?cfg.alFuel:'';$('#alWater').value=cfg.alWater!=null?cfg.alWater:'';$('#alTemp').value=cfg.alTemp!=null?cfg.alTemp:'';$('#b3Sail').checked=cfg.b3sail!==false;$('#b3Wake').checked=cfg.b3wake!==false;['lnHdg','lnCog','lnLay'].forEach(k=>$('#'+k).checked=cfg[k]!==false);$('#lnMin').value=cfg.lnMin||30;$('#map3dCb').checked=M3D;$('#sAvoid').checked=cfg.avoidLand!==false;$('#sMinDepth').value=cfg.minDepth??3;$('#sHapLvl').value=String(cfg.hapLvl!=null?cfg.hapLvl:(cfg.haptic===false?0:2));$('#sCruise').value=cfg.cruise;$('#sHeel').value=cfg.heelAlert||25;$('#sKPoint').value=cfg.kPoint;$('#sKMap').value=cfg.kMap;
+  $('#sNoGo').value=cfg.noGo;$('#sYdHost').value=cfg.ydHost;$('#sYdPort').value=cfg.ydPort;$('#sAwake').checked=!!cfg.awake;$('#sCerbo').value=cfg.cerbo||'';$('#alOn').checked=cfg.alOn!==false;$('#seaD1').value=cfg.seaD1||1;$('#enAh').value=cfg.batAh||'';$('#enRes').value=cfg.reserve!=null?cfg.reserve:'';$('#enWc').value=cfg.solWc||'';$('#enFu').value=cfg.fuelL||'';$('#enWa').value=cfg.waterL||'';$('#seaM1').value=cfg.seaM1||4;$('#seaD2').value=cfg.seaD2||31;$('#seaM2').value=cfg.seaM2||10;$('#seaAuto').checked=cfg.seasonAuto!==false;$('#alSoc').value=cfg.alSoc!=null?cfg.alSoc:'';$('#alFuel').value=cfg.alFuel!=null?cfg.alFuel:'';$('#alWater').value=cfg.alWater!=null?cfg.alWater:'';$('#alTemp').value=cfg.alTemp!=null?cfg.alTemp:'';$('#b3Sail').checked=cfg.b3sail!==false;$('#b3Wake').checked=cfg.b3wake!==false;['lnHdg','lnCog','lnLay'].forEach(k=>$('#'+k).checked=cfg[k]!==false);$('#lnMin').value=cfg.lnMin||30;$('#map3dCb').checked=M3D;$('#sAvoid').checked=cfg.avoidLand!==false;$('#sMinDepth').value=cfg.minDepth??3;$('#sHapLvl').value=String(cfg.hapLvl!=null?cfg.hapLvl:(cfg.haptic===false?0:2));$('#sCruise').value=cfg.cruise;$('#sHeel').value=cfg.heelAlert||25;$('#sKPoint').value=cfg.kPoint;$('#sKMap').value=cfg.kMap;
   $('#sStartKn').value=cfg.startKn;$('#sStartSec').value=cfg.startSec;$('#sStopKn').value=cfg.stopKn;$('#sStopMin').value=cfg.stopMin;$('#sInt').value=cfg.interval;
 }
 ['lnHdg','lnCog','lnLay'].forEach(k=>$('#'+k).onchange=e=>{cfg[k]=e.target.checked;saveCfg();scheduleDraw()});$('#sNoGo').onchange=e=>{cfg.noGo=Math.max(0,Math.min(80,+e.target.value||0));e.target.value=cfg.noGo;saveCfg();try{updDials()}catch(_){}};
@@ -4130,7 +4347,7 @@ $('#sHapLvl').onchange=e=>{cfg.hapLvl=+e.target.value;cfg.haptic=cfg.hapLvl>0;sa
 $('#sBoat').oninput=()=>{cfg.boat=$('#sBoat').value.trim()||DEF.boat;$('#boat').textContent=cfg.boat;saveCfg()};   // le nom change tout de suite en haut à gauche, sans attendre « Enregistrer »
 $('#sSave').onclick=()=>{
   cfg={...cfg,boat:$('#sBoat').value||DEF.boat,src:$('#sSrc').value,gpsSrc:$('#sGps').value,windRef:$('#sWind').value,host:$('#sHost').value.trim(),
-   ydHost:$('#sYdHost').value.trim()||DEF.ydHost,ydPort:+$('#sYdPort').value||DEF.ydPort,awake:$('#sAwake').checked,cerbo:$('#sCerbo').value.trim(),alOn:$('#alOn').checked,seaD1:Math.min(31,Math.max(1,+$('#seaD1').value||1)),seaM1:+$('#seaM1').value||4,seaD2:Math.min(31,Math.max(1,+$('#seaD2').value||31)),seaM2:+$('#seaM2').value||10,seasonAuto:$('#seaAuto').checked,alSoc:$('#alSoc').value===''?null:+$('#alSoc').value,alFuel:$('#alFuel').value===''?null:+$('#alFuel').value,alWater:$('#alWater').value===''?null:+$('#alWater').value,alTemp:$('#alTemp').value===''?null:+$('#alTemp').value,b3sail:$('#b3Sail').checked,b3wake:$('#b3Wake').checked,avoidLand:$('#sAvoid').checked,minDepth:Math.max(0,+$('#sMinDepth').value||0),
+   ydHost:$('#sYdHost').value.trim()||DEF.ydHost,ydPort:+$('#sYdPort').value||DEF.ydPort,awake:$('#sAwake').checked,cerbo:$('#sCerbo').value.trim(),alOn:$('#alOn').checked,seaD1:Math.min(31,Math.max(1,+$('#seaD1').value||1)),batAh:+$('#enAh').value||null,reserve:$('#enRes').value===''?null:+$('#enRes').value,solWc:+$('#enWc').value||null,fuelL:+$('#enFu').value||null,waterL:+$('#enWa').value||null,seaM1:+$('#seaM1').value||4,seaD2:Math.min(31,Math.max(1,+$('#seaD2').value||31)),seaM2:+$('#seaM2').value||10,seasonAuto:$('#seaAuto').checked,alSoc:$('#alSoc').value===''?null:+$('#alSoc').value,alFuel:$('#alFuel').value===''?null:+$('#alFuel').value,alWater:$('#alWater').value===''?null:+$('#alWater').value,alTemp:$('#alTemp').value===''?null:+$('#alTemp').value,b3sail:$('#b3Sail').checked,b3wake:$('#b3Wake').checked,avoidLand:$('#sAvoid').checked,minDepth:Math.max(0,+$('#sMinDepth').value||0),
    cruise:+$('#sCruise').value||DEF.cruise,heelAlert:Math.max(10,Math.min(45,+$('#sHeel').value||25)),kPoint:$('#sKPoint').value.trim(),kMap:$('#sKMap').value.trim(),
    startKn:+$('#sStartKn').value||DEF.startKn,startSec:+$('#sStartSec').value||DEF.startSec,
    stopKn:+$('#sStopKn').value||DEF.stopKn,stopMin:+$('#sStopMin').value||DEF.stopMin,interval:Math.max(1,+$('#sInt').value||DEF.interval)};
@@ -4979,7 +5196,7 @@ function demoStep(dt){
   S('electrical.batteries.Servitude.current',run?18:-(9+3*Math.sin(s.t/40))+(Math.max(0,Math.sin((s.t-1200)/2400))*14));
   S('electrical.batteries.Servitude.capacity.timeRemaining',(s.soc/100*400)/Math.max(3,9)*3600);
   S('electrical.solar.MPPT Pont.panelPower',Math.max(0,320*Math.sin(s.t/3000)));S('electrical.solar.MPPT Pont.yieldToday',0.8+s.t/9000);
-  S('electrical.system.consumption',118+25*Math.sin(s.t/50));
+  S('electrical.system.consumption',118+25*Math.sin(s.t/50));S('electrical.system.alternator',run?520:0);S('electrical.system.shore',s.t<240?1400:0);S('electrical.system.acLoad',s.t<240?180:0);
   S('environment.inside.Frigo.temperature',277.6+0.6*Math.sin(s.t/200));S('environment.inside.Carré.temperature',292.4+0.4*Math.sin(s.t/900));S('environment.inside.Carré.relativeHumidity',0.58);
   S('electrical.batteries.Démarrage.voltage',run?13.9:12.7);
   S('tanks.fuel.0.currentLevel',s.fuel/120);S('tanks.freshWater.0.currentLevel',s.water/150);
@@ -5144,6 +5361,7 @@ function go(v){
   if(v==='route'){$('#rCruise').value=cfg.cruise;renderPlan();renderPolar()}
   if(v==='notes'){renderNotes();noteTab(NT)}
   if(v==='stats')renderStats();
+  if(v==='energy')renderEnergy();
   window.scrollTo(0,0);
 }
 $$('nav button').forEach(b=>b.onclick=()=>go(b.dataset.v));
