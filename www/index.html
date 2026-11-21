@@ -3766,7 +3766,7 @@ $('#fxPlay').onclick=()=>{
 };
 
 
-const APP_VERSION='2.6.1',APP_BUILD='21.11-p';
+const APP_VERSION='2.6.1',APP_BUILD='21.11-r';
 (()=>{const e=document.getElementById('appVer');if(e)e.textContent='Carnet de bord · v'+APP_VERSION+' ('+APP_BUILD+')'})();
 /* ---------- Météo du parcours : vent, vagues, houle et courant le long du tracé (routage, tracé modifié, depuis ma position) ---------- */
 const RWL={wind:{n:'Vent',u:'nds',lim:'maxW',def:22,to:false},waves:{n:'Vagues',u:'m',lim:'maxH',def:2,to:false},swell:{n:'Houle',u:'m',lim:'maxH',def:2,to:false},cur:{n:'Courant',u:'nds',lim:null,to:true}};
@@ -5794,7 +5794,12 @@ async function anchSearch(c,rNM,kinds,prog){
   const fetchR=rNM<=10?15:rNM<=20?25:45,fetchK=rNM<=10?Object.keys(ANCH_KINDS):kinds;
   const cl=+(Math.round(c.lat*50)/50).toFixed(2),cn=+(Math.round(c.lon*50)/50).toFixed(2);
   const key=[cl,cn,fetchR,fetchK.join()].join('|');
-  const fit=j=>anchParse(j,c).filter(x=>kinds.includes(x.kind)&&x.d<=rNM).slice(0,60);
+  const fit=j=>{const all=anchParse(j,c).filter(x=>kinds.includes(x.kind)&&x.d<=rNM),out=[],cnt={};
+    for(const x of all){/* au plus 25 par type (les bouées ne masquent pas les mouillages plus loin) ; on fusionne les doublons sans nom à moins de 0,05 NM */
+      if((cnt[x.kind]||0)>=25)continue;
+      if(!x.name&&out.some(o=>o.kind===x.kind&&!o.name&&hav(o,x)<0.05))continue;
+      cnt[x.kind]=(cnt[x.kind]||0)+1;out.push(x)}
+    return out};
   const find=()=>{let m={};try{m=JSON.parse(localStorage.getItem('anchCache')||'{}')}catch(e){}
     for(const k in m){const [la,lo,r,ks]=k.split('|'),e=m[k];if(Date.now()-e.t>864e5)continue;
       if(Math.abs(+la-cl)<=0.021&&Math.abs(+lo-cn)<=0.021&&+r>=rNM+1.5&&kinds.every(x=>ks.split(',').includes(x)))return e.j}return null};
@@ -7488,7 +7493,7 @@ function seaHide(){const p=$('#seaPop');if(p)p.hidden=true;SMK.hl=null;SMK.tok++
 async function mapObjTap(x,y){
   const g=toGeo(x,y),tok=++SMK.tok;
   if($('#mapSea').checked){
-    seaBubble(x,y,'⏳ '+tr('Recherche…'),10000);
+    seaBubble(x,y,'⏳ '+tr('Recherche…'),30000);
     let r=[];try{r=await seaQuery(g,x,y)}catch(e){if(tok===SMK.tok)seaBubble(x,y,tr('Infos indisponibles (hors ligne ?)')+(e&&e.codes?' ['+e.codes.join(', ')+']':''),5000);return}
     if(tok!==SMK.tok)return;
     if(r.length){
