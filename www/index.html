@@ -5788,17 +5788,27 @@ function anchKind(t){
 async function anchSearch(c,rNM,kinds){
   const dl=rNM/60,dn=rNM/60/Math.max(.2,Math.cos(c.lat*D2R)),b=`(${(c.lat-dl).toFixed(4)},${(c.lon-dn).toFixed(4)},${(c.lat+dl).toFixed(4)},${(c.lon+dn).toFixed(4)})`;
   const key=[c.lat.toFixed(2),c.lon.toFixed(2),rNM,kinds.join()].join('|');if(PLC.anch[key])return PLC.anch[key];
+  try{const sv=JSON.parse(localStorage.getItem('anchCache')||'{}')[key];if(sv&&Date.now()-sv.t<864e5&&sv.j)return PLC.anch[key]=anchParse(sv.j,c)}catch(e){}
   if(navigator.onLine===false)throw new Error('hors ligne : la recherche de mouillages demande Internet');
-  const ql='[out:json][timeout:25];('+kinds.map(k=>ANCH_KINDS[k].q(b)).join('')+');out center tags 120;';
-  let j=null,err=null;
+  const wait=Math.ceil((PLC.cool||0)-Date.now())/1000;if(wait>0)throw new Error('trop de requêtes : patiente encore '+Math.ceil(wait)+' s avant de relancer');
+  if(PLC.busy)PLC.busy.abort();const ac=new AbortController();PLC.busy=ac;
+  const ql='[out:json][timeout:12];('+kinds.map(k=>ANCH_KINDS[k].q(b)).join('')+');out center tags 60;';
+  let j=null,err=null,n429=0;const t0=Date.now();
   for(const u of['https://overpass-api.de/api/interpreter','https://overpass.private.coffee/api/interpreter','https://overpass.kumi.systems/api/interpreter']){
-    const ac=new AbortController(),tm=setTimeout(()=>ac.abort(),15000);
-    try{const r=await fetch(u,{method:'POST',body:'data='+encodeURIComponent(ql),headers:{'Content-Type':'application/x-www-form-urlencoded'},signal:ac.signal});
-      if(r.ok){j=await r.json();clearTimeout(tm);break}err=new Error('service saturé ('+r.status+'), réessaie dans un instant')}
-    catch(e){err=new Error(e.name==='AbortError'?'le service ne répond pas (délai dépassé), réessaie avec un rayon plus petit':'service injoignable (Internet ?)')}
-    clearTimeout(tm);
+    if(Date.now()-t0>30000||ac.signal.aborted)break;
+    const tmo=new AbortController(),tm=setTimeout(()=>tmo.abort(),12000),onab=()=>tmo.abort();ac.signal.addEventListener('abort',onab);
+    try{const r=await fetch(u,{method:'POST',body:'data='+encodeURIComponent(ql),headers:{'Content-Type':'application/x-www-form-urlencoded'},signal:tmo.signal});
+      if(r.ok){j=await r.json();break}
+      if(r.status===429){n429++;err=new Error('trop de requêtes (429)')}else err=new Error('service saturé ('+r.status+')')}
+    catch(e){err=new Error(ac.signal.aborted?'recherche annulée':e.name==='AbortError'?'le service ne répond pas (délai dépassé)':'service injoignable (Internet ?)')}
+    clearTimeout(tm);ac.signal.removeEventListener('abort',onab);
   }
-  if(!j)throw err||new Error('recherche impossible');
+  if(PLC.busy===ac)PLC.busy=null;
+  if(!j){if(n429){PLC.cool=Date.now()+30000;throw new Error('le service OpenStreetMap limite les requêtes (429) : attends 30 secondes puis relance une seule fois')}throw err||new Error('recherche impossible')}
+  try{const m=JSON.parse(localStorage.getItem('anchCache')||'{}');m[key]={t:Date.now(),j:{elements:(j.elements||[]).slice(0,200)}};const ks=Object.keys(m);if(ks.length>12)delete m[ks.sort((x,y)=>m[x].t-m[y].t)[0]];localStorage.setItem('anchCache',JSON.stringify(m))}catch(e){}
+  return PLC.anch[key]=anchParse(j,c);
+}
+function anchParse(j,c){
   const seen=new Set(),out=[];
   for(const e of j.elements||[]){
     const t=e.tags||{},la=e.lat??e.center?.lat,lo=e.lon??e.center?.lon;if(la==null||lo==null)continue;
@@ -5808,7 +5818,7 @@ async function anchSearch(c,rNM,kinds){
     const p={lat:la,lon:lo};out.push({kind:k,name:nm,lat:la,lon:lo,d:hav(c,p),brg:bearing(c,p),info:info.join(' · ')});
   }
   out.sort((a,b)=>a.d-b.d);
-  return PLC.anch[key]=out.slice(0,60);
+  return out.slice(0,60);
 }
 /* boîte de dialogue réutilisable : recherche par nom ou par mouillage, puis choix */
 function plcDlg(o){
@@ -5820,7 +5830,7 @@ function plcDlg(o){
   d.innerHTML=`<div class="card" style="width:min(560px,100%);max-height:88vh;overflow:auto;margin:0;border-radius:20px 20px 0 0;padding:14px 14px 22px"><div class="row" style="justify-content:space-between;align-items:center"><b style="font-size:17px">${esc(o.title||'Choisir un lieu')}</b><button class="b sec" id="plcX" style="width:auto;padding:6px 12px">Fermer</button></div>
   <div class="seg" style="margin-top:10px"><button id="plcM1">🔎 Lieu par nom</button><button id="plcM2">⚓ Mouillages</button></div><div id="plcBody"></div></div>`;
   document.body.appendChild(d);
-  const close=()=>d.remove();$('#plcX').onclick=close;d.addEventListener('click',e=>{if(e.target===d)close()});
+  const close=()=>{try{PLC.busy&&PLC.busy.abort()}catch(e){}d.remove()};$('#plcX').onclick=close;d.addEventListener('click',e=>{if(e.target===d)close()});
   const body=$('#plcBody');
   const rowHtml=(p,i)=>`<div class="row" style="align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line)"><div style="flex:1;min-width:0"><b>${p.ico?p.ico+' ':''}${esc(p.name||'(sans nom)')}</b><div class="mut" style="font-size:12px;overflow:hidden;text-overflow:ellipsis">${esc(p.sub||'')}</div></div>${acts.map(a=>`<button class="b sec" data-i="${i}" data-a="${a.k}" style="width:auto;padding:6px 10px;font-size:13px">${a.label}</button>`).join('')}</div>`;
   const wire=(list)=>$$('#plcBody [data-i]').forEach(b=>b.onclick=()=>{const p=list[+b.dataset.i];close();o.onPick(p,b.dataset.a)});
@@ -5848,11 +5858,12 @@ function plcDlg(o){
     const o2=()=>{close();plcDlg({...o,mode:'place',title:'Autour de quel lieu ?',actions:[{k:'c',label:'Choisir'}],onPick:(p)=>plcDlg({...o,mode:'anch',center:p})})};
     $$('#plcK [data-k]').forEach(c=>c.onchange=()=>{kinds=$$('#plcK [data-k]').filter(x=>x.checked).map(x=>x.dataset.k)});
     $('#plcR').onchange=e=>rad=+e.target.value;
-    $('#plcAg').onclick=async()=>{const res=$('#plcRes');if(!cen){res.textContent='Choisis d’abord un lieu (« changer »).';return}if(!kinds.length){res.textContent='Coche au moins un type.';return}res.textContent='Recherche…';
+    $('#plcAg').onclick=async()=>{const res=$('#plcRes');if(!cen){res.textContent='Choisis d’abord un lieu (« changer »).';return}if(!kinds.length){res.textContent='Coche au moins un type.';return}res.textContent='Recherche… (30 s maximum)';const gb=$('#plcAg');gb.disabled=true;
       try{const l=await anchSearch(cen,rad,kinds);if(!l.length){res.textContent='Rien trouvé dans ce rayon (la base OpenStreetMap est incomplète ici). Élargis le rayon ou consulte un guide de croisière.';return}
         l.forEach(p=>{p.ico=ANCH_KINDS[p.kind].ico;p.sub=`${p.d.toFixed(1)} NM · cap ${Math.round(p.brg)}° (${card(p.brg)})${p.info?' · '+p.info:''}`;if(!p.name)p.name=ANCH_KINDS[p.kind].lbl+' (sans nom)'});
         res.innerHTML=`<div style="margin-bottom:4px">${l.length} résultat(s), du plus proche au plus loin</div>`+l.map(rowHtml).join('');wire(l)}
-      catch(e){res.textContent='⚠️ '+e.message}};
+      catch(e){res.textContent='⚠️ '+e.message}
+      finally{gb.disabled=false}};
   };
   $('#plcM1').onclick=()=>{mode='place';showPlace()};$('#plcM2').onclick=()=>{mode='anch';showAnch()};
   mode==='anch'?showAnch():showPlace();
