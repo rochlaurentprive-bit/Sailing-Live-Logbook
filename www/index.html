@@ -3766,7 +3766,7 @@ $('#fxPlay').onclick=()=>{
 };
 
 
-const APP_VERSION='2.6.1',APP_BUILD='21.11-j';
+const APP_VERSION='2.6.1',APP_BUILD='21.11-k';
 (()=>{const e=document.getElementById('appVer');if(e)e.textContent='Carnet de bord · v'+APP_VERSION+' ('+APP_BUILD+')'})();
 /* ---------- Météo du parcours : vent, vagues, houle et courant le long du tracé (routage, tracé modifié, depuis ma position) ---------- */
 const RWL={wind:{n:'Vent',u:'nds',lim:'maxW',def:22,to:false},waves:{n:'Vagues',u:'m',lim:'maxH',def:2,to:false},swell:{n:'Houle',u:'m',lim:'maxH',def:2,to:false},cur:{n:'Courant',u:'nds',lim:null,to:true}};
@@ -7454,15 +7454,27 @@ function seaDescribe(el){
   const la=el.lat!=null?el.lat:el.center&&el.center.lat,lo=el.lon!=null?el.lon:el.center&&el.center.lon;
   return{lines:L,lat:la,lon:lo};
 }
+const SEAQ={};
 async function seaQuery(g,x,y){
   const mpp=156543.03*Math.cos(g.lat*D2R)/2**MV.z,R=Math.round(Math.min(3000,Math.max(15,30*mpp)));
+  const ck=[g.lat.toFixed(4),g.lon.toFixed(4),R].join('|');if(SEAQ[ck])return SEAQ[ck];
   const q=`[out:json][timeout:8];(node(around:${R},${g.lat.toFixed(6)},${g.lon.toFixed(6)})["seamark:type"];way(around:${R},${g.lat.toFixed(6)},${g.lon.toFixed(6)})["seamark:type"];);out tags center 12;`;
-  const ac=new AbortController(),to=setTimeout(()=>ac.abort(),9000);
-  try{const r=await fetch('https://overpass-api.de/api/interpreter?data='+encodeURIComponent(q),{signal:ac.signal});if(!r.ok)throw new Error('HTTP '+r.status);
+  const SRV=['https://overpass-api.de/api/interpreter','https://overpass.openstreetmap.fr/api/interpreter','https://overpass.private.coffee/api/interpreter','https://overpass.kumi.systems/api/interpreter'];
+  let last=-1;try{last=SRV.indexOf(localStorage.getItem('ovLast'))}catch(e){}if(last>0)SRV.unshift(SRV.splice(last,1)[0]);
+  let r=null,codes=[];const t0=Date.now();
+  for(const u of SRV){if(Date.now()-t0>20000)break;
+    const ac=new AbortController(),to=setTimeout(()=>ac.abort(),7000);
+    try{const rr=await fetch(u,{method:'POST',body:'data='+encodeURIComponent(q),headers:{'Content-Type':'application/x-www-form-urlencoded'},signal:ac.signal});
+      if(rr.ok){r=rr;try{localStorage.setItem('ovLast',u)}catch(e){}clearTimeout(to);break}codes.push(rr.status)}
+    catch(e){codes.push(e.name==='AbortError'?'délai':'réseau')}
+    clearTimeout(to)}
+  if(!r){const e=new Error('seaq '+codes.join(','));e.codes=codes;throw e}
+  {
     const j=await r.json();const seen=new Set(),out=[];
     (j.elements||[]).forEach(e=>{const d=seaDescribe(e);if(d.lat==null)return;const k=d.lines.join('|');if(seen.has(k))return;seen.add(k);d.dist=Math.hypot((d.lat-g.lat)*111320,(d.lon-g.lon)*111320*Math.cos(g.lat*D2R));out.push(d)});
-    out.sort((a,b)=>a.dist-b.dist);return out.slice(0,3);
-  }finally{clearTimeout(to)}
+    out.sort((a,b)=>a.dist-b.dist);return SEAQ[ck]=out.slice(0,3);
+  }
+
 }
 function seaBubble(x,y,html,ms){
   let p=$('#seaPop');if(!p){p=document.createElement('div');p.id='seaPop';p.style.cssText='position:absolute;z-index:6;max-width:min(300px,calc(100% - 70px));background:var(--card);color:var(--tx);border:1.5px solid var(--acc);border-radius:12px;padding:8px 28px 8px 10px;font-size:12.5px;line-height:1.4;box-shadow:0 3px 14px rgba(0,0,0,.45);cursor:pointer';$('#mapStage').appendChild(p);p.onclick=seaHide}
@@ -7476,7 +7488,7 @@ async function mapObjTap(x,y){
   const g=toGeo(x,y),tok=++SMK.tok;
   if($('#mapSea').checked){
     seaBubble(x,y,'⏳ '+tr('Recherche…'),10000);
-    let r=[];try{r=await seaQuery(g,x,y)}catch(e){if(tok===SMK.tok)seaBubble(x,y,tr('Infos indisponibles (hors ligne ?)'),4000);return}
+    let r=[];try{r=await seaQuery(g,x,y)}catch(e){if(tok===SMK.tok)seaBubble(x,y,tr('Infos indisponibles (hors ligne ?)')+(e&&e.codes?' ['+e.codes.join(', ')+']':''),5000);return}
     if(tok!==SMK.tok)return;
     if(r.length){
       SMK.hl={lat:r[0].lat,lon:r[0].lon};
