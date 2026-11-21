@@ -224,8 +224,8 @@ nav{bottom:calc(16px + env(safe-area-inset-bottom))!important}
 .tcard{padding:0;overflow:hidden}.tcard .in{padding:12px 14px}
 .tcard svg.mm{display:block;width:100%;height:92px;background:var(--surf2)}
 .fab{position:fixed;right:max(env(safe-area-inset-right),18px);bottom:calc(96px + env(safe-area-inset-bottom));width:56px;height:56px;border-radius:50%;border:0;background:var(--acc);color:var(--on-acc);font-size:28px;z-index:6;box-shadow:0 6px 18px rgba(0,0,0,.45)}
-.modal:focus-within,#plcDlg:focus-within{align-items:flex-start!important;padding-top:max(env(safe-area-inset-top),16px)!important}
-.modal:focus-within>*,#plcDlg:focus-within>*{max-height:55vh!important;overflow:auto!important;border-radius:20px!important}
+.kbt,#plcDlg{align-items:flex-start!important;padding-top:max(env(safe-area-inset-top),16px)!important}
+.kbt>*,#plcDlg>*{max-height:55vh!important;overflow:auto!important;border-radius:20px!important}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:40;display:flex;align-items:flex-end;justify-content:center}
 .modal>div{background:var(--card);border-radius:20px 20px 0 0;border:1px solid var(--line);width:min(560px,100%);max-height:90vh;overflow:auto;padding:16px max(env(safe-area-inset-right),20px) calc(18px + env(safe-area-inset-bottom)) max(env(safe-area-inset-left),20px)}
 .ed2{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
@@ -3765,7 +3765,7 @@ $('#fxPlay').onclick=()=>{
 };
 
 
-const APP_VERSION='2.6.1',APP_BUILD='21.11-e';
+const APP_VERSION='2.6.1',APP_BUILD='21.11-f';
 (()=>{const e=document.getElementById('appVer');if(e)e.textContent='Carnet de bord · v'+APP_VERSION+' ('+APP_BUILD+')'})();
 /* ---------- Météo du parcours : vent, vagues, houle et courant le long du tracé (routage, tracé modifié, depuis ma position) ---------- */
 const RWL={wind:{n:'Vent',u:'nds',lim:'maxW',def:22,to:false},waves:{n:'Vagues',u:'m',lim:'maxH',def:2,to:false},swell:{n:'Houle',u:'m',lim:'maxH',def:2,to:false},cur:{n:'Courant',u:'nds',lim:null,to:true}};
@@ -7653,10 +7653,8 @@ function later(d){clearTimeout(t);t=setTimeout(reveal,d)}
 function setKb(){kb=kbH();document.documentElement.style.setProperty('--kb',kb+'px');document.body.classList.toggle('kbopen',kb>50)}
 /* Fenêtres plaquées en bas de l'écran (feuilles modales) : on les remonte en haut tant qu'on saisit, pour qu'elles ne passent pas sous le clavier */
 function fixedRoot(e){let n=e;while(n&&n!==document.body){const cs=getComputedStyle(n);if(cs.position==='fixed'&&n.parentElement===document.body)return n;n=n.parentElement}return null}
-function lift(e){const o=fixedRoot(e);if(!o||o.id==='kbLiftOff')return;const cs=getComputedStyle(o);
-  if(cs.display==='flex'||cs.display==='grid'){o.dataset.kbl='1';o.style.setProperty('align-items','flex-start','important');o.style.setProperty('padding-top','max(env(safe-area-inset-top),16px)','important');
-    const c=o.firstElementChild;if(c){c.dataset.kbm=c.style.maxHeight||'';c.style.setProperty('max-height','52vh','important');c.style.setProperty('border-radius','20px','important')}}}
-function unlift(){document.querySelectorAll('[data-kbl]').forEach(o=>{if(o.contains(document.activeElement)&&isTxt(document.activeElement))return;delete o.dataset.kbl;o.style.removeProperty('align-items');o.style.removeProperty('padding-top');const c=o.firstElementChild;if(c){c.style.removeProperty('max-height');c.style.removeProperty('border-radius');if(c.dataset.kbm)c.style.maxHeight=c.dataset.kbm;delete c.dataset.kbm}})}
+function lift(e){const o=fixedRoot(e);if(!o)return;const d=getComputedStyle(o).display;if(d==='flex'||d==='grid')o.classList.add('kbt')}
+function unlift(){}
 document.addEventListener('focusin',e=>{if(isTxt(e.target)){lift(e.target);later(120);later(350);setTimeout(reveal,700)}});
 document.addEventListener('focusout',()=>setTimeout(unlift,250));
 document.addEventListener('input',e=>{if(isTxt(e.target))later(60)},true);
