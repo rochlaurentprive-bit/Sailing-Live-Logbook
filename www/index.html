@@ -5703,7 +5703,7 @@ function renderWx(){
     <input type="range" id="wxSl" min="0" max="${d.ts.length-1}" value="${k}" style="padding:0"><div class="mut" id="wxSlL" style="margin-top:2px">${fm(d.ts[k])} (dans ${Math.round((d.ts[k]-Date.now())/3600e3)} h)</div>`}
   h+=`<div class="row" style="margin-top:8px;gap:6px"><select id="wxMod" style="flex:1">${WXM.map(m=>`<option value="${m[0]}">${m[1]}</option>`).join('')}</select><select id="wxWMod" style="flex:1">${WXW.map(m=>`<option value="${m[0]}">${m[1]}</option>`).join('')}</select><button class="b sec" id="wxRef" style="width:auto">↻</button></div></div>`;
   if(WXV.busy)h+='<div class="card mut">Chargement des prévisions…</div>';
-  else if(WXV.err)h+=`<div class="card warn">⚠️ ${esc(WXV.err)}<div class="mut" style="margin-top:6px">Il faut une clé Windy Point Forecast (⚙️ Réglages → Routage et météo) ou des GRIB importés. Le mode démonstration affiche des données fictives.</div></div>`;
+  else if(WXV.err)h+=`<div class="card warn">⚠️ ${esc(WXV.err)}${cfg.kPoint?'':'<div class="mut" style="margin-top:6px">Il faut une clé Windy Point Forecast (⚙️ Réglages → Routage et météo) ou des GRIB importés. Le mode démonstration affiche des données fictives.</div>'}</div>`;
   else if(d){
     const k=wxIdx(d),S=d.S,t=d.ts[k],g=a=>S[a][k];const w=g('wind'),gu=g('gust'),dr=g('dir'),wh=g('wh'),sun=sunPos(d.place.lat,d.place.lon,t);
     const dial=(dr==null)?'':`<svg viewBox="0 0 100 100" style="width:104px;height:104px"><circle cx="50" cy="50" r="44" fill="none" stroke="var(--line)" stroke-width="5"/><circle cx="50" cy="50" r="44" fill="none" stroke="${wxCol(w||0)}" stroke-width="5" stroke-dasharray="${Math.min(1,(w||0)/40)*276} 276" transform="rotate(-90 50 50)" stroke-linecap="round"/><g transform="rotate(${Math.round(dr+180)} 50 50)"><path d="M50 14 L60 40 L50 34 L40 40Z" fill="${wxCol(w||0)}"/></g><text x="50" y="52" text-anchor="middle" font-size="22" font-weight="700" fill="var(--tx)">${w==null?'--':Math.round(w)}</text><text x="50" y="66" text-anchor="middle" font-size="9" fill="var(--mut)">nœuds</text></svg>`;
@@ -5747,8 +5747,8 @@ function wxWire(){
     sv.onpointerdown=e=>{sv.setPointerCapture(e.pointerId);mv(e);sv._d=1};sv.onpointermove=e=>{if(sv._d)mv(e)};sv.onpointerup=()=>{sv._d=0;renderWx()}});
   const lw=$('#wxLW');if(lw)lw.onchange=()=>{WXV.limW=Math.max(5,+lw.value||20);wxSave();renderWx()};
   const lh=$('#wxLH');if(lh)lh.onchange=()=>{WXV.limH=Math.max(.2,+lh.value||1.5);wxSave();renderWx()};
-  $('#wxMap').onclick=()=>{go('route');if(cfg.kMap)showWindy();else alert('Renseigne la clé Windy Map Forecast dans ⚙️ Réglages.')};
-  $('#wxRoute').onclick=()=>{const p=d.place;$('#rB').value=p.lat.toFixed(4)+', '+p.lon.toFixed(4);wpFromFields();go('route')};
+  const wm=$('#wxMap');if(wm)wm.onclick=()=>{go('route');if(cfg.kMap)showWindy();else alert('Renseigne la clé Windy Map Forecast dans ⚙️ Réglages.')};
+  const wr=$('#wxRoute');if(wr)wr.onclick=()=>{const p=d.place;$('#rB').value=p.lat.toFixed(4)+', '+p.lon.toFixed(4);wpFromFields();go('route')};
 }
 let wxLiveT=0;
 function wxLive(){ // met à jour le curseur et le libellé sans tout reconstruire pendant le glissement
