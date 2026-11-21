@@ -1975,10 +1975,26 @@ function startYdwg(){
 
 /* ---------- Enregistrement des trajets ---------- */
 let cur=null, moveCnt=0, idleCnt=0, lastPt=0, lastSave=0, lastLog=0;
+function enSnap(){
+  const now=NOW(),bs=Object.values(D.bats).filter(b=>now-b.t<30000),b=bs.find(x=>x.soc!=null&&x.i!=null)||bs.find(x=>x.soc!=null)||bs[0],o={};
+  if(b){if(b.soc!=null)o.soc=+b.soc.toFixed(1);if(b.i!=null)o.bi=+b.i.toFixed(2)}
+  const sol=Object.values(D.sol).filter(x=>now-x.t<60000);if(sol.length)o.sw=Math.round(sol.reduce((a,x)=>a+(x.w||0),0));
+  const fu=Object.values(D.tanks).find(k=>k.type==='fuel'&&now-k.t<120000);if(fu)o.fu=+fu.lvl.toFixed(1);
+  return o;
+}
+function enStats(t){
+  const p=t.points;let a0=null,a1=null,ahIn=0,ahOut=0,wh=0,f0=null,f1=null,n=0;
+  for(let i=0;i<p.length;i++){const q=p[i],dt=i?Math.min(600,(q.t-p[i-1].t)/1000):0;
+    if(q.soc!=null){if(a0==null)a0=q.soc;a1=q.soc;n++}
+    if(q.fu!=null){if(f0==null)f0=q.fu;f1=q.fu;n++}
+    if(i&&q.bi!=null&&p[i-1].bi!=null){const A=(q.bi+p[i-1].bi)/2;if(A>0)ahIn+=A*dt/3600;else ahOut-=A*dt/3600}
+    if(i&&q.sw!=null&&p[i-1].sw!=null)wh+=(q.sw+p[i-1].sw)/2*dt/3600}
+  return n?{a0,a1,ahIn,ahOut,wh,f0,f1}:null;
+}
 function snapshot(){
   return{t:NOW(),lat:D.lat,lon:D.lon,sog:D.sog,cog:D.cog,tws:fresh('tws')?D.tws:null,twa:fresh('twa')?D.twa:null,
     aws:fresh('aws')?D.aws:null,awa:fresh('awa')?D.awa:null,depth:fresh('depth')?D.depth:null,rpm:fresh('rpm')?D.rpm:null,
-    engT:fresh('engT')?D.engT:null,bat:Object.values(D.bats)[0]?.v??null,stw:fresh('stw')?D.stw:null,roll:fresh('roll')?D.roll:null};
+    engT:fresh('engT')?D.engT:null,bat:Object.values(D.bats)[0]?.v??null,stw:fresh('stw')?D.stw:null,roll:fresh('roll')?D.roll:null,...enSnap()};
 }
 function startTrip(auto){
   if(cur)return;
@@ -2973,6 +2989,7 @@ async function showTrip(id){
    ${S.stats?`<div class="rings"><div class="rg"><div class="r" style="--p:${pct(s.avg,Math.max(1,s.maxS))}"><b>${num(s.avg)}</b></div><small>vitesse moy. (max ${num(s.maxS)} nds)</small></div>
     <div class="rg"><div class="r" style="--p:${pct(s.maxW,40)};--c:var(--wind)"><b>${s.maxW?num(s.maxW,0):'--'}</b></div><small>vent max (nds)</small></div>
     <div class="rg"><div class="r" style="--p:${engPct||0};--c:var(--bad)"><b>${engPct!=null?engPct+'%':'--'}</b></div><small>au moteur (${fmtDur(s.eng)})</small></div></div>`:''}</div>
+  ${(()=>{const e=enStats(t);if(!e)return'';const d=(a,b)=>a!=null&&b!=null?(b-a>0?'+':'')+num(b-a,0)+' pts':'';return`<div class="card"><b>Énergie du trajet</b><div class="rings" style="margin-top:8px">${e.a0!=null?`<div class="rg"><div class="r" style="--p:${Math.round(e.a1)};--c:var(--ok)"><b>${Math.round(e.a1)}%</b></div><small>batterie : ${Math.round(e.a0)} % → ${Math.round(e.a1)} %</small></div>`:''}${e.f0!=null?`<div class="rg"><div class="r" style="--p:${Math.round(e.f1)};--c:var(--warn)"><b>${Math.round(e.f1)}%</b></div><small>gasoil : ${Math.round(e.f0)} % → ${Math.round(e.f1)} % (${num(e.f0-e.f1,0)} pts)</small></div>`:''}</div><div class="mut" style="margin-top:8px">${e.ahOut||e.ahIn?`Consommé ${num(e.ahOut,1)} Ah · rechargé ${num(e.ahIn,1)} Ah`:''}${e.wh?` · solaire ${num(e.wh/1000,2)} kWh`:''}</div></div>`})()}
   ${S.map&&t.points.length>1?`<div class="card"><b>Tracé</b><div class="mut" style="margin-bottom:6px">Couleur = vitesse (bleu lent, rouge rapide). Touche un point blanc pour voir l'entrée du log.</div>${miniMap(t,true)}</div>`:''}
   ${S.charts?CHARTS.filter(c=>F.includes(c[0])).map(c=>chart(t,c[1],c[2],c[3],c[4],c[5])).join(''):''}
   <div class="row noprint" style="justify-content:space-between;margin:14px 0 8px"><b style="font:600 20px var(--num)">Journal de bord</b><button class="b" id="tAdd">＋ Entrée</button></div>
@@ -3065,8 +3082,8 @@ function toGPX(t){
   t.points.map(p=>`<trkpt lat="${p.lat}" lon="${p.lon}"><time>${new Date(p.t).toISOString()}</time></trkpt>`).join('\n')+`\n</trkseg></trk></gpx>`;
 }
 function toCSV(t){
-  const h='heure_iso;lat;lon;sog_nds;cog;tws_nds;twa;aws_nds;awa;profondeur_m;rpm;temp_moteur;batterie_v';
-  return h+'\n'+t.points.map(p=>[new Date(p.t).toISOString(),p.lat,p.lon,p.sog,p.cog,p.tws,p.twa,p.aws,p.awa,p.depth,p.rpm,p.engT,p.bat].map(v=>v==null?'':(typeof v==='number'?+v.toFixed(5):v)).join(';')).join('\n');
+  const h='heure_iso;lat;lon;sog_nds;cog;tws_nds;twa;aws_nds;awa;profondeur_m;rpm;temp_moteur;batterie_v;charge_pct;courant_a;solaire_w;gasoil_pct';
+  return h+'\n'+t.points.map(p=>[new Date(p.t).toISOString(),p.lat,p.lon,p.sog,p.cog,p.tws,p.twa,p.aws,p.awa,p.depth,p.rpm,p.engT,p.bat,p.soc,p.bi,p.sw,p.fu].map(v=>v==null?'':(typeof v==='number'?+v.toFixed(5):v)).join(';')).join('\n');
 }
 let FS=null,SH=null;
 async function download(name,txt,type){
