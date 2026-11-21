@@ -3766,7 +3766,7 @@ $('#fxPlay').onclick=()=>{
 };
 
 
-const APP_VERSION='2.6.1',APP_BUILD='21.11-h';
+const APP_VERSION='2.6.1',APP_BUILD='21.11-i';
 (()=>{const e=document.getElementById('appVer');if(e)e.textContent='Carnet de bord · v'+APP_VERSION+' ('+APP_BUILD+')'})();
 /* ---------- Météo du parcours : vent, vagues, houle et courant le long du tracé (routage, tracé modifié, depuis ma position) ---------- */
 const RWL={wind:{n:'Vent',u:'nds',lim:'maxW',def:22,to:false},waves:{n:'Vagues',u:'m',lim:'maxH',def:2,to:false},swell:{n:'Houle',u:'m',lim:'maxH',def:2,to:false},cur:{n:'Courant',u:'nds',lim:null,to:true}};
@@ -5789,27 +5789,35 @@ function anchKind(t){
   return'port';
 }
 async function anchSearch(c,rNM,kinds){
-  const dl=rNM/60,dn=rNM/60/Math.max(.2,Math.cos(c.lat*D2R)),b=`(${(c.lat-dl).toFixed(4)},${(c.lon-dn).toFixed(4)},${(c.lat+dl).toFixed(4)},${(c.lon+dn).toFixed(4)})`;
-  const key=[c.lat.toFixed(2),c.lon.toFixed(2),rNM,kinds.join()].join('|');if(PLC.anch[key])return PLC.anch[key];
-  try{const sv=JSON.parse(localStorage.getItem('anchCache')||'{}')[key];if(sv&&Date.now()-sv.t<864e5&&sv.j)return PLC.anch[key]=anchParse(sv.j,c)}catch(e){}
+  /* Une seule requête sert plusieurs recherches : on télécharge d'un coup les 3 types sur un rayon d'au moins 10 NM,
+     on garde la réponse 24 h (centre arrondi à ~1 NM), puis on filtre sur place (type, rayon, distance). */
+  const fetchR=rNM<=10?15:rNM<=20?25:45,fetchK=rNM<=10?Object.keys(ANCH_KINDS):kinds;
+  const cl=+(Math.round(c.lat*50)/50).toFixed(2),cn=+(Math.round(c.lon*50)/50).toFixed(2);
+  const key=[cl,cn,fetchR,fetchK.join()].join('|');
+  const fit=j=>anchParse(j,c).filter(x=>kinds.includes(x.kind)&&x.d<=rNM).slice(0,60);
+  const find=()=>{let m={};try{m=JSON.parse(localStorage.getItem('anchCache')||'{}')}catch(e){}
+    for(const k in m){const [la,lo,r,ks]=k.split('|'),e=m[k];if(Date.now()-e.t>864e5)continue;
+      if(Math.abs(+la-cl)<=0.021&&Math.abs(+lo-cn)<=0.021&&+r>=rNM+1.5&&kinds.every(x=>ks.split(',').includes(x)))return e.j}return null};
+  const hit=find();if(hit)return fit(hit);
   if(navigator.onLine===false)throw new Error('hors ligne : la recherche de mouillages demande Internet');
   const wait=Math.ceil((PLC.cool||0)-Date.now())/1000;if(wait>0)throw new Error('trop de requêtes : patiente encore '+Math.ceil(wait)+' s avant de relancer');
   if(PLC.busy)PLC.busy.abort();const ac=new AbortController();PLC.busy=ac;
-  const ql='[out:json][timeout:12];('+kinds.map(k=>ANCH_KINDS[k].q(b)).join('')+');out center tags 60;';
-  let j=null,err=null,n429=0;const codes=[];const t0=Date.now();
+  const dl=fetchR/60,dn=fetchR/60/Math.max(.2,Math.cos(c.lat*D2R)),b=`(${(cl-dl).toFixed(4)},${(cn-dn).toFixed(4)},${(cl+dl).toFixed(4)},${(cn+dn).toFixed(4)})`;
+  const ql='[out:json][timeout:12];('+fetchK.map(k=>ANCH_KINDS[k].q(b)).join('')+');out center tags 150;';
+  let j=null,err=null,n429=0;const codes=[],t0=Date.now();
   for(const u of['https://overpass-api.de/api/interpreter','https://overpass.private.coffee/api/interpreter','https://overpass.kumi.systems/api/interpreter']){
     if(Date.now()-t0>30000||ac.signal.aborted)break;
     const tmo=new AbortController(),tm=setTimeout(()=>tmo.abort(),12000),onab=()=>tmo.abort();ac.signal.addEventListener('abort',onab);
     try{const r=await fetch(u,{method:'POST',body:'data='+encodeURIComponent(ql),headers:{'Content-Type':'application/x-www-form-urlencoded'},signal:tmo.signal});
       if(r.ok){j=await r.json();break}
-      if(r.status===429){n429++;err=new Error('trop de requêtes (429)')}else{codes.push(r.status);err=new Error('service saturé (HTTP '+codes.join(', ')+') : réessaie dans une minute ou réduis le rayon')}}
+      if(r.status===429){n429++;err=new Error('trop de requêtes (429)')}else{codes.push(r.status);err=new Error('service saturé (HTTP '+codes.join(', ')+') : réessaie dans une minute')}}
     catch(e){err=new Error(ac.signal.aborted?'recherche annulée':e.name==='AbortError'?'le service ne répond pas (délai dépassé)':'service injoignable (Internet ?)')}
     clearTimeout(tm);ac.signal.removeEventListener('abort',onab);
   }
   if(PLC.busy===ac)PLC.busy=null;
   if(!j){if(n429){PLC.cool=Date.now()+30000;throw new Error('le service OpenStreetMap limite les requêtes (429) : attends 30 secondes puis relance une seule fois')}throw err||new Error('recherche impossible')}
-  try{const m=JSON.parse(localStorage.getItem('anchCache')||'{}');m[key]={t:Date.now(),j:{elements:(j.elements||[]).slice(0,200)}};const ks=Object.keys(m);if(ks.length>12)delete m[ks.sort((x,y)=>m[x].t-m[y].t)[0]];localStorage.setItem('anchCache',JSON.stringify(m))}catch(e){}
-  return PLC.anch[key]=anchParse(j,c);
+  try{const m=JSON.parse(localStorage.getItem('anchCache')||'{}');m[key]={t:Date.now(),j:{elements:(j.elements||[]).slice(0,400)}};const ks=Object.keys(m);if(ks.length>12)delete m[ks.sort((x,y)=>m[x].t-m[y].t)[0]];localStorage.setItem('anchCache',JSON.stringify(m))}catch(e){}
+  return fit(j);
 }
 function anchParse(j,c){
   const seen=new Set(),out=[];
