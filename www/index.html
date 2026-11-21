@@ -473,6 +473,7 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
     <button class="b sec" id="gpsAsk">Autoriser / tester le GPS du téléphone</button>
     <label>Adresse Signal K (hôte:port)</label><input id="sHost" placeholder="192.168.1.50:3000">
     <label>YDWG-02 : adresse (Wi-Fi du boîtier) et port TCP</label>
+    <label>Cerbo GX Victron (optionnel : batteries, solaire, Ruuvi) · adresse IP ou IP:port (9001)</label><input id="sCerbo" placeholder="192.168.4.20" autocapitalize="off" autocorrect="off"><div class="muted" style="font-size:12px;margin:2px 0 8px">Sur le Cerbo : Réglages › Services › MQTT sur LAN (activé).</div>
     <div class="row"><input id="sYdHost" placeholder="192.168.4.1" style="flex:2"><input id="sYdPort" type="number" placeholder="1456" style="flex:1"></div>
     <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="b3Sail" style="width:auto"> Vues 3D : voiles animées (réglées selon le vent, rangées au moteur ou à l'arrêt)</label>
     <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="b3Wake" style="width:auto"> Vues 3D : remous de l'hélice quand le moteur tourne</label>
@@ -1695,7 +1696,7 @@ const db={h:null,
   del(s,id){if(window.PIBOX&&PIBOX.has(s))return PIBOX.del(s,id);return this.req(this.st(s,'readwrite').delete(id))}};
 
 /* ---------- Données instantanées ---------- */
-const D={bats:{},tanks:{}}, T={}; // valeurs et horodatages
+const D={bats:{},tanks:{},sol:{},temps:{},sys:{}}, T={}; // valeurs et horodatages
 const fresh=k=>T[k]&&NOW()-T[k]<15000;
 const SRC={};let PSRC='boat',LASTBOAT=0;const APP_T0=Date.now();   // provenance de chaque valeur : boat (mesuré) | sk (calculé par Signal K) | calc (calculé par l'appli) | phone
 function set(k,v){if(v==null||isNaN(v)&&typeof v==='number')return;D[k]=v;T[k]=NOW();SRC[k]=PSRC;if(PSRC==='boat'||PSRC==='sk')LASTBOAT=NOW()}
@@ -1829,6 +1830,12 @@ function skValue(path,v){
   else if((m=path.match(/^propulsion\.([^.]+)\.fuel\.rate$/)))set('fuelRate',v*3.6e6);
   else if((m=path.match(/^tanks\.([^.]+)\.([^.]+)\.currentLevel$/))){D.tanks[m[1]+'.'+m[2]]={type:m[1],lvl:v*100,t:NOW()};SRC.tank=PSRC}
   else if((m=path.match(/^electrical\.batteries\.([^.]+)\.voltage$/))){(D.bats[m[1]]=D.bats[m[1]]||{}).v=v;D.bats[m[1]].t=NOW();SRC.bat=PSRC}
+  else if((m=path.match(/^electrical\.batteries\.([^.]+)\.current$/))){(D.bats[m[1]]=D.bats[m[1]]||{}).i=v;D.bats[m[1]].t=NOW();SRC.bat=PSRC}
+  else if((m=path.match(/^electrical\.batteries\.([^.]+)\.temperature$/))){(D.bats[m[1]]=D.bats[m[1]]||{}).tc=v-273.15;D.bats[m[1]].t=NOW()}
+  else if((m=path.match(/^electrical\.batteries\.([^.]+)\.capacity\.timeRemaining$/))){(D.bats[m[1]]=D.bats[m[1]]||{}).tr=v/3600;D.bats[m[1]].t=NOW()}
+  else if((m=path.match(/^electrical\.solar\.([^.]+)\.(panelPower|yieldToday)$/))){const o=D.sol[m[1]]=D.sol[m[1]]||{};if(m[2]==='panelPower')o.w=v;else o.y=v;o.t=NOW()}
+  else if((m=path.match(/^electrical\.system\.(consumption|solar)$/))){D.sys[m[1]]=v;D.sys.t=NOW()}
+  else if((m=path.match(/^environment\.inside\.([^.]+)\.(temperature|relativeHumidity)$/))){const o=D.temps[m[1]]=D.temps[m[1]]||{};if(m[2]==='temperature')o.c=v-273.15;else o.h=v*100;o.t=NOW()}
   else if((m=path.match(/^electrical\.batteries\.([^.]+)\.capacity\.stateOfCharge$/))){(D.bats[m[1]]=D.bats[m[1]]||{}).soc=v*100;D.bats[m[1]].t=NOW();SRC.bat=PSRC}
 }
 let ws=null, wsTimer=null;
@@ -1842,7 +1849,52 @@ function connectSK(){
   ws.onclose=()=>{setSrc('déconnecté','bad');if(cfg.src==='signalk')wsTimer=setTimeout(connectSK,4000)};
   ws.onerror=()=>{try{ws.close()}catch(e){}};
 }
-function closeSrc(){Object.keys(T).forEach(k=>delete T[k]);D.bats={};D.tanks={};if(typeof BL!=='undefined'&&BL){try{BL.disconnect().catch(()=>{})}catch(e){}}clearTimeout(wsTimer);if(ws){ws.onclose=null;try{ws.close()}catch(e){}ws=null}clearInterval(simT)}
+function closeSrc(){Object.keys(T).forEach(k=>delete T[k]);D.bats={};D.tanks={};D.sol={};D.temps={};D.sys={};if(typeof BL!=='undefined'&&BL){try{BL.disconnect().catch(()=>{})}catch(e){}}clearTimeout(wsTimer);if(ws){ws.onclose=null;try{ws.close()}catch(e){}ws=null}clearInterval(simT)}
+/* ---------- Cerbo GX Victron : MQTT sur WebSocket (réseau local), en parallèle de la source principale ---------- */
+let cws=null,cTimer=null,cPing=null,cKA=null,CER={id:'',st:'',names:{},ty:{}};
+function mqttStr(t){const u=new TextEncoder().encode(t);return[u.length>>8,u.length&255,...u]}
+function mqttPkt(h,body){const r=[];let n=body.length;do{let d=n%128;n=Math.floor(n/128);if(n)d|=128;r.push(d)}while(n);return new Uint8Array([h,...r,...body])}
+function stopCerbo(){clearTimeout(cTimer);clearInterval(cPing);clearInterval(cKA);if(cws){cws.onclose=null;try{cws.close()}catch(e){}cws=null}CER.st=''}
+function startCerbo(){
+  stopCerbo();const h=(cfg.cerbo||'').trim();if(!h||cfg.src==='demo')return;
+  const url='ws://'+(h.includes(':')?h:h+':9001');CER.st='connexion…';
+  try{cws=new WebSocket(url,'mqtt')}catch(e){CER.st='erreur';return}
+  cws.binaryType='arraybuffer';let buf=[];
+  cws.onopen=()=>{cws.send(mqttPkt(0x10,[...mqttStr('MQTT'),4,2,0,30,...mqttStr('carnet-'+Math.random().toString(16).slice(2,8))]))};
+  cws.onmessage=ev=>{buf.push(...new Uint8Array(ev.data));
+    while(buf.length>=2){let i=1,len=0,mul=1,b;do{if(i>=buf.length)return;b=buf[i++];len+=(b&127)*mul;mul*=128}while(b&128);
+      if(buf.length<i+len)return;const p=buf.splice(0,i+len),t=p[0]>>4,body=p.slice(i);
+      if(t===2){CER.st='connecté';cws.send(mqttPkt(0x82,[0,1,...mqttStr('N/#'),0]));
+        clearInterval(cPing);cPing=setInterval(()=>{try{cws.send(new Uint8Array([0xC0,0]))}catch(e){}},20000)}
+      else if(t===3){const tl=(body[0]<<8)|body[1],tp=new TextDecoder().decode(new Uint8Array(body.slice(2,2+tl)));let off=2+tl;if(((p[0]>>1)&3)>0)off+=2;
+        let v;try{v=JSON.parse(new TextDecoder().decode(new Uint8Array(body.slice(off)))).value}catch(e){continue}cerbo(tp,v)}}};
+  cws.onclose=()=>{CER.st='déconnecté';clearInterval(cPing);clearInterval(cKA);cTimer=setTimeout(startCerbo,5000)};
+  cws.onerror=()=>{try{cws.close()}catch(e){}};
+}
+function cerbo(tp,v){
+  const q=tp.split('/');if(q[0]!=='N')return;
+  if(!CER.id){CER.id=q[1];const ka=()=>{try{cws.send(mqttPkt(0x30,mqttStr('R/'+CER.id+'/keepalive')))}catch(e){}};ka();clearInterval(cKA);cKA=setInterval(ka,30000)}
+  const k=q.slice(2).join('/'),S=skValue,P=PSRC;PSRC='boat';
+  try{
+    let m;
+    if(v==null)return;
+    if(k==='system/0/Dc/Battery/Voltage')S('electrical.batteries.Servitude.voltage',v);
+    else if(k==='system/0/Dc/Battery/Current')S('electrical.batteries.Servitude.current',v);
+    else if(k==='system/0/Dc/Battery/Soc')S('electrical.batteries.Servitude.capacity.stateOfCharge',v/100);
+    else if(k==='system/0/Dc/Battery/TimeToGo')S('electrical.batteries.Servitude.capacity.timeRemaining',v);
+    else if(k==='system/0/Dc/Battery/Temperature')S('electrical.batteries.Servitude.temperature',v+273.15);
+    else if(k==='system/0/Dc/System/Power')S('electrical.system.consumption',v);
+    else if(k==='system/0/Dc/Pv/Power')S('electrical.system.solar',v);
+    else if((m=k.match(/^solarcharger\/(\d+)\/CustomName$/)))CER.names['s'+m[1]]=v;
+    else if((m=k.match(/^solarcharger\/(\d+)\/Yield\/Power$/)))S(`electrical.solar.${CER.names['s'+m[1]]||'MPPT '+m[1]}.panelPower`,v);
+    else if((m=k.match(/^solarcharger\/(\d+)\/History\/Daily\/0\/Yield$/)))S(`electrical.solar.${CER.names['s'+m[1]]||'MPPT '+m[1]}.yieldToday`,v);
+    else if((m=k.match(/^temperature\/(\d+)\/CustomName$/)))CER.names['t'+m[1]]=v;
+    else if((m=k.match(/^temperature\/(\d+)\/Temperature$/)))S(`environment.inside.${CER.names['t'+m[1]]||'Capteur '+m[1]}.temperature`,v+273.15);
+    else if((m=k.match(/^temperature\/(\d+)\/Humidity$/)))S(`environment.inside.${CER.names['t'+m[1]]||'Capteur '+m[1]}.relativeHumidity`,v/100);
+    else if((m=k.match(/^tank\/(\d+)\/FluidType$/)))CER.ty[m[1]]=['fuel','freshWater','wasteWater','liveWell','lubrication','blackWater'][v]||'fuel';
+    else if((m=k.match(/^tank\/(\d+)\/Level$/))){if(CER.ty[m[1]])S(`tanks.${CER.ty[m[1]]}.c${m[1]}.currentLevel`,v/100)}
+  }finally{PSRC=P}
+}
 function setSrc(t,c){const e=$('#src');e.textContent=t;e.className='pill '+c}
 
 
@@ -1877,7 +1929,7 @@ function n2kPgn(pgn,b){
     case 130310:sk('environment.water.temperature',sc(nU16(b,1),0.01));sk('environment.outside.temperature',sc(nU16(b,3),0.01));sk('environment.outside.pressure',sc(nU16(b,5),100));break;
     case 130311:{const s=b[1]&0x3F;sk(s===0?'environment.water.temperature':'environment.outside.temperature',s<=1?sc(nU16(b,2),0.01):null);sk('environment.outside.pressure',sc(nU16(b,6),100));break}
     case 130312:{const s=b[2];if(s===0)sk('environment.water.temperature',sc(nU16(b,3),0.01));else if(s===1)sk('environment.outside.temperature',sc(nU16(b,3),0.01));break}
-    case 127508:sk(`electrical.batteries.Batterie ${b[0]}.voltage`,sc(nU16(b,1),0.01));break;
+    case 127508:{const n=`Batterie ${b[0]}`;sk(`electrical.batteries.${n}.voltage`,sc(nU16(b,1),0.01));sk(`electrical.batteries.${n}.current`,sc(nS16(b,3),0.1));sk(`electrical.batteries.${n}.temperature`,sc(nU16(b,5),0.01));break}
     case 127506:if(b[3]!==0xFF&&b[3]<=100)sk(`electrical.batteries.Batterie ${b[1]}.capacity.stateOfCharge`,b[3]/100);break;
   }
 }
@@ -2592,6 +2644,40 @@ function mkEngine(root){
 
 /* 7. Énergie & réservoirs */
 const TANKFR={fuel:'Gazole',freshWater:'Eau douce',wasteWater:'Eaux grises',blackWater:'Eaux noires',liveWell:'Vivier',lubrication:'Huile',ballast:'Ballast'};
+/* 7bis. Installation électrique : charge, courant, solaire, consommation, températures */
+function mkPower(root){
+  const C=2*Math.PI*80;
+  root.innerHTML=SVG('',`<rect x="6" y="6" width="288" height="288" rx="26" fill="url(#gFace)" stroke="url(#gRim)" stroke-width="3"/>
+  <g transform="rotate(135 150 118)"><circle cx="150" cy="118" r="80" fill="none" stroke="#000" opacity=".3" stroke-width="16" stroke-dasharray="${(C*0.75).toFixed(1)} ${C.toFixed(1)}" stroke-linecap="round"/>
+  <circle class="arc" cx="150" cy="118" r="80" fill="none" stroke="var(--ok)" stroke-width="16" stroke-dasharray="0 ${C.toFixed(1)}" stroke-linecap="round" style="filter:url(#fGlow)"/></g>
+  <text class="soc" x="150" y="130" text-anchor="middle" style="font:700 56px var(--num);fill:var(--tx)">--</text>
+  <text class="sm" x="150" y="152" text-anchor="middle">charge batterie</text>
+  <text class="vi" x="150" y="204" text-anchor="middle" style="font:600 19px var(--num);fill:var(--tx)"></text>
+  <text class="tr" x="150" y="224" text-anchor="middle" style="font-size:13px;fill:var(--mut)"></text>
+  <g class="fl"></g><text class="none sm" x="150" y="120" text-anchor="middle">en attente des données…</text>`);
+  const q=s=>root.querySelector(s);
+  return()=>{
+    const now=NOW(),bs=Object.entries(D.bats).filter(([,b])=>now-b.t<15000),b=(bs.find(([,x])=>x.i!=null&&x.soc!=null)||bs.find(([,x])=>x.soc!=null)||bs[0]||[])[1];
+    q('.none').setAttribute('opacity',b?0:1);
+    const soc=b&&b.soc!=null?b.soc:null,C2=2*Math.PI*80;
+    q('.soc').textContent=soc!=null?Math.round(soc)+'%':'--';
+    q('.arc').setAttribute('stroke-dasharray',`${(C2*0.75*Math.max(0,Math.min(100,soc||0))/100).toFixed(1)} ${C2.toFixed(1)}`);
+    q('.arc').setAttribute('stroke',soc==null?'var(--mut)':soc<20?'var(--bad)':soc<50?'var(--warn)':'var(--ok)');
+    q('.vi').textContent=b?[b.v!=null?b.v.toFixed(2)+' V':'',b.i!=null?(b.i>0?'+':'')+b.i.toFixed(1)+' A':''].filter(Boolean).join('   '):'';
+    q('.tr').textContent=b&&b.i!=null?(b.i>0.5?'en charge':b.tr!=null&&b.tr>0?'reste '+(b.tr>=48?Math.round(b.tr/24)+' j':b.tr.toFixed(1)+' h'):''):'';
+    const sol=Object.values(D.sol).filter(x=>now-x.t<30000),sw=sol.reduce((a,x)=>a+(x.w||0),0),sy=sol.reduce((a,x)=>a+(x.y||0),0);
+    const cons=D.sys.consumption!=null&&now-D.sys.t<30000?D.sys.consumption:null;
+    const tm=Object.entries(D.temps).filter(([,x])=>now-x.t<120000&&x.c!=null).slice(0,3);
+    const rows=[];
+    if(sol.length||D.sys.solar!=null)rows.push(['Solaire',Math.round(D.sys.solar!=null&&!sol.length?D.sys.solar:sw)+' W'+(sy?' · '+sy.toFixed(1)+' kWh':''),'var(--warn)']);
+    if(cons!=null)rows.push(['Conso',Math.round(cons)+' W','var(--wind)']);
+    tm.forEach(([n,x])=>rows.push([n,x.c.toFixed(1)+'°'+(x.h!=null?' · '+Math.round(x.h)+'%':''),'var(--tx)']));
+    const fu=Object.values(D.tanks).find(k=>k.type==='fuel'&&now-k.t<60000);if(fu)rows.push(['Gazole',Math.round(fu.lvl)+' %',fu.lvl<15?'var(--bad)':'var(--tx)']);
+    const rs=rows.slice(0,4),y0=243,h=14;
+    q('.fl').innerHTML=rs.map((r,i)=>`<text class="sm" x="30" y="${y0+i*h}" style="font-size:12px;fill:var(--mut)">${esc(String(r[0]).slice(0,14))}</text><text class="sm" x="270" y="${y0+i*h}" text-anchor="end" style="font-size:12px;fill:${r[2]}">${esc(r[1])}</text>`).join('');
+  };
+}
+
 function mkEnergy(root){
   root.innerHTML=SVG('',`<rect x="6" y="6" width="288" height="288" rx="26" fill="url(#gFace)" stroke="url(#gRim)" stroke-width="3"/><g class="rows"></g><text class="sm none" x="150" y="150" text-anchor="middle">en attente des batteries…</text>`);
   const q=s=>root.querySelector(s);
@@ -2618,7 +2704,8 @@ const DIALS={
   meteo3d:{name:'Bateau 3D et météo',mk:r=>mkAtt3D(r,{classic:true}),legend:'<span>glisse : tourner · pince : zoom · touche : vue</span>'},
   depth:{name:'Profondeur',mk:mkDepth,legend:''},
   engine:{name:'Moteur',mk:mkEngine,legend:''},
-  energy:{name:'Énergie et réservoirs',mk:mkEnergy,legend:''}};
+  energy:{name:'Énergie et réservoirs',mk:mkEnergy,legend:''},
+  power:{name:'Installation électrique',mk:mkPower,legend:'<span>charge · courant · solaire · consommation · températures</span>'}};
 const dialList=()=>{const o=(cfg.dialOrder||[]).filter(id=>DIALS[id]);Object.keys(DIALS).forEach(id=>{if(!o.includes(id)){const k=id==='meteo3d'?o.indexOf('attitude'):-1;if(k>=0)o.splice(k+1,0,id);else o.push(id)}});return o};
 const dialActive=()=>{const a=dialList().filter(id=>!(cfg.dialOff||[]).includes(id));return a.length?a:['wind']};
 const saveCfg=()=>localStorage.setItem('cfg',JSON.stringify(cfg));
@@ -2725,7 +2812,7 @@ function updNoBoat(){
   e.classList.toggle('hide',!lost);
   if(lost){$('#nbT').textContent=tr('Pas de signal bateau');$('#nbS').textContent=tr('Le carnet, les notes et la carte restent disponibles.')+' · '+(($('#src')||{}).textContent||'')}
 }
-const PKEYS={wind:['aws','awa','tws','twa'],speed:['sog','stw','lat'],compass:['hdg','cog','lat'],attitude:['roll','pitch'],meteo3d:['roll','pitch','baro','airT','wTemp'],depth:['depth'],engine:['rpm','engT','oilP'],energy:['bat','tank']};
+const PKEYS={wind:['aws','awa','tws','twa'],speed:['sog','stw','lat'],compass:['hdg','cog','lat'],attitude:['roll','pitch'],meteo3d:['roll','pitch','baro','airT','wTemp'],depth:['depth'],engine:['rpm','engT','oilP'],energy:['bat','tank'],power:['bat']};
 const PLBL={aws:'AWS',awa:'AWA',tws:'TWS',twa:'TWA',sog:'SOG',stw:'STW',hdg:'Cap',cog:'COG',lat:'GPS',roll:'Roulis',pitch:'Tangage',baro:'Baro',airT:'Air',wTemp:'Eau',depth:'Prof.',rpm:'Régime',engT:'T° moteur',oilP:'Huile',bat:'Batteries',tank:'Réservoirs'};
 function updProv(){
   const e=$('#provBar');if(!e)return;
@@ -3904,7 +3991,7 @@ function loadSettings(){
   $('#boat').textContent=cfg.boat;
   $('#sBoat').value=cfg.boat;$('#sSrc').value=cfg.src;$('#sGps').value=cfg.gpsSrc||'auto';$('#sWind').value=cfg.windRef||'auto';try{initHist()}catch(e){}try{initSync()}catch(e){}$('#sHost').value=cfg.host;
   $('#sDemoSpd').value=String(cfg.demoSpeed||1);buildLogCfg();updDemoBar();
-  $('#sNoGo').value=cfg.noGo;$('#sYdHost').value=cfg.ydHost;$('#sYdPort').value=cfg.ydPort;$('#sAwake').checked=!!cfg.awake;$('#b3Sail').checked=cfg.b3sail!==false;$('#b3Wake').checked=cfg.b3wake!==false;['lnHdg','lnCog','lnLay'].forEach(k=>$('#'+k).checked=cfg[k]!==false);$('#lnMin').value=cfg.lnMin||30;$('#map3dCb').checked=M3D;$('#sAvoid').checked=cfg.avoidLand!==false;$('#sMinDepth').value=cfg.minDepth??3;$('#sHapLvl').value=String(cfg.hapLvl!=null?cfg.hapLvl:(cfg.haptic===false?0:2));$('#sCruise').value=cfg.cruise;$('#sHeel').value=cfg.heelAlert||25;$('#sKPoint').value=cfg.kPoint;$('#sKMap').value=cfg.kMap;
+  $('#sNoGo').value=cfg.noGo;$('#sYdHost').value=cfg.ydHost;$('#sYdPort').value=cfg.ydPort;$('#sAwake').checked=!!cfg.awake;$('#sCerbo').value=cfg.cerbo||'';$('#b3Sail').checked=cfg.b3sail!==false;$('#b3Wake').checked=cfg.b3wake!==false;['lnHdg','lnCog','lnLay'].forEach(k=>$('#'+k).checked=cfg[k]!==false);$('#lnMin').value=cfg.lnMin||30;$('#map3dCb').checked=M3D;$('#sAvoid').checked=cfg.avoidLand!==false;$('#sMinDepth').value=cfg.minDepth??3;$('#sHapLvl').value=String(cfg.hapLvl!=null?cfg.hapLvl:(cfg.haptic===false?0:2));$('#sCruise').value=cfg.cruise;$('#sHeel').value=cfg.heelAlert||25;$('#sKPoint').value=cfg.kPoint;$('#sKMap').value=cfg.kMap;
   $('#sStartKn').value=cfg.startKn;$('#sStartSec').value=cfg.startSec;$('#sStopKn').value=cfg.stopKn;$('#sStopMin').value=cfg.stopMin;$('#sInt').value=cfg.interval;
 }
 ['lnHdg','lnCog','lnLay'].forEach(k=>$('#'+k).onchange=e=>{cfg[k]=e.target.checked;saveCfg();scheduleDraw()});$('#sNoGo').onchange=e=>{cfg.noGo=Math.max(0,Math.min(80,+e.target.value||0));e.target.value=cfg.noGo;saveCfg();try{updDials()}catch(_){}};
@@ -3916,7 +4003,7 @@ $('#hapTest').onclick=()=>{const w=cfg.haptic,l=cfg.hapLvl;cfg.haptic=true;if(!c
 $('#sHapLvl').onchange=e=>{cfg.hapLvl=+e.target.value;cfg.haptic=cfg.hapLvl>0;saveCfg();if(cfg.hapLvl>0)hap('strong')};
 $('#sSave').onclick=()=>{
   cfg={...cfg,boat:$('#sBoat').value||DEF.boat,src:$('#sSrc').value,gpsSrc:$('#sGps').value,windRef:$('#sWind').value,host:$('#sHost').value.trim(),
-   ydHost:$('#sYdHost').value.trim()||DEF.ydHost,ydPort:+$('#sYdPort').value||DEF.ydPort,awake:$('#sAwake').checked,b3sail:$('#b3Sail').checked,b3wake:$('#b3Wake').checked,avoidLand:$('#sAvoid').checked,minDepth:Math.max(0,+$('#sMinDepth').value||0),
+   ydHost:$('#sYdHost').value.trim()||DEF.ydHost,ydPort:+$('#sYdPort').value||DEF.ydPort,awake:$('#sAwake').checked,cerbo:$('#sCerbo').value.trim(),b3sail:$('#b3Sail').checked,b3wake:$('#b3Wake').checked,avoidLand:$('#sAvoid').checked,minDepth:Math.max(0,+$('#sMinDepth').value||0),
    cruise:+$('#sCruise').value||DEF.cruise,heelAlert:Math.max(10,Math.min(45,+$('#sHeel').value||25)),kPoint:$('#sKPoint').value.trim(),kMap:$('#sKMap').value.trim(),
    startKn:+$('#sStartKn').value||DEF.startKn,startSec:+$('#sStartSec').value||DEF.startSec,
    stopKn:+$('#sStopKn').value||DEF.stopKn,stopMin:+$('#sStopMin').value||DEF.stopMin,interval:Math.max(1,+$('#sInt').value||DEF.interval)};
@@ -4762,6 +4849,11 @@ function demoStep(dt){
   S('propulsion.0.revolutions',run?(2050+30*Math.sin(s.t/3))/60:0);S('propulsion.0.temperature',s.engT+273.15);
   S('propulsion.0.oilPressure',(run?3.6+0.1*Math.sin(s.t/5):0)*100000);S('propulsion.0.runTime',s.engSec);S('propulsion.0.fuel.rate',(run?3.4:0)/3.6e6);
   S('electrical.batteries.Servitude.voltage',12.9+(s.soc-50)*0.006+(run?0.9:0));S('electrical.batteries.Servitude.capacity.stateOfCharge',s.soc/100);
+  S('electrical.batteries.Servitude.current',run?18:-(9+3*Math.sin(s.t/40))+(Math.max(0,Math.sin((s.t-1200)/2400))*14));
+  S('electrical.batteries.Servitude.capacity.timeRemaining',(s.soc/100*400)/Math.max(3,9)*3600);
+  S('electrical.solar.MPPT Pont.panelPower',Math.max(0,320*Math.sin(s.t/3000)));S('electrical.solar.MPPT Pont.yieldToday',0.8+s.t/9000);
+  S('electrical.system.consumption',118+25*Math.sin(s.t/50));
+  S('environment.inside.Frigo.temperature',277.6+0.6*Math.sin(s.t/200));S('environment.inside.Carré.temperature',292.4+0.4*Math.sin(s.t/900));S('environment.inside.Carré.relativeHumidity',0.58);
   S('electrical.batteries.Démarrage.voltage',run?13.9:12.7);
   S('tanks.fuel.0.currentLevel',s.fuel/120);S('tanks.freshWater.0.currentLevel',s.water/150);
   try{aisDemo(s.lat,s.lon,cog,dt)}catch(e){}
@@ -4934,7 +5026,7 @@ function startSource(){
   if(cfg.src!=='demo'&&(CLK.k!==1||DM)){if(cur&&cur.demo)endTrip();setClock(1,true);DM=null}
   updDemoBar();
   startPhoneGps();
-  cfg.src==='ydwg'?startYdwg():cfg.src==='signalk'&&cfg.host?connectSK():startSim()}
+  cfg.src==='ydwg'?startYdwg():cfg.src==='signalk'&&cfg.host?connectSK():startSim();startCerbo()}
 
 /* ---------- Démarrage ---------- */
 (async()=>{
