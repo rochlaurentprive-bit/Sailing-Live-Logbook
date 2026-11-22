@@ -495,7 +495,11 @@ table.rt{width:100%;border-collapse:collapse;font-size:14px}.rt td{padding:7px 4
     <div class="row" style="margin-top:6px"><div style="flex:1"><label>Batterie sous (%)</label><input id="alSoc" type="number" inputmode="numeric" placeholder="25"></div><div style="flex:1"><label>Gasoil sous (%)</label><input id="alFuel" type="number" inputmode="numeric" placeholder="15"></div></div>
     <div class="row"><div style="flex:1"><label>Eau douce sous (%)</label><input id="alWater" type="number" inputmode="numeric" placeholder="10"></div><div style="flex:1"><label>Frigo au-dessus de (°C)</label><input id="alTemp" type="number" inputmode="decimal" placeholder="vide = pas d'alarme"></div></div></div>
     <label>Cerbo GX Victron (optionnel : batteries, solaire, Ruuvi) · adresse IP ou IP:port (9001)</label><input id="sCerbo" placeholder="192.168.4.20" autocapitalize="off" autocorrect="off"><div class="muted" style="font-size:12px;margin:2px 0 8px">Sur le Cerbo : Réglages › Services › MQTT sur LAN (activé).</div>
+    <div class="row" style="margin-bottom:4px"><button class="b" id="tCer" type="button" style="flex:1">Tester le Cerbo</button></div>
+    <div class="muted" id="tCerMsg" style="font-size:13px;margin:4px 0 8px;white-space:pre-line"></div>
     <div class="row"><input id="sYdHost" placeholder="192.168.4.1" style="flex:2"><input id="sYdPort" type="number" placeholder="1456" style="flex:1"></div>
+    <div class="row" style="margin-top:6px"><button class="b" id="tYd" type="button" style="flex:1">Tester le YDWG</button><button class="b" id="tYdWeb" type="button" style="flex:1">Page du boîtier</button></div>
+    <div class="muted" id="tYdMsg" style="font-size:13px;margin:4px 0 8px;white-space:pre-line"></div>
     <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="b3Sail" style="width:auto"> Vues 3D : voiles animées (réglées selon le vent, rangées au moteur ou à l'arrêt)</label>
     <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="b3Wake" style="width:auto"> Vues 3D : remous de l'hélice quand le moteur tourne</label>
     <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="sAwake" style="width:auto"> Garder l'écran allumé (Android)</label>
@@ -861,6 +865,31 @@ Belgique · côte et estran (Vlaamse Hydrografie)|België · kust en strand (Vla
 Allemagne · voies intérieures (WSV)|Duitsland · binnenwateren (WSV)|Germany · inland waterways (WSV)|Deutschland · Binnenwasserstraßen (WSV)|Alemania · vías interiores (WSV)
 YDWG-02 · aucune donnée|YDWG-02 · geen gegevens|YDWG-02 · no data|YDWG-02 · keine Daten|YDWG-02 · sin datos
 YDWG-02 · données illisibles|YDWG-02 · onleesbare gegevens|YDWG-02 · unreadable data|YDWG-02 · unlesbare Daten|YDWG-02 · datos ilegibles
+Tester le YDWG|YDWG testen|Test the YDWG|YDWG testen|Probar el YDWG
+Page du boîtier|Pagina van het apparaat|Device web page|Webseite des Geräts|Página del dispositivo
+Tester le Cerbo|Cerbo testen|Test the Cerbo|Cerbo testen|Probar el Cerbo
+Test en cours…|Test bezig…|Test running…|Test läuft…|Probando…
+Test complet : appli Android requise.|Volledige test: Android-app vereist.|Full test: Android app required.|Vollständiger Test: Android-App nötig.|Prueba completa: requiere la app Android.
+Page du boîtier joignable|Pagina van het apparaat bereikbaar|Device page reachable|Webseite des Geräts erreichbar|Página del dispositivo accesible
+Boîtier injoignable|Apparaat onbereikbaar|Device unreachable|Gerät nicht erreichbar|Dispositivo inaccesible
+Es-tu bien connecté à son Wi-Fi ou au même réseau ?|Ben je verbonden met zijn wifi of hetzelfde netwerk?|Are you connected to its Wi-Fi or the same network?|Bist du mit seinem WLAN oder demselben Netz verbunden?|¿Estás conectado a su wifi o a la misma red?
+La source de données n'est pas « YDWG-02 direct ».|De gegevensbron is niet «YDWG-02 direct».|The data source is not “YDWG-02 direct”.|Die Datenquelle ist nicht «YDWG-02 direkt».|La fuente de datos no es «YDWG-02 directo».
+Liaison de données|Gegevensverbinding|Data link|Datenverbindung|Enlace de datos
+Enregistre les réglages pour reconnecter.|Sla de instellingen op om opnieuw te verbinden.|Save the settings to reconnect.|Speichere die Einstellungen, um neu zu verbinden.|Guarda los ajustes para reconectar.
+Données reçues|Ontvangen gegevens|Data received|Empfangene Daten|Datos recibidos
+trames|frames|frames|Frames|tramas
+dernière il y a|laatste |last one |letzte vor|última hace
+Connecté mais aucune trame NMEA reçue|Verbonden maar geen NMEA-frames ontvangen|Connected but no NMEA frame received|Verbunden, aber keine NMEA-Frames empfangen|Conectado pero ninguna trama NMEA recibida
+octets|bytes|bytes|Bytes|bytes
+Bus éteint ? Serveur TCP / protocole RAW ?|Bus uit? TCP-server / RAW-protocol?|Bus off? TCP server / RAW protocol?|Bus aus? TCP-Server / RAW-Protokoll?|¿Bus apagado? ¿Servidor TCP / protocolo RAW?
+Saisis d'abord l'adresse du Cerbo.|Vul eerst het adres van de Cerbo in.|Enter the Cerbo address first.|Gib zuerst die Adresse des Cerbo ein.|Introduce primero la dirección del Cerbo.
+Adresse invalide|Ongeldig adres|Invalid address|Ungültige Adresse|Dirección no válida
+Pas de réponse en 5 s|Geen antwoord binnen 5 s|No answer within 5 s|Keine Antwort in 5 s|Sin respuesta en 5 s
+Adresse correcte ? MQTT sur LAN activé ?|Adres juist? MQTT op LAN ingeschakeld?|Correct address? MQTT on LAN enabled?|Adresse korrekt? MQTT im LAN aktiviert?|¿Dirección correcta? ¿MQTT en LAN activado?
+Cerbo connecté (MQTT)|Cerbo verbonden (MQTT)|Cerbo connected (MQTT)|Cerbo verbunden (MQTT)|Cerbo conectado (MQTT)
+Connexion refusée par le Cerbo|Verbinding geweigerd door de Cerbo|Connection refused by the Cerbo|Verbindung vom Cerbo abgelehnt|Conexión rechazada por el Cerbo
+Connexion impossible|Verbinding onmogelijk|Connection impossible|Verbindung nicht möglich|Conexión imposible
+Connexion fermée|Verbinding gesloten|Connection closed|Verbindung geschlossen|Conexión cerrada
 Balises et feux marins (OpenSeaMap)|Boeien en lichten (OpenSeaMap)|Buoys and marine lights (OpenSeaMap)|Seezeichen und Feuer (OpenSeaMap)|Balizas y luces marinas (OpenSeaMap)
 Profondeurs d'eau en couleur (EMODnet) · touche la carte pour lire la profondeur|Waterdiepte in kleur (EMODnet) · tik op de kaart om de diepte te lezen|Water depths in colour (EMODnet) · tap the map to read the depth|Wassertiefen farbig (EMODnet) · Karte antippen, um die Tiefe zu lesen|Profundidades en color (EMODnet) · toca el mapa para leer la profundidad
 Pas de données de profondeur ici (hors zone EMODnet).|Hier geen dieptegegevens (buiten EMODnet-gebied).|No depth data here (outside the EMODnet area).|Hier keine Tiefendaten (außerhalb des EMODnet-Gebiets).|Sin datos de profundidad aquí (fuera de la zona EMODnet).
@@ -2305,6 +2334,45 @@ function startYdwg(){
   }).catch(e=>setSrc('erreur : '+(e.message||e),'bad'));
 }
 
+
+
+/* ---------- Tests de connexion (Réglages) : YDWG-02 et Cerbo ---------- */
+(()=>{
+  const yh=()=>$('#sYdHost').value.trim()||'192.168.4.1';
+  $('#tYdWeb').onclick=()=>{const u='http://'+yh();try{window.open(u,'_blank')||(location.href=u)}catch(e){location.href=u}};
+  $('#tYd').onclick=async()=>{
+    const out=$('#tYdMsg'),b=$('#tYd'),host=yh(),L=[];b.disabled=true;out.textContent='⏳ '+tr('Test en cours…');
+    try{
+      if(!NATIVE)L.push('ℹ️ '+tr('Test complet : appli Android requise.'));
+      else{
+        let ok=false,code='';
+        try{const r=await Promise.race([fetch('http://'+host+'/',{cache:'no-store'}),new Promise((_,j)=>setTimeout(()=>j(new Error('timeout')),4500))]);ok=true;code=r.status}catch(e){}
+        L.push(ok?'✓ '+tr('Page du boîtier joignable')+` (${host}, HTTP ${code})`:'✗ '+tr('Boîtier injoignable')+` (${host}) · `+tr('Es-tu bien connecté à son Wi-Fi ou au même réseau ?'));
+      }
+      if(cfg.src!=='ydwg')L.push('ℹ️ '+tr('La source de données n\'est pas « YDWG-02 direct ».'));
+      else if(YDS.st!=='connected')L.push('✗ '+tr('Liaison de données')+' : '+(YDS.st||'—')+' · '+tr('Enregistre les réglages pour reconnecter.'));
+      else if(YDS.frames>0)L.push('✓ '+tr('Données reçues')+` : ${YDS.frames} `+tr('trames')+' · '+tr('dernière il y a')+` ${Math.round((Date.now()-YDS.last)/1000)} s`);
+      else L.push('⚠ '+tr('Connecté mais aucune trame NMEA reçue')+` (${YDS.bytes} `+tr('octets')+') · '+tr('Bus éteint ? Serveur TCP / protocole RAW ?'));
+    }catch(e){L.push('✗ '+(e.message||e))}
+    out.textContent=L.join('\n');b.disabled=false;
+  };
+  $('#tCer').onclick=async()=>{
+    const out=$('#tCerMsg'),b=$('#tCer'),h=$('#sCerbo').value.trim();
+    if(!h){out.textContent='✗ '+tr('Saisis d\'abord l\'adresse du Cerbo.');return}
+    b.disabled=true;out.textContent='⏳ '+tr('Test en cours…');
+    const url='ws://'+(h.includes(':')?h:h+':9001');
+    const res=await new Promise(done=>{
+      let fin=false,w=null,tm=null;const end=m=>{if(fin)return;fin=true;clearTimeout(tm);try{w&&w.close()}catch(e){}done(m)};
+      try{w=new WebSocket(url,'mqtt')}catch(e){return end('✗ '+tr('Adresse invalide'))}
+      w.binaryType='arraybuffer';tm=setTimeout(()=>end('✗ '+tr('Pas de réponse en 5 s')+' · '+tr('Adresse correcte ? MQTT sur LAN activé ?')),5000);
+      w.onopen=()=>w.send(mqttPkt(0x10,[...mqttStr('MQTT'),4,2,0,30,...mqttStr('carnet-test')]));
+      w.onmessage=ev=>{const u=new Uint8Array(ev.data);if(u[0]>>4===2)end(u[3]===0?'✓ '+tr('Cerbo connecté (MQTT)')+' · '+url:'✗ '+tr('Connexion refusée par le Cerbo')+` (${u[3]})`)};
+      w.onerror=()=>end('✗ '+tr('Connexion impossible')+' · '+url);
+      w.onclose=()=>end('✗ '+tr('Connexion fermée')+' · '+url);
+    });
+    out.textContent=res;b.disabled=false;
+  };
+})();
 
 /* ---------- Enregistrement des trajets ---------- */
 let cur=null, moveCnt=0, idleCnt=0, lastPt=0, lastSave=0, lastLog=0;
@@ -3784,7 +3852,7 @@ $('#fxPlay').onclick=()=>{
 };
 
 
-const APP_VERSION='2.6.1',APP_BUILD='22.11-d';
+const APP_VERSION='2.6.1',APP_BUILD='22.11-e';
 (()=>{const e=document.getElementById('appVer');if(e)e.textContent='Carnet de bord · v'+APP_VERSION+' ('+APP_BUILD+')'})();
 /* ---------- Météo du parcours : vent, vagues, houle et courant le long du tracé (routage, tracé modifié, depuis ma position) ---------- */
 const RWL={wind:{n:'Vent',u:'nds',lim:'maxW',def:22,to:false},waves:{n:'Vagues',u:'m',lim:'maxH',def:2,to:false},swell:{n:'Houle',u:'m',lim:'maxH',def:2,to:false},cur:{n:'Courant',u:'nds',lim:null,to:true}};
