@@ -859,6 +859,8 @@ Cartes marines officielles (gratuites, indicatives)|Officiële zeekaarten (grati
 Pays-Bas · eaux navigables (Rijkswaterstaat)|Nederland · vaarwateren (Rijkswaterstaat)|Netherlands · navigable waters (Rijkswaterstaat)|Niederlande · Wasserstraßen (Rijkswaterstaat)|Países Bajos · aguas navegables (Rijkswaterstaat)
 Belgique · côte et estran (Vlaamse Hydrografie)|België · kust en strand (Vlaamse Hydrografie)|Belgium · coast and foreshore (Vlaamse Hydrografie)|Belgien · Küste und Watt (Vlaamse Hydrografie)|Bélgica · costa y estran (Vlaamse Hydrografie)
 Allemagne · voies intérieures (WSV)|Duitsland · binnenwateren (WSV)|Germany · inland waterways (WSV)|Deutschland · Binnenwasserstraßen (WSV)|Alemania · vías interiores (WSV)
+YDWG-02 · aucune donnée|YDWG-02 · geen gegevens|YDWG-02 · no data|YDWG-02 · keine Daten|YDWG-02 · sin datos
+YDWG-02 · données illisibles|YDWG-02 · onleesbare gegevens|YDWG-02 · unreadable data|YDWG-02 · unlesbare Daten|YDWG-02 · datos ilegibles
 Balises et feux marins (OpenSeaMap)|Boeien en lichten (OpenSeaMap)|Buoys and marine lights (OpenSeaMap)|Seezeichen und Feuer (OpenSeaMap)|Balizas y luces marinas (OpenSeaMap)
 Profondeurs d'eau en couleur (EMODnet) · touche la carte pour lire la profondeur|Waterdiepte in kleur (EMODnet) · tik op de kaart om de diepte te lezen|Water depths in colour (EMODnet) · tap the map to read the depth|Wassertiefen farbig (EMODnet) · Karte antippen, um die Tiefe zu lesen|Profundidades en color (EMODnet) · toca el mapa para leer la profundidad
 Pas de données de profondeur ici (hors zone EMODnet).|Hier geen dieptegegevens (buiten EMODnet-gebied).|No depth data here (outside the EMODnet area).|Hier keine Tiefendaten (außerhalb des EMODnet-Gebiets).|Sin datos de profundidad aquí (fuera de la zona EMODnet).
@@ -2189,7 +2191,7 @@ function startCerbo(){
   try{cws=new WebSocket(url,'mqtt')}catch(e){CER.st='erreur';return}
   cws.binaryType='arraybuffer';let buf=[];
   cws.onopen=()=>{cws.send(mqttPkt(0x10,[...mqttStr('MQTT'),4,2,0,30,...mqttStr('carnet-'+Math.random().toString(16).slice(2,8))]))};
-  cws.onmessage=ev=>{buf.push(...new Uint8Array(ev.data));
+  cws.onmessage=ev=>{const u8=new Uint8Array(ev.data);for(let k=0;k<u8.length;k++)buf.push(u8[k]);
     while(buf.length>=2){let i=1,len=0,mul=1,b;do{if(i>=buf.length)return;b=buf[i++];len+=(b&127)*mul;mul*=128}while(b&128);
       if(buf.length<i+len)return;const p=buf.splice(0,i+len),t=p[0]>>4,body=p.slice(i);
       if(t===2){CER.st='connecté';cws.send(mqttPkt(0x82,[0,1,...mqttStr('N/#'),0]));
@@ -2280,19 +2282,23 @@ function parseRawLines(txt){   // format : « hh:mm:ss.mmm R 09F80115 A0 A1 … 
     const p=line.trim().split(/\s+/);if(p.length<4||p[1]!=='R')continue;
     const id=parseInt(p[2],16);if(isNaN(id))continue;
     const b=p.slice(3).map(x=>parseInt(x,16));if(b.some(isNaN))continue;
-    n2kFrame(id,b);
+    YDS.frames++;n2kFrame(id,b);
   }
 }
 /* ---------- Liaison native Android avec le YDWG-02 (plugin BoatLink) ---------- */
 let BL=null;
+const YDS={st:'',since:0,bytes:0,frames:0,last:0};
+setInterval(()=>{if(cfg.src!=='ydwg'||YDS.st!=='connected')return;const e=$('#src');if(!e)return;const q=Date.now()-Math.max(YDS.since,YDS.last);
+  if(q>15000&&YDS.frames===0)setSrc(YDS.bytes?'YDWG-02 · données illisibles':'YDWG-02 · aucune donnée','bad');
+  else if(/^YDWG-02 ·/.test(e.textContent)&&YDS.frames>0)setSrc('YDWG-02','ok')},3000);
 function startYdwg(){
   closeSrc();
   if(!NATIVE){setSrc('appli Android requise','bad');return}
   BL=BL||plug('BoatLink');
   setSrc('connexion…','');
   Promise.resolve(BL.removeAllListeners?BL.removeAllListeners():null).then(async()=>{
-    await BL.addListener('lines',e=>{parseRawLines(e.data);onBoatData()});
-    await BL.addListener('status',e=>setSrc(e.state==='connected'?'YDWG-02':e.state==='connecting'?'connexion…':'déconnecté',e.state==='connected'?'ok':e.state==='connecting'?'':'bad'));
+    await BL.addListener('lines',e=>{YDS.bytes+=String(e.data||'').length;YDS.last=Date.now();parseRawLines(e.data);onBoatData()});
+    await BL.addListener('status',e=>{YDS.st=e.state;if(e.state==='connected'){YDS.since=Date.now();YDS.bytes=0;YDS.frames=0;YDS.last=0}setSrc(e.state==='connected'?'YDWG-02':e.state==='connecting'?'connexion…':'déconnecté',e.state==='connected'?'ok':e.state==='connecting'?'':'bad')});
     try{await BL.requestNotifications()}catch(e){}
     await BL.keepAwake({on:!!cfg.awake});
     await BL.connect({host:cfg.ydHost||'192.168.4.1',port:+cfg.ydPort||1456});
@@ -3778,7 +3784,7 @@ $('#fxPlay').onclick=()=>{
 };
 
 
-const APP_VERSION='2.6.1',APP_BUILD='22.11-c';
+const APP_VERSION='2.6.1',APP_BUILD='22.11-d';
 (()=>{const e=document.getElementById('appVer');if(e)e.textContent='Carnet de bord · v'+APP_VERSION+' ('+APP_BUILD+')'})();
 /* ---------- Météo du parcours : vent, vagues, houle et courant le long du tracé (routage, tracé modifié, depuis ma position) ---------- */
 const RWL={wind:{n:'Vent',u:'nds',lim:'maxW',def:22,to:false},waves:{n:'Vagues',u:'m',lim:'maxH',def:2,to:false},swell:{n:'Houle',u:'m',lim:'maxH',def:2,to:false},cur:{n:'Courant',u:'nds',lim:null,to:true}};
@@ -6589,7 +6595,7 @@ function recSnap(){
     const v=k=>D[k]==null?'-':(typeof D[k]==='number'?+D[k].toFixed(2):D[k]);
     const f=k=>fresh(k)?'1':'0';
     rlog('data',`sog=${v('sog')}${f('sog')} cog=${v('cog')}${f('cog')} hdg=${v('hdg')}${f('hdg')} tws=${v('tws')}${f('tws')} aws=${v('aws')}${f('aws')} depth=${v('depth')}${f('depth')} roll=${v('roll')} pitch=${v('pitch')} rpm=${v('rpm')}`);
-    const st={src:cfg.src,gps:cfg.gpsSrc,native:!!NATIVE,online:navigator.onLine,pill:($('#src')||{}).textContent,gpsPill:($('#gpsp')||{}).textContent,gpsDiag:GPS.diag||'',gpsErr:GPS.err||'',phone:GPS.phone?`acc±${Math.round(GPS.phone.acc)}m age ${Math.round((Date.now()-GPS.phone.t)/1000)}s`:'-',haptic:HAP.msg,rec:($('#recp')||{}).textContent,sim:!!simT};
+    const st={src:cfg.src,gps:cfg.gpsSrc,native:!!NATIVE,online:navigator.onLine,pill:($('#src')||{}).textContent,gpsPill:($('#gpsp')||{}).textContent,gpsDiag:GPS.diag||'',gpsErr:GPS.err||'',phone:GPS.phone?`acc±${Math.round(GPS.phone.acc)}m age ${Math.round((Date.now()-GPS.phone.t)/1000)}s`:'-',haptic:HAP.msg,rec:($('#recp')||{}).textContent,sim:!!simT,yd:`${YDS.st||'-'} octets ${YDS.bytes} trames ${YDS.frames}`};
     const j=JSON.stringify(st);if(j!==REC.last.st){rlog('state',j);REC.last.st=j}
   }catch(e){rlog('error','snap '+e.message)}
 }
